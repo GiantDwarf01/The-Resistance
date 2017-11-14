@@ -1,0 +1,146 @@
+-- [ Hidden Agenda ] --
+-- These are the Roles and functions for the Hidden Agenda expansion
+
+
+-- Resistance
+function role_Commander(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Commander"
+  data["Output"] = function()
+    local output = "\nThe spies are " .. output_returnSpies(color, "Resistance")
+    return ref_colorCodes.Resistance .. "You are the Commander of the Resistance!" .. output
+  end
+  data["Help"] = ref_colorCodes.Resistance .. "As the Resistance Commander, you are given the names of the Spies! Use this info to help the Resistance succeed missions." .. ref_colorCodes.Spy .. "\nBut beware - if there is an Assassin, they will try to seek you out."
+
+  return data
+end
+function role_BodyGuard(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Body Guard"
+  data["Output"] = function()
+    local output = ""
+    local object = find_playersByRole({"Commander","False Commander"})
+
+    local commander = object["Commander"]
+    if table.size(object) == 1 then
+      output = output_name(commander)
+    else
+      local falsecommander = object["False Commander"]
+
+      if math.random(100) >= 50 then falsecommander, commander = commander, falsecommander end
+
+      output = "But conflicting intel reports that both " .. output_name(commander) .. ref_colorCodes.Resistance .. " and " .. output_name(falsecommander) .. ref_colorCodes.Resistance .. " is the Commander"
+    end
+
+    return ref_colorCodes.Resistance .. "You are the Body Guard!\nYour job is to protect the Commander: " .. output
+  end
+  return data
+end
+function role_ResistanceDefector(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Resistance Defector"
+  data["Setup"] = function(color)
+    local thisPlayer = data_playerData[color]
+    thisPlayer["DefectorCard"] = getObjectFromGUID(ref_roleCards["Spy Defector"][thisPlayer["CardIndex"]]).clone()
+    data_playerData[color] = thisPlayer
+  end
+  data["Output"] = function()
+    return ref_colorCodes.Resistance .. "You are a Defector - you are currently allied with the Resistance!"
+  end
+  data["Deal Team"] = function(color)
+    if data_currentMission > 2 then
+
+      if data_defectorSwaps[data_currentMission] == nil and deal_defectorCard() then
+        local object = find_playersByRole({"Spy Defector"})
+        if table.size(object) == 1 then
+          local spyColor = object["Spy Defector"]
+
+          local spy = data_playerData[spyColor]
+          local resist = data_playerData[color]
+
+          local oldSpyCard = spy["Card"]
+          local oldResistCard = resist["Card"]
+
+          spy["Card"].setPosition({0,-1,0})
+          spy["Card"] = resist["DefectorCard"]
+
+          resist["Card"].setPosition({0,-1,0})
+          resist["Card"] = spy["DefectorCard"]
+
+          spy["DefectorCard"] = oldSpyCard
+          resist["DefectorCard"] = oldResistCard
+
+          data_playerData[color] = spy
+          data_playerData[spyColor] = resist
+
+          data_playerData[color]["Place Card"](color, true)
+          data_playerData[spyColor]["Place Card"](spyColor, true)
+
+          broadcastToColor(data_playerData[color]["Output"](color), color, {1,1,1})
+          broadcastToColor(data_playerData[spyColor]["Output"](spyColor), spyColor, {1,1,1})
+
+          data_defectorSwaps[data_currentMission] = true
+        end
+      end
+    end
+  end
+  return data
+end
+
+-- Spies
+function role_Assassin(color)
+  local data = role_Spy(color)
+  data["Role"] = "Assassin"
+  data["End Game"] = {
+    priority = 1,
+    runFunction = function(winner)
+      if winner == "Resistance" then
+        data_gamePhase = "Assassination"
+
+        clean_teamTokens()
+
+        set_teamsChats()
+        local board = getObjectFromGUID(data.Board)
+        local pos = board.positionToWorld(ref_boardLocations.Team)
+        local assassinToken = getObjectFromGUID(ref_tokens["Assassin"]).clone({position = pos})
+        assassinToken.setDescription("Drop on the player you think is the Commander")
+        assassinToken.setScale({1.21, 1.00, 1.26})
+        assassinToken.setRotation(board.getRotation())
+      else
+        check_victory(winner)
+      end
+    end
+  }
+  return data
+end
+function role_FalseCommander(color)
+  local data = role_Spy(color)
+  data["Role"] = "False Commander"
+  return data
+end
+function role_DeepCover(color)
+  local data = role_Spy(color)
+  data["Role"] = "Deep Cover"
+  return data
+end
+function role_BlindSpy(color)
+  local data = role_Spy(color)
+  data["Role"] = "Blind Spy"
+  data["Output"] = function()
+    return ref_colorCodes.Spy .. "You are a undercover Spy!\nBut you have gone dark and are Blinded"
+  end
+  return data
+end
+function role_SpyDefector(color)
+  local data = role_Spy(color)
+  data["Role"] = "Spy Defector"
+  data["Setup"] = function(color)
+    local thisPlayer = data_playerData[color]
+    thisPlayer["DefectorCard"] = getObjectFromGUID(ref_roleCards["Resistance Defector"][thisPlayer["CardIndex"]]).clone()
+    data_playerData[color] = thisPlayer
+  end
+  data["Output"] = function()
+    return ref_colorCodes.Spy .. "You are a Defector - you are currently allied with the Spies!"
+  end
+  return data
+end

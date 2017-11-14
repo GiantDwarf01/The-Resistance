@@ -1,0 +1,41 @@
+-- [ Bonus Roles ] --
+-- These are the Roles and functions for the bonus roles
+
+-- Resistance Roles
+function role_ResistanceRogue(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Resistance Rogue"
+  data["Mission Cards"] = {"Success", "Rogue Success"}
+  data["Required Cards"] = {["Rogue Success"] = 0}
+  data["End Game"] = {
+    priority = 1,
+    runFunction = function(winner, color)
+      if winner == "Resistance" and data["Required Cards"]["Rogue Success"] >= 2 and table.contains(object_missionCards, "Rogue Success") then
+        end_game("Resistance Rogue")
+      else
+        check_victory(winner)
+      end
+    end
+  }
+  return data
+end
+
+-- Spy Roles
+function role_SpyRogue(color)
+  local data = role_Spy(color)
+  data["Role"] = "Spy Rogue"
+  data["Mission Cards"] = {"Success", "Fail"}
+  data["Required Cards"] = {["Fail"] = 0}
+  data["End Game"] = {
+    priority = 1,
+    runFunction = function(winner, color)
+      if winner == "Spy" and data["Required Cards"]["Fail"] >= 2
+      and table.contains(data_lastTeam, color) then
+        end_game("Spy Rogue")
+      else
+        check_victory(winner)
+      end
+    end
+  }
+  return data
+end

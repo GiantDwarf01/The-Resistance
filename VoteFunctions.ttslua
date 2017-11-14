@@ -1,0 +1,126 @@
+
+object_victoryTokens = {}
+object_voteCards = {}
+
+data_voteFunctions = {}
+
+
+function deal_voteCards()
+  clean_votes()
+  data_gamePhase = "Voting Phase"
+
+  for color,data in pairs(data_playerData) do
+    if data["Deal Votes"] ~= nil then
+      data["Deal Votes"](color)
+    end
+  end
+
+  for index,color in pairs(data_playersInGame) do
+    local boardGUID = ref_playerBoards[color]
+    local board = getObjectFromGUID(ref_playerBoards[color])
+    local teamPos = board.positionToWorld(ref_boardPosition.Hand)
+
+    local approveCard = getObjectFromGUID(ref_cardGuids["Approve"])
+    local rejectCard = getObjectFromGUID(ref_cardGuids["Reject"])
+
+    local card = approveCard.clone({position = teamPos})
+    card.setScale({1.25,1,1.25})
+    card.setRotation(board.getRotation())
+    table.insert(object_voteCards, card)
+
+    card = rejectCard.clone({position = teamPos})
+    card.setScale({1.25,1,1.25})
+    card.setRotation(board.getRotation())
+    table.insert(object_voteCards, card)
+  end
+end
+
+function repeating_voteChecks()
+  local missionTeam = data_missionTeam
+  -- Check Team Token area
+  for index,color in pairs(data_playersInGame) do
+    local boardGUID = ref_playerBoards[color]
+    local board = getObjectFromGUID(ref_playerBoards[color])
+
+    local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+    local teamList = getObjectsAtPosition(teamPos, "Card")
+
+    if #teamList > 0 then
+      if not data_playerVotes[color] then
+        data_playerVotes[color] = teamList[1]
+      end
+    else
+      if data_playerVotes[color] ~= nil then
+        data_playerVotes[color] = nil
+      end
+    end
+  end
+
+  if table.size(data_playerVotes) == #data_playersInGame then
+    startLuaCoroutine(Global, 'calculate_votes')
+  end
+end
+
+function set_voteTrack()
+  local token = getObjectFromGUID(ref_tokens["Vote Marker"])
+  token.setPosition(ref_voteTrackPosition[data_downvotes])
+  token.setLock(true)
+end
+
+function calculate_votes()
+  for color,data in pairs(data_playerData) do
+    if data["Vote Reveal"] ~= nil and not data_voteFunctions[color] then
+      data_voteFunctions[color] = true
+      data["Vote Reveal"](color)
+      return 1
+    end
+  end
+
+  data_voteFunctions = {}
+  local calculations = { approves = 0, rejects = 0 }
+
+  for color, vote in pairs(data_playerVotes) do
+    local boardGUID = ref_playerBoards[color]
+    local board = getObjectFromGUID(ref_playerBoards[color])
+    local pos = board.positionToWorld(ref_boardPosition.Vote)
+    local rot = board.getRotation()
+    rot.z = 0
+    vote.setPosition(pos)
+    vote.setRotationSmooth(rot)
+    vote.setLock(true)
+  end
+
+  for color, vote in pairs(data_playerVotes) do
+    if vote.getName() == "Approve" then
+      calculations.approves = calculations.approves + 1
+    elseif vote.getName() == "Reject" then
+      calculations.rejects = calculations.rejects + 1
+    end
+  end
+
+  for color,data in pairs(data_playerData) do
+    if data["Calculate Votes"] ~= nil then
+      calculations = data["Calculate Votes"](color, calculations)
+    end
+  end
+
+  clean_hands()
+
+  if calculations.approves > calculations.rejects then
+    deal_missionCards()
+  else
+    data_downvotes = data_downvotes + 1
+    set_voteTrack()
+    deal_teamTokens()
+  end
+
+  return 1
+end
+
+function clean_votes()
+  for color, vote in pairs(data_playerVotes) do
+    vote.destruct()
+  end
+
+  data_playerVotes = {}
+end

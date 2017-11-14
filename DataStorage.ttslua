@@ -1,0 +1,68 @@
+-- Contains data tables that get updated during the game
+
+-- [ General Data ] --
+-- Players in Game
+data_playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
+-- Current leader as "Color"
+data_currentLeader = ""
+-- Players sorted by teams, stored as "color"
+data_teams = { ["Resistance"] = {}, ["Spy"] = {} }
+-- Victory count
+data_victories = { ["Resistance"] = 0, ["Spy"] = 0 }
+-- Current Game Phase
+data_gamePhase = "Waiting on Start"
+
+
+
+-- [ Role Data ] --
+-- Roles included in the game stored as "Role"
+data_inGameRoles = {}
+-- Player Roles stored as [Color] = "Role"
+data_playerRoles = {}
+-- Stores role data as [Color] = {Data}
+data_playerData = {}
+-- Selected special roles, selected by the option boards
+data_specialRoles = { resistance = {"Hacker","Mayor","Pretender"}, spies = {"Spy Chief","Corruptor","Politician","Deep Agent"}, secondary = {"Amnesiac"} }
+
+
+
+-- [ Option Data ] --
+-- Options to include stored as "Option"
+data_includedOptions = {}
+-- Option data stored as [Option] = {Data}
+data_optionData = {}
+
+
+
+-- [ Mission Data ] --
+-- Stores mission team as [color] = {Team Token}
+data_missionTeam = {}
+-- Stores color of team on mission as {Color}
+data_missionColors = {}
+-- Active mission number
+data_currentMission = 1
+-- Number of Team Members
+data_missionCount = 0
+-- Previous mission team
+data_lastTeam = {}
+-- Finished ["Mission Results"] functions
+data_missionResultFunctions = {}
+-- Finished ["End Mission"] functions
+data_endMissionCompleted = {}
+-- Winner of previous mission
+data_missionWinner = ""
+
+
+-- Finished ["End Game"] functions
+data_endGamesCompleted = {}
+
+
+-- [ Vote Data ] --
+-- Stores vote cards as [color] = {Vote Card}
+data_playerVotes = {}
+-- Number of downvotes
+data_downvotes = 1
+
+
+-- Alternate defector card
+data_defectorCards = {}

@@ -1,0 +1,215 @@
+
+#include !\The-Resistance\Roles\BaseGame
+#include !\The-Resistance\Roles\HiddenAgenda
+#include !\The-Resistance\Roles\HostileIntent
+#include !\The-Resistance\Roles\BonusRoles
+#include !\The-Resistance\Roles\CustomRoles
+
+-- Gets known spies
+function helper_returnKnownSpies(player)
+  local others = {}
+  local playerRole = data_playerRoles[player]
+  local spies = table.removeItems(data_teams.Spy, player)
+  return spies
+end
+
+spyOrder = {
+  ["Deep Agent"] = 15,
+  ["Spy Chief"] = 10
+}
+
+function output_returnSpies(player, team)
+  local output = ""
+  -- Table of spies filtered by roles current player is allowed to see
+  local spies = helper_returnKnownSpies(player)
+  local playerRoles = data_playerRoles[player]
+
+  table.sort(spies, function(e1, e2)
+    local r1 = data_playerRoles[e1]
+    local r2 = data_playerRoles[e2]
+
+    local a, b = 0, 0
+    if spyOrder[r1] ~= nil then a = spyOrder[r1] end
+    if spyOrder[r2] ~= nil then b = spyOrder[r2] end
+    return a < b
+  end)
+
+  for index, color in pairs(spies) do
+    if color ~= player then
+      local role = data_playerRoles[color]
+      local roleOutput = ""
+
+      if ref_hiddenSpies[playerRoles] ~= nil and ref_hiddenSpies[playerRoles][role] ~= nil then
+        roleOutput = ref_hiddenSpies[playerRoles][role](color)
+      elseif ref_hiddenSpies[team .. " Team"] ~= nil and ref_hiddenSpies[team .. " Team"][role] ~= nil then
+        roleOutput = ref_hiddenSpies[team .. " Team"][role](color)
+      else
+        roleOutput = output_name(color)
+      end
+
+      if index == #spies - 1 then
+        if #spies > 2 then
+          output = output .. roleOutput .. ref_colorCodes[team] .. ", and "
+        else
+          output = output .. roleOutput .. ref_colorCodes[team] .. " and "
+        end
+      elseif index == #spies then
+        output = output .. roleOutput .. ref_colorCodes[team]
+      elseif #spies > 2 then
+        output = output .. roleOutput .. ref_colorCodes[team] .. ", "
+      else
+        output = output .. roleOutput .. ref_colorCodes[team] .. " "
+      end
+    end
+  end
+
+  return output
+end
+
+function find_playersByRole(roles, exception)
+  local others = {}
+  for _, color in pairs(data_playersInGame) do
+    if color ~= exception then
+      local playerRole = data_playerRoles[color]
+
+      for _,role in pairs(roles) do
+        if playerRole == role then
+          others[role] = color
+        end
+      end
+    end
+  end
+  return others
+end
+
+
+-- Load random role pool
+function load_roles()
+  local playerCount = #data_playersInGame
+
+  local resistancePlayers = ref_resistanceCount[playerCount]
+  local spyPlayers = playerCount - resistancePlayers
+
+  local sepecialResistance = data_specialRoles.resistance
+  local sepecialSpies = data_specialRoles.spies
+
+  assert(#sepecialResistance <= resistancePlayers, "Too many Resistance roles selected")
+  assert(#sepecialSpies <= spyPlayers, "Too many Spy roles selected")
+
+  local inGameRoles = {}
+  for index, role in pairs(sepecialResistance) do
+    table.insert(inGameRoles, {["role"] = role,["team"] = "Resistance"})
+    resistancePlayers = resistancePlayers - 1
+  end
+  for index, role in pairs(sepecialSpies) do
+    table.insert(inGameRoles, {["role"] = role,["team"] = "Spy"})
+    spyPlayers = spyPlayers - 1
+  end
+
+  while resistancePlayers > 0 do
+    table.insert(inGameRoles, {["role"] = "Resistance",["team"] = "Resistance"})
+    resistancePlayers = resistancePlayers - 1
+  end
+  while spyPlayers > 0 do
+    table.insert(inGameRoles, {["role"] = "Spy",["team"] = "Spy"})
+    spyPlayers = spyPlayers - 1
+  end
+
+  data_inGameRoles = inGameRoles
+end
+-- Assign roles
+function assign_roles()
+  assert(#data_playersInGame == #data_inGameRoles, "Number of roles is not equal to number of players")
+
+  -- Local static global varibles
+  local playersInGame = data_playersInGame
+  local inGameRoles = data_inGameRoles
+
+  -- Local dynamic global varibles
+  local playerRoles = {}
+  local playerData = {}
+  local teams = {["Resistance"] = {}, ["Spy"] = {}}
+
+  -- Randomize roles
+  table.shuffle(inGameRoles)
+
+  local roles = ref_roles
+  -- Randomly assign role and teams
+  for index,color in pairs(playersInGame) do
+    local role = inGameRoles[1]["role"]
+    local team = inGameRoles[1]["team"]
+
+    playerRoles[color] = role
+    playerData[color] = roles[role](color)
+
+    table.insert(teams[team],color)
+    table.remove(inGameRoles, 1)
+  end
+
+  local secondaryRoles = data_specialRoles.secondary
+
+  -- Assign dynamic global varibles
+  data_playerRoles = playerRoles
+  data_playerData = playerData
+  data_teams = teams
+
+  for _,role in pairs(secondaryRoles) do
+    local randomIndex = math.random(#playersInGame)
+    local startIndex = randomIndex
+    local color = playersInGame[randomIndex]
+
+    local oldRole = playerRoles[color]
+    while table.contains(ref_secondaryRestrictions[role], oldRole) do
+      randomIndex = randomIndex + 1
+
+      if #playersInGame < randomIndex then randomIndex = 1 end
+
+      color = playersInGame[randomIndex]
+      oldRole = playerRoles[color]
+
+      if randomIndex == startIndex then
+        error("No available Amnesiac role")
+      end
+    end
+
+    playerData[color] = roles[role](color)
+    playerRoles[color] = role
+  end
+
+  -- Assign dynamic global varibles
+  data_playerRoles = playerRoles
+  data_playerData = playerData
+  data_teams = teams
+end
+-- Deal out role cards
+function deal_roleCards()
+  local roleCards = table.copy(ref_roleCards)
+  local playersInGame = data_playersInGame
+  local playerRoles = data_playerRoles
+  local playerData = data_playerData
+  local roles = ref_roles
+
+  for color,role in pairs(playerRoles) do
+    local playerHand = Player[color].getPlayerHand()
+    local randomIndex = math.random(#roleCards[role])
+    local card = getObjectFromGUID(roleCards[role][randomIndex]).clone()
+    table.remove(roleCards[role], randomIndex)
+
+    local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 6.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 6.6}
+    local rot = {0, playerHand['rot_y'] + 180, 0}
+
+    card.setPosition(pos)
+    card.setRotation(rot)
+    card.setScale({2.12, 1, 2.12})
+
+    playerData[color].Card = card
+    playerData[color].CardIndex = randomIndex
+
+    if playerData[color].Setup ~= nil then
+      playerData[color].Setup(color)
+    end
+
+    print(color .. ": " ..playerData[color].Output())
+    --printToColor(playerData[color].Output(), color, {1,1,1})
+  end
+end

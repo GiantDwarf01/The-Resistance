@@ -1,0 +1,74 @@
+-- [ Base Game ] --
+-- These are the Roles and functions for the base game
+
+-- Resistance Roles
+function role_Resistance(color)
+  local data = {}
+  data["Role"] = "Resistance"
+  data["Team"] = "Resistance"
+  data["Board"] = ref_playerBoards[color]
+  data["Mission Cards"] = {"Success"}
+  data["Card"] = nil
+  data["Card Count"] = {}
+  data["Place Card"] = function(color, instant)
+    local card = data.Card
+
+    local playerHand = Player[color].getPlayerHand()
+    local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 6.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 6.6}
+    local rot = {0, playerHand['rot_y'] + 180, 0}
+
+    if instant then
+      card.setPosition(pos)
+      card.setRotation(rot)
+    else
+      card.setPositionSmooth(pos)
+      card.setRotationSmooth(rot)
+    end
+    card.setScale({2.12, 1, 2.12})
+  end
+  data["Output"] = function()
+    return ref_colorCodes.Resistance .. "You are a member of the Resistance!"
+  end
+  data["Help"] = ref_colorCodes.Resistance .. "As a member of the Resistance, your goal is to help the Resistance take down the evil Empire! You win when 3 missions Succeed."
+
+  return data
+end
+
+-- Spy Roles
+function role_Spy(color)
+  local data = {}
+  data["Role"] = "Spy"
+  data["Team"] = "Spy"
+  data["Board"] = ref_playerBoards[color]
+  data["Mission Cards"] = {"Success", "Fail"}
+  data["Card"] = nil
+  data["Card Count"] = {}
+  data["Place Card"] = function(color, instant)
+    local card = data.Card
+
+    local playerHand = Player[color].getPlayerHand()
+    local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 6.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 6.6}
+    local rot = {0, playerHand['rot_y'] + 180, 0}
+
+    if instant then
+      card.setPosition(pos)
+      card.setRotation(rot)
+    else
+      card.setPositionSmooth(pos)
+      card.setRotationSmooth(rot)
+    end
+    card.setScale({2.12, 1, 2.12})
+  end
+  data["Output"] = function()
+    local output = output_returnSpies(color, "Spy")
+    local spies = helper_returnKnownSpies(color)
+
+    if #spies == 1 then
+      output = "\nYour fellow spy is " .. output
+    else
+      output = "\nYour fellow spies are " .. output
+    end
+    return ref_colorCodes.Spy .. "You are a undercover Spy!" .. output
+  end
+  return data
+end

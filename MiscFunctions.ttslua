@@ -1,0 +1,112 @@
+
+-- [[ Table Functions ]] --
+-- Swaps two indexes in array
+function table.swap(array, index1, index2)
+  array[index1], array[index2] = array[index2], array[index1]
+end
+-- Shuffles an array
+function table.shuffle(array)
+  local counter = #array
+  while counter > 1 do
+    local index = math.random(counter)
+    table.swap(array, index, counter)
+    counter = counter -1
+  end
+end
+-- Checks if table contains a value
+function table.contains(table, value)
+  for _, val in pairs(table) do
+    if val == value then
+      return true
+    end
+  end
+
+  return false
+end
+--Gets size of non indexed table
+function table.size(table)
+  local count = 0
+  for _,_ in pairs(table) do
+    count = count + 1
+  end
+  return count
+end
+-- Remove exception item lists
+function table.removeItems(list, ...)
+  local exceptions = {...}
+  local foundItems = {}
+
+  for _,item in pairs(list) do
+    if #exceptions == 0 or not table.contains(exceptions, item) then
+      table.insert(foundItems, item)
+    end
+  end
+
+  return foundItems
+end
+-- Prints tables
+function table.print(inTable, indent)
+  if not indent then indent = 1 end
+
+  for k, v in pairs(inTable) do
+    formatting = string.rep("  ", indent) .. k .. ": "
+
+    if type(v) == "table" then
+      print(formatting)
+      table.print(v, indent+1)
+    elseif type(v) == "boolean" then
+      print(formatting .. tostring(v))
+    elseif type(v) == "userdata" then
+      print(formatting .. v.getName() .. ":" .. v.getGUID())
+    else
+      print(formatting .. v)
+    end
+  end
+end
+-- Deep Copy table
+function table.copy(original)
+    local copy = {}
+    for k, v in pairs(original) do
+        -- as before, but if we find a table, make sure we copy that too
+        if type(v) == 'table' then
+            v = table.copy(v)
+        end
+        copy[k] = v
+    end
+    return copy
+end
+
+
+-- [[ Object Management Functions ]] --
+-- Gets objects at given position with the given tag(s)
+function getObjectsAtPosition(pos, ...)
+    local tagList = {...}
+    local objList = Physics.cast({
+      origin=pos, direction={0,1,0}, type=2, size={0.1,0.1,0.1},max_distance=0, debug=ref_debugOutput
+    })
+    local foundItems = {}
+    for _, obj in ipairs(objList) do
+        if #tagList == 0 then
+          table.insert(foundItems, obj.hit_object)
+        else
+          for _, tag in ipairs(tagList) do
+            if obj.hit_object.tag == tag then
+              table.insert(foundItems, obj.hit_object)
+              break
+            end
+          end
+        end
+    end
+    return foundItems
+end
+-- Removes objects that match exeception GUIDs from table
+function objectListException(list, ...)
+  local foundItems = {}
+  local exceptions = {...}
+  for _, obj in ipairs(list) do
+    if #exceptions == 0 or not table.contains(exceptions, obj.getGUID()) then
+      table.insert(foundItems, item)
+    end
+  end
+  return foundItems
+end

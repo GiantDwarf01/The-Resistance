@@ -1,0 +1,156 @@
+object_teamCards = {}
+objects_teamToken = {}
+objects_extraTeamCards = {}
+
+
+-- Place leader token on
+function set_leaderToken()
+  local playersInGame = data_playersInGame
+  local colorOrder = {
+    "White", "Brown", "Red", "Orange", "Yellow",
+    "Green", "Teal", "Blue", "Purple",  "Pink",
+    "White", "Brown", "Red", "Orange", "Yellow",
+    "Green", "Teal", "Blue", "Purple",  "Pink",
+  }
+
+  if data_currentLeader == "" then
+    data_currentLeader = playersInGame[math.random(#data_playersInGame)]
+  else
+    local start = false
+    for _, color in pairs(colorOrder) do
+      if not start then
+        if data_currentLeader == color then
+          start = true
+        end
+      else
+        if table.contains(playersInGame, color) then
+          data_currentLeader = color
+          break
+        end
+      end
+    end
+  end
+
+  local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])
+  local pos = board.positionToWorld(ref_boardPosition.Leader)
+  local token = getObjectFromGUID(ref_tokens["Leader"])
+  token.setPosition(pos)
+  token.setRotation(board.getRotation())
+  token.setLock(true)
+  token.setScale({1.07,1,1.07})
+end
+
+-- Deal out round team tokens
+function deal_teamTokens()
+  set_leaderToken()
+  clean_teamTokens()
+  data_gamePhase = "Team Building"
+  data_missionTeam = {}
+
+  for _,option in pairs(data_includedOptions) do
+    if data_optionData[option]["Deal Team"] ~= nil then
+      data_optionData[option]["Deal Team"]()
+    end
+  end
+
+  for color,data in pairs(data_playerData) do
+    if data["Deal Team"] ~= nil then
+      data["Deal Team"](color)
+    end
+  end
+
+  local missionMembers = ref_missionCount[#data_playersInGame][data_currentMission]
+  local tokenPosition = ref_tokenPosition[missionMembers]
+  local cards = ref_cardGuids["Team Token"]
+
+  for _, pos in pairs(tokenPosition) do
+    local gottenCard = getObjectFromGUID(cards[math.random(#cards)])
+    local card = gottenCard.clone({position = pos})
+    card.setScale({1.14,1,1.12})
+    card.setRotation({0,180,0})
+
+    table.insert(object_teamCards, card)
+  end
+
+  data_missionCount = missionMembers
+end
+
+-- Check placed team
+function repeating_teamChecks()
+  local missionTeam = data_missionTeam
+  -- Check Team Token area
+  for index,color in pairs(data_playersInGame) do
+    local boardGUID = ref_playerBoards[color]
+    local board = getObjectFromGUID(ref_playerBoards[color])
+
+    local teamPos = board.positionToWorld(ref_boardPosition.Team)
+    local teamList = getObjectsAtPosition(teamPos, "Card")
+
+    if #teamList > 0 then
+      if not missionTeam[color] then
+        missionTeam[color] = teamList[1]
+      end
+    else
+      if missionTeam[color] then
+        missionTeam[color] = nil
+      end
+    end
+  end
+
+  data_missionTeam = missionTeam
+
+  local optionReq = true
+  for _,option in pairs(data_includedOptions) do
+    if data_optionData[option]["Team Requirement"] ~= nil then
+      if not data_optionData[option]["Team Requirement"]() then
+        optionReq = false
+      end
+    end
+  end
+
+  if table.size(missionTeam) == data_missionCount and optionReq then
+    data_missionColors = {}
+    data_gamePhase = "Voting Phase"
+    for color,card in pairs(missionTeam) do
+      local boardGUID = ref_playerBoards[color]
+      local board = getObjectFromGUID(ref_playerBoards[color])
+
+      local teamPos = board.positionToWorld(ref_boardPosition.Team)
+      card.setPosition(teamPos)
+      card.setRotation(board.getRotation())
+      card.setLock(true)
+
+      table.insert(data_missionColors, color)
+    end
+
+    if objects_extraTeamCards ~= nil then
+      for color,card in pairs(objects_extraTeamCards) do
+        local boardGUID = ref_playerBoards[color]
+        local board = getObjectFromGUID(ref_playerBoards[color])
+
+        local teamPos = board.positionToWorld(ref_boardPosition[card.spot])
+        card.object.setPosition(teamPos)
+        card.object.setRotation(board.getRotation())
+        card.object.setLock(true)
+      end
+
+      objects_extraTeamCards = {}
+    end
+
+    deal_voteCards()
+  end
+end
+
+-- Clean up team tokens
+function clean_teamTokens()
+  for _, token in pairs(object_teamCards) do
+    token.destruct()
+  end
+
+  for _, token in pairs(objects_teamToken) do
+    token.destruct()
+  end
+
+  object_teamCards = {}
+  objects_teamToken = {}
+end

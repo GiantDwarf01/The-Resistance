@@ -1,0 +1,199 @@
+-- [ Hostile Intent ] --
+-- These are the Roles and functions for the Hostile Intent expansion
+
+-- Resistance Roles
+function role_ResistanceChief(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Resistance Chief"
+  data["Output"] = function()
+    local output = ""
+    local object = find_playersByRole({"Resistance Chief"}, color)
+    if table.size(object) == 1 then
+      local chief = object["Resistance Chief"]
+      output = "\nYour co-chief is " .. output_name(chief)
+    end
+
+    object = find_playersByRole({"Coordinator"}, color)
+    if table.size(object) == 1 then
+      local chief = object["Coordinator"]
+      output = output .. "\nThe Resistance Coordinator is " .. output_name(chief)
+    end
+
+    return ref_colorCodes.Resistance .. "You are the Resistance Chief!" .. output
+  end
+
+  return data
+end
+function role_ResistanceHunter(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Resistance Hunter"
+  data["End Game"] = {
+    priority = 2,
+    runFunction = function(winner)
+      if winner == "Resistance" then
+        data_gamePhase = "Resistance Hunting"
+
+        clean_teamTokens()
+
+        local board = getObjectFromGUID(data.Board)
+        local pos = board.positionToWorld(ref_boardLocations.Team)
+        local assassinToken = getObjectFromGUID(ref_tokens["Hunter"]).clone({position = pos})
+        assassinToken.setDescription("Drop on the player you think is the Spy Chief")
+        assassinToken.setScale({1.21, 1.00, 1.26})
+        assassinToken.setRotation(board.getRotation())
+      else
+        check_victory(winner)
+      end
+    end
+  }
+  return data
+end
+function role_DummyAgent(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Dummy Agent"
+  return data
+end
+function role_Coordinator(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Coordinator"
+  return data
+end
+function role_Pretender(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Pretender"
+  return data
+end
+function role_ResistanceReverser(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Resistance Reverser"
+  data["Mission Cards"] = {"Success", "Reverse"}
+  return data
+end
+
+-- Spy Roles
+function role_SpyChief(color)
+  local data = role_Spy(color)
+  data["Role"] = "Spy Chief"
+  if #data_playersInGame >= 7 then
+    data["Mission Cards"] = {"Success", "Chief Fail"}
+  end
+  return data
+end
+function role_SpyHunter(color)
+  local data = role_Spy(color)
+  data["Role"] = "Spy Hunter"
+  data["End Game"] = {
+    priority = 2,
+    runFunction = function(winner)
+      if winner == "Spy" then
+        data_gamePhase = "Spy Hunting"
+
+        clean_teamTokens()
+
+        local board = getObjectFromGUID(data.Board)
+        local pos = board.positionToWorld(ref_boardLocations.Team)
+        local assassinToken = getObjectFromGUID(ref_tokens["Assassin"]).clone({position = pos})
+        assassinToken.setDescription("Drop on the player you think is the Resistance Chief")
+        assassinToken.setScale({1.21, 1.00, 1.26})
+        assassinToken.setRotation(board.getRotation())
+      elseif winner == "Early Hunt" then
+        data_gamePhase = "Spy Hunting"
+
+        clean_teamTokens()
+
+        local board = getObjectFromGUID(data.Board)
+        local pos = board.positionToWorld(ref_boardLocations.Team)
+        local assassinToken = getObjectFromGUID(ref_tokens["Assassin"]).clone({position = pos})
+        assassinToken.setDescription("Drop on the player you think is the Resistance Chief")
+        assassinToken.setScale({1.21, 1.00, 1.26})
+        assassinToken.setRotation(board.getRotation())
+      else
+        check_victory(winner)
+      end
+    end
+  }
+  data["Hunted"] = false
+  data["Allow Hunt"] = function(color)
+    if not data["Hunted"] then
+      broadcastToColor("Your Chief has authorized a Hunt", color, {1,0,0})
+      printToColor('Click the Activate Hunt button or type "!hunt"', color, {1,0,0})
+
+      local buttondata = {click_function = "activate_earlyHunt", function_owner = self, label = "Activate Hunt",
+        position = {0, 0.2, 3.2}, scale = {0.3, 0.3, 0.3}, width = 2500, height = 400, font_size = 400}
+
+      local board = getObjectFromGUID(data.Board)
+      board.createButton(buttondata)
+    end
+  end
+  data["Deal Votes"] = function(color)
+    if not data["Hunted"] then
+      local board = getObjectFromGUID(data.Board)
+      board.clearButtons()
+    end
+  end
+  return data
+end
+function role_DeepAgent(color)
+  local data = role_Spy(color)
+  data["Role"] = "Deep Agent"
+  data["Output"] = function()
+    return ref_colorCodes.Spy .. "You are a undercover Spy!\nBut you are deep undercover..."
+  end
+
+  data["Blamed"] = false
+  data["Deal Team"] = function(color)
+    local object = find_playersByRole({"Pretender"})
+    if table.size(object) == 0 then
+      return
+    end
+
+    if not data["Blamed"] then
+      printToColor('Click the Place Blame button or type "!blame"', color, {1,0,0})
+      local buttondata = {click_function = "activate_blame", function_owner = self, label = "Place Blame",
+      position = {0, 0.2, 3.2}, scale = {0.3, 0.3, 0.3}, width = 2500, height = 400, font_size = 400}
+      local board = getObjectFromGUID(data.Board)
+      board.createButton(buttondata)
+    end
+  end
+
+  data["Deal Votes"] = function(color)
+    if not data["Blamed"] then
+      local board = getObjectFromGUID(data.Board)
+      board.clearButtons()
+    end
+  end
+
+  data["Blame Pretender"] = function(color)
+    data_gamePhase = "Blaming"
+
+    local board = getObjectFromGUID(data.Board)
+    local pos = board.positionToWorld(ref_boardLocations.Vote)
+    local token = getObjectFromGUID(ref_tokens["Check Player"]).clone({position = pos})
+    token.setRotation(board.getRotation())
+    token.setDescription(color)
+
+    --token.setDescription("Drop on the player you think is the Pretender")
+    token.setRotation(board.getRotation())
+    revealColor(color)
+  end
+
+  data["Swap Pretender"] = function(deepAgent,pretender)
+    local deep = data_playerData[deepAgent]
+    local pretend = data_playerData[pretender]
+
+    data_playerData[deepAgent] = pretend
+    data_playerData[pretender] = deep
+    data_playerData[deepAgent]["Place Card"](deepAgent)
+    data_playerData[pretender]["Place Card"](pretender)
+
+    revealColor(pretender)
+  end
+
+  return data
+end
+function role_SpyReverser(color)
+  local data = role_Spy(color)
+  data["Role"] = "Spy Reverser"
+  data["Mission Cards"] = {"Success", "Fail", "Reverse"}
+  return data
+end

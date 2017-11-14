@@ -1,0 +1,276 @@
+
+object_missionCards = {}
+object_revealedMission = {}
+
+
+-- Check for placed mission cards
+function repeating_checkMission()
+  local placard = getObjectFromGUID(ref_tokens["Played Board"])
+  local deckList = getObjectsAtPosition(placard.positionToWorld({0,0.2,0}), "Deck")
+
+  if #deckList > 0 then
+    local deck = deckList[1]
+    if deck.getQuantity() == data_missionCount then
+      reveal_missionCards(deck)
+    end
+  end
+end
+
+-- Place mission cards
+function reveal_missionCards(deck)
+  data_missionResultFunctions = {}
+  object_revealedMission = {}
+  local positions = ref_missionRevealPosition[data_missionCount]
+  deck.shuffle()
+
+  for _,pos in pairs(positions) do
+    local card = deck.takeObject({
+      position       = pos,
+      rotation       = {180,90,0},
+    })
+    object_revealedMission[card.getDescription()] = card
+    card.setLock(true)
+    card.setDescription("")
+  end
+
+  startLuaCoroutine(Global, 'calculate_missionResults')
+end
+
+-- Determine Result of Mission
+function calculate_missionResults()
+  clean_hands()
+
+  local playerData = data_playerData
+  for _,color in pairs(data_playersInGame) do
+    if playerData[color]["Mission Results"] ~= nil and not table.contains(data_missionResultFunctions, color) then
+      table.insert(data_missionResultFunctions, color)
+      playerData[color]["Mission Results"](color)
+      return 1
+    end
+  end
+
+  for _,card in pairs(object_revealedMission) do
+    while card.isSmoothMoving() do
+      coroutine.yield()
+    end
+  end
+
+  for _,card in pairs(object_revealedMission) do
+    card.setRotationSmooth({0,90,0})
+  end
+
+  local missionCards = {}
+
+  local success = 0
+  local fail = 0
+
+  local revealedMission = object_revealedMission
+
+  local played_spyChief = false
+  local played_hit = false
+  local played_reverse = false
+  local played_rogue = false
+  local played_spyRogue = false
+
+  local played_cards = {}
+
+  local roles = {}
+  local lastTeam = {}
+
+  for color,card in pairs(revealedMission) do
+    local cardname = card.getName()
+    local role = playerData[color].Role
+
+    table.insert(roles, playerData[color].Role)
+    table.insert(missionCards, cardname)
+    table.insert(lastTeam, color)
+
+    if cardname == "Success" then
+      success = success + 1
+    elseif cardname == "Fail" then
+      fail = fail + 1
+      if role == "Spy Chief" then
+        played_cards["Chief Fail"] = true
+      elseif role == "Spy Rogue" then
+        played_cards["Spy Rogue"] = true
+      end
+    elseif cardname == "Chief Fail" then
+      fail = fail + 1
+      played_cards["Chief Fail"] = true
+    elseif cardname == "Hit" then
+      played_cards["Hit"] = true
+    elseif cardname == "Rogue Success" then
+      played_cards["Rogue"] = true
+    elseif cardname == "Reverse" then
+      if played_cards["Reverse"] == nil then played_cards["Reverse"] = false end
+      played_cards["Reverse"] = not played_cards["Reverse"]
+    elseif cardname == "Sabotage" then
+      played_cards["Sabotage"] = true
+    end
+
+    local cardCount = playerData[color]["Card Count"]
+    if cardCount[cardname] == nil then cardCount[cardname] = 0 end
+    local count = cardCount[cardname]
+    data_playerData[color]["Card Count"][cardname] = count + 1
+  end
+
+  object_missionCards = missionCards
+  data_lastTeam = lastTeam
+
+  local missionFailed = false
+
+  if #data_playersInGame >= 7 then
+    if data_currentMission == 4 then
+      if fail > 1 then
+        missionFailed = true
+      end
+    elseif fail > 0 then
+      missionFailed = true
+    end
+  elseif fail > 0 then
+    missionFailed = true
+  end
+
+  if played_cards["Hit"] then
+    if table.contains(roles, "Mayor") then
+      broadcastToAll("The Hitman has killed the Mayor!", {1,0,0})
+      end_game("Spy")
+      return 1
+    end
+  end
+  if played_cards["Chief Fail"] then
+    local hunter = find_playersByRole({"Spy Hunter"})
+    for _,color in pairs(hunter) do
+      data_playerData[color]["Allow Hunt"](color)
+    end
+  end
+  if played_cards["Reverse"] then
+    missionFailed = not missionFailed
+  end
+  if played_cards["Rogue"] then
+    local rogue = find_playersByRole({"Resistance Rogue"})
+    for _,rogueColor in pairs(rogue) do
+      data_playerData[rogueColor]["Required Cards"]["Rogue Success"] = playerData[rogueColor]["Required Cards"]["Rogue Success"] + 1
+    end
+  end
+  if played_cards["Spy Rogue"] then
+    local rogue = find_playersByRole({"Spy Rogue"})
+    for _,rogueColor in pairs(rogue) do
+      data_playerData[rogueColor]["Required Cards"]["Fail"] = playerData[rogueColor]["Required Cards"]["Fail"] + 1
+    end
+  end
+  if played_cards["Sabotage"] then
+    missionFailed = false
+  end
+
+
+  local card = getObjectFromGUID(ref_tokens["Victory Token"]).clone({
+    position     = ref_victoryPosition[data_currentMission],
+  })
+
+  if missionFailed then
+    card.setLock(true)
+    card.setRotation({0,180,180})
+
+    broadcastToAll("The mission has failed!", {1,0,0})
+    data_victories.Spy = data_victories.Spy + 1
+
+    data_downvotes = 1
+    set_voteTrack()
+    roundWinner = "Spy"
+  else
+    card.setLock(true)
+    card.setRotation({0,180,0})
+
+    broadcastToAll("The mission has succeeded!", {0,0.65,1})
+    data_victories.Resistance = data_victories.Resistance + 1
+
+    data_downvotes = 1
+    set_voteTrack()
+    roundWinner = "Resistance"
+  end
+
+  object_victoryTokens[data_currentMission] = card
+
+  data_currentMission = data_currentMission + 1
+
+  local endWinner = ""
+  if data_victories.Resistance == 3 then
+    endWinner = "Resistance"
+  elseif data_victories.Spy == 3 then
+    endWinner = "Spy"
+  end
+
+
+  data_missionColors = {}
+  data_endMissionCompleted = {}
+
+  if not check_victory(endWinner) then
+    clean_teamTokens()
+    check_nextRound(roundWinner)
+  end
+
+  return 1
+end
+
+-- Deal Mission Cards
+function deal_missionCards()
+  clean_mission()
+
+  for color,data in pairs(data_playerData) do
+    if data["Deal Mission"] ~= nil then
+      data["Deal Mission"](color)
+    end
+  end
+
+  data_gamePhase = "Mission"
+  local playerRoles = data_playerRoles
+  local playerData = data_playerData
+  local missionCardGuids = ref_cardGuids
+
+  for color,_ in pairs(data_missionTeam) do
+    local role = playerRoles[color]
+    local data = playerData[color]
+
+    local boardGUID = ref_playerBoards[color]
+    local board = getObjectFromGUID(ref_playerBoards[color])
+    local teamPos = board.positionToWorld(ref_boardPosition.Hand)
+
+    for _,card in pairs(data["Mission Cards"]) do
+      local allow = true
+
+      if data["Card Limits"] ~= nil and data["Card Limits"][card] ~= nil then
+        local limit = data["Card Limits"][card]
+        if data["Card Count"][card] ~= nil then
+          local count = data["Card Count"][card]
+          if limit <= count then
+            allow = false
+          end
+        end
+      end
+
+      if card == "Rogue Success" then
+        if data_optionData["Watching"] ~= nil then
+          if data_optionData["Watching"]["Watching Player"] == color then
+            allow = false
+          end
+        end
+      end
+
+      if allow then
+        local missionCard = getObjectFromGUID(missionCardGuids[card]).clone({position     = teamPos,})
+        missionCard.setLock(false)
+        missionCard.setRotation(board.getRotation())
+        missionCard.setDescription(color)
+      end
+    end
+  end
+end
+
+-- Clean mission cards
+function clean_mission()
+  for _,card in pairs(object_revealedMission) do
+    card.destruct()
+  end
+  object_revealedMission = {}
+end
