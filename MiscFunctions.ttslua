@@ -82,7 +82,7 @@ end
 function getObjectsAtPosition(pos, ...)
     local tagList = {...}
     local objList = Physics.cast({
-      origin=pos, direction={0,1,0}, type=2, size={0.1,0.1,0.1},max_distance=0, debug=ref_debugOutput
+      origin=pos, direction={0,1,0}, type=2, size={0.1,0.1,0.1},max_distance=0, debug=true
     })
     local foundItems = {}
     for _, obj in ipairs(objList) do

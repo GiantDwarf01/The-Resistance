@@ -215,6 +215,7 @@ end
 
 -- Deal Mission Cards
 function deal_missionCards()
+  data_gamePhase = "Dealing Mission"
   clean_mission()
 
   for color,data in pairs(data_playerData) do
@@ -223,7 +224,6 @@ function deal_missionCards()
     end
   end
 
-  data_gamePhase = "Mission"
   local playerRoles = data_playerRoles
   local playerData = data_playerData
   local missionCardGuids = ref_cardGuids
@@ -265,6 +265,8 @@ function deal_missionCards()
       end
     end
   end
+
+  data_gamePhase = "Mission"
 end
 
 -- Clean mission cards

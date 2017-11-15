@@ -40,12 +40,32 @@ function set_leaderToken()
   token.setScale({1.07,1,1.07})
 end
 
+ref_roundMarkerPosition = {
+  {-11.03, 1.29, -3.40},
+  {-4.33, 1.29, -3.40},
+  {2.34, 1.29, -3.40},
+  {8.98, 1.29, -3.40},
+  {15.66, 1.29, -3.40}
+}
+
+-- Set mission token
+function set_roundMarker()
+  local token = getObjectFromGUID(ref_tokens["Round Marker"])
+  token.setScale({0.79, 1.00, 0.79})
+  token.setPosition(ref_roundMarkerPosition[data_currentMission])
+  token.setLock(true)
+end
+
 -- Deal out round team tokens
 function deal_teamTokens()
+
   set_leaderToken()
+  set_voteTrack()
+  set_roundMarker()
   clean_teamTokens()
-  data_gamePhase = "Team Building"
   data_missionTeam = {}
+
+  data_gamePhase = "Team Building"
 
   for _,option in pairs(data_includedOptions) do
     if data_optionData[option]["Deal Team"] ~= nil then

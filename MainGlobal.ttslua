@@ -11,6 +11,43 @@
 #include !\The-Resistance\MissionFunctions
 #include !\The-Resistance\VoteFunctions
 
+function update_notes()
+  if data_gamePhase == "Team Building" then
+
+    local output = "╔════════════╗\n◆ Building Team ◆   \n╚════════════╝"
+
+
+  elseif data_gamePhase == "Voting Phase" then
+  elseif data_gamePhase == "Mission" then
+  end
+end
+
+
+
+function place_object(data)
+  local object = data.object
+  local name = object.getName()
+  local color = object.getDescription()
+
+  if name == "Reject" or name == "Approve" then
+    local board = getObjectFromGUID(ref_playerBoards[color])
+    local pos = board.positionToWorld(ref_boardPosition.Vote)
+    local rot = board.getRotation()
+    rot.z = 180
+    object.setPosition(pos)
+    object.setRotationSmooth(rot)
+  elseif name == "Success" or name == "Fail" or name == "Chief Fail" or name == "Rogue Success" or
+         name == "Reverse" or name == "Hit" or name == "Sabotage" or name == "Extract" or
+         name == "Infect" or name == "Cure" then
+    local placard = getObjectFromGUID(ref_tokens["Played Board"])
+    object.setPosition(placard.positionToWorld({0,0.2,0}))
+
+    local rot = placard.getRotation()
+    rot.z = 180
+    object.setRotation(rot)
+  end
+end
+
 
 
 --[[ API Functions ]]--
@@ -19,9 +56,15 @@ function onLoad(save_state)
   math.randomseed(os.time())
 
   setup_functionCall()
-  startGame()
-  --debug_teamCards()
 
+  local data = {click_function = "startGame", function_owner = self, label = "Start Game",
+  position = {0, 0.1, 1}, scale = {0.1, 0.1, 0.1}, width = 3500, height = 700, font_size = 700}
+
+  getObjectFromGUID('18eb21').createButton(data)
+  --startGame()
+end
+
+function startGame()
   Timer.create({
     identifier     = "Timer name of EPICNESS",
     function_name  = "repeating_functionCalls",
@@ -29,10 +72,16 @@ function onLoad(save_state)
     delay          = 1,
     repetitions    = 0,
   })
-end
 
-function startGame()
+  for _,color in pairs(getSeatedPlayers()) do
+    table.insert(data_playersInGame, color)
+  end
+
+  data_playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
+
   -- Deal Role Cards
+  setup_hiddenZones()
+  setup_playBoard()
   load_roles()
   assign_roles()
   assignOptions()
@@ -424,9 +473,7 @@ end
 -- All functions for the inital set up of the game
 function setup_functionCall()
   setup_roleCards()
-  setup_lockObjects()
-  setup_hiddenZones()
-  setup_playBoard()
+  --setup_lockObjects()
 end
 -- All functions that are repeating
 function repeating_functionCalls()

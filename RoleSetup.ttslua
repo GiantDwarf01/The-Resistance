@@ -15,7 +15,7 @@ end
 
 spyOrder = {
   ["Deep Agent"] = 15,
-  ["Spy Chief"] = 10
+  ["Spy Chief"] = 10,
 }
 
 function output_returnSpies(player, team)
@@ -27,7 +27,6 @@ function output_returnSpies(player, team)
   table.sort(spies, function(e1, e2)
     local r1 = data_playerRoles[e1]
     local r2 = data_playerRoles[e2]
-
     local a, b = 0, 0
     if spyOrder[r1] ~= nil then a = spyOrder[r1] end
     if spyOrder[r2] ~= nil then b = spyOrder[r2] end

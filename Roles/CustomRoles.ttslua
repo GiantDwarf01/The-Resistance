@@ -250,8 +250,65 @@ end
 -- Neutral Roles
 function role_Amnesiac(color)
   local data = data_playerData[color]
+
   data["Old Role"] = data["Role"]
   data["Role"] = "Amnesiac"
+
+  data["Original Mission Cards"] = data["Mission Cards"]
+
+  data["Mission Cards"] = {"Success", "Fail"}
+
+  local specialCards = {
+    ["Spy Chief"] = "Chief Fail",
+    ["Spy Reverser"] = "Reverse",
+    ["Resistance Rogue"] = "Rogue Success",
+    ["Resistance Reverser"] = "Reverse",
+    ["Mole"] = "Sabotage",
+  }
+
+  for _,role in pairs(data_specialRoles.resistance) do
+    print(role)
+    if specialCards[role] ~= nil then
+      if not table.contains(data["Mission Cards"],specialCards[role]) then
+        table.insert(data["Mission Cards"], specialCards[role])
+      end
+    end
+  end
+  for _,role in pairs(data_specialRoles.spies) do
+    print(role)
+    if specialCards[role] ~= nil then
+      if not table.contains(data["Mission Cards"],specialCards[role]) then
+        table.insert(data["Mission Cards"], specialCards[role])
+      end
+    end
+  end
+
+  data["Remember"] = function()
+    printToColor("You've remembered something...", color, {1,1,0})
+    printToColor(data["Old Output"](color), color, {1,1,1})
+
+    data["Output"] = data["Old Output"]
+
+    data["Role"] = data["Old Role"]
+    local role = data["Role"]
+
+    local roles = ref_roleCards[role]
+
+    local randomIndex = math.random(#roles)
+    local card = getObjectFromGUID(roles[randomIndex]).clone()
+
+    data["Card"].destruct()
+    data.Card = card
+
+    data["Place Card"](color, true)
+  end
+
+  data["Deal Mission"] = function()
+    if data_currentMission == 5 then
+      data["Remember"]()
+    end
+  end
+
   data["Old Output"] = data["Output"]
 
   local team = data_teams[data.Team]

@@ -2,7 +2,7 @@
 
 -- [ General Data ] --
 -- Players in Game
-data_playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
+data_playersInGame = {}
 -- Current leader as "Color"
 data_currentLeader = ""
 -- Players sorted by teams, stored as "color"
@@ -22,7 +22,7 @@ data_playerRoles = {}
 -- Stores role data as [Color] = {Data}
 data_playerData = {}
 -- Selected special roles, selected by the option boards
-data_specialRoles = { resistance = {"Hacker","Mayor","Pretender"}, spies = {"Spy Chief","Corruptor","Politician","Deep Agent"}, secondary = {"Amnesiac"} }
+data_specialRoles = { resistance = {"Resistance Reverser","Resistance Rogue"}, spies = {"Spy Chief","Corruptor","Politician","Deep Agent"}, secondary = {"Amnesiac"} }
 
 
 
