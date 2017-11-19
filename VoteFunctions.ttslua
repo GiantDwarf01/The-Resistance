@@ -27,14 +27,20 @@ function deal_voteCards()
     card.setScale({1.25,1,1.25})
     card.setRotation(board.getRotation())
     card.setDescription(color)
+    card.setLock(false)
+    card.interactable = true
     table.insert(object_voteCards, card)
 
     card = rejectCard.clone({position = teamPos})
     card.setScale({1.25,1,1.25})
     card.setRotation(board.getRotation())
     card.setDescription(color)
+    card.setLock(false)
+    card.interactable = true
     table.insert(object_voteCards, card)
   end
+
+  update_notes()
 end
 
 function repeating_voteChecks()
@@ -48,12 +54,14 @@ function repeating_voteChecks()
     local teamList = getObjectsAtPosition(teamPos, "Card")
 
     if #teamList > 0 then
-      if not data_playerVotes[color] then
+      if data_playerVotes[color] == nil then
         data_playerVotes[color] = teamList[1]
+        update_notes()
       end
     else
+      data_playerVotes[color] = nil
+        update_notes()
       if data_playerVotes[color] ~= nil then
-        data_playerVotes[color] = nil
       end
     end
   end
@@ -70,6 +78,7 @@ function set_voteTrack()
 end
 
 function calculate_votes()
+  print("Calculating Votes")
   for color,data in pairs(data_playerData) do
     if data["Vote Reveal"] ~= nil and not data_voteFunctions[color] then
       data_voteFunctions[color] = true
@@ -77,10 +86,18 @@ function calculate_votes()
       return 1
     end
   end
+  print("Vote Reveal")
 
   data_voteFunctions = {}
-  local calculations = { approves = 0, rejects = 0 }
 
+  local record = {
+    ["Leader"] = data_currentLeader,
+    ["Team"] = data_missionColors,
+    ["Approve"] = {},
+    ["Reject"] = {},
+  }
+
+  local calculations = { approves = 0, rejects = 0 }
   for color, vote in pairs(data_playerVotes) do
     local board = getObjectFromGUID(ref_playerBoards[color])
     local pos = board.positionToWorld(ref_boardPosition.Vote)
@@ -91,13 +108,19 @@ function calculate_votes()
     vote.setLock(true)
   end
 
+  print("Revealed Vote")
+
   for color, vote in pairs(data_playerVotes) do
     if vote.getName() == "Approve" then
       calculations.approves = calculations.approves + 1
+      table.insert(record["Approve"], color)
     elseif vote.getName() == "Reject" then
       calculations.rejects = calculations.rejects + 1
+      table.insert(record["Reject"], color)
     end
   end
+
+  print("Added Votes")
 
   for color,data in pairs(data_playerData) do
     if data["Calculate Votes"] ~= nil then
@@ -105,11 +128,63 @@ function calculate_votes()
     end
   end
 
+  print("Unique Votes")
+
   clean_hands()
 
+  local mission = "Mission " .. data_currentMission
+
+  -- Check if mission has been voted on before
+  if data_record[mission] == nil then
+    data_record[mission] = {}
+  end
+
   if calculations.approves > calculations.rejects then
+    print("Votes approved")
+
+    -- Check if mission has been attempted and try again if it has
+    local i = 0
+    while true do
+      i = i + 1
+
+      if data_record[mission]["Team " .. i] == nil then
+        data_record[mission]["Team " .. i] = record
+
+        if objects_extraTeamCards ~= nil and objects_extraTeamCards ~= {} then
+          data_record[mission]["Team " .. i]["Extra Tokens"] = {}
+          for color,card in pairs(objects_extraTeamCards) do
+            data_record[mission]["Team " .. i]["Extra Tokens"][card.object.getName()] = color
+          end
+        end
+
+        break
+      end
+    end
+
     deal_missionCards()
   else
+    print("Votes rejected")
+
+    if data_record[mission]["Vote " .. data_downvotes] == nil then
+      data_record[mission]["Vote " .. data_downvotes] = {}
+    end
+    local i = 0
+    while true do
+      i = i + 1
+      if data_record[mission]["Vote " .. data_downvotes][i] == nil then
+        data_record[mission]["Vote " .. data_downvotes][i] = record
+
+        if objects_extraTeamCards ~= nil and objects_extraTeamCards ~= {} then
+          data_record[mission]["Vote " .. data_downvotes][i]["Extra Tokens"] = {}
+          for color,card in pairs(objects_extraTeamCards) do
+            data_record[mission]["Vote " .. data_downvotes][i]["Extra Tokens"][card.object.getName()] = color
+          end
+        end
+
+        break
+      end
+    end
+
     data_downvotes = data_downvotes + 1
     set_voteTrack()
     deal_teamTokens()

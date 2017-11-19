@@ -58,12 +58,14 @@ end
 
 -- Deal out round team tokens
 function deal_teamTokens()
-
   set_leaderToken()
   set_voteTrack()
   set_roundMarker()
   clean_teamTokens()
+  update_notes()
   data_missionTeam = {}
+
+  objects_extraTeamCards = {}
 
   data_gamePhase = "Team Building"
 
@@ -88,6 +90,8 @@ function deal_teamTokens()
     local card = gottenCard.clone({position = pos})
     card.setScale({1.14,1,1.12})
     card.setRotation({0,180,0})
+    card.setLock(false)
+    card.interactable = true
 
     table.insert(object_teamCards, card)
   end
@@ -109,10 +113,12 @@ function repeating_teamChecks()
     if #teamList > 0 then
       if not missionTeam[color] then
         missionTeam[color] = teamList[1]
+        update_notes()
       end
     else
       if missionTeam[color] then
         missionTeam[color] = nil
+        update_notes()
       end
     end
   end
@@ -124,6 +130,8 @@ function repeating_teamChecks()
     if data_optionData[option]["Team Requirement"] ~= nil then
       if not data_optionData[option]["Team Requirement"]() then
         optionReq = false
+      else
+        update_notes()
       end
     end
   end
@@ -131,6 +139,7 @@ function repeating_teamChecks()
   if table.size(missionTeam) == data_missionCount and optionReq then
     data_missionColors = {}
     data_gamePhase = "Voting Phase"
+
     for color,card in pairs(missionTeam) do
       local boardGUID = ref_playerBoards[color]
       local board = getObjectFromGUID(ref_playerBoards[color])
@@ -143,7 +152,7 @@ function repeating_teamChecks()
       table.insert(data_missionColors, color)
     end
 
-    if objects_extraTeamCards ~= nil then
+    if objects_extraTeamCards ~= nil and objects_extraTeamCards ~= {} then
       for color,card in pairs(objects_extraTeamCards) do
         local boardGUID = ref_playerBoards[color]
         local board = getObjectFromGUID(ref_playerBoards[color])
@@ -153,8 +162,6 @@ function repeating_teamChecks()
         card.object.setRotation(board.getRotation())
         card.object.setLock(true)
       end
-
-      objects_extraTeamCards = {}
     end
 
     deal_voteCards()

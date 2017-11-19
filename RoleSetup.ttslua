@@ -200,15 +200,174 @@ function deal_roleCards()
     card.setPosition(pos)
     card.setRotation(rot)
     card.setScale({2.12, 1, 2.12})
+    card.setLock(true)
+    card.interactable = true
 
     playerData[color].Card = card
     playerData[color].CardIndex = randomIndex
 
+
+    local output = playerData[color].Output()
+    playerData[color]["Saved Output"] = output
+
+    --print(color .. ": " .. output)
+    printToColor(output, color, {1,1,1})
+  end
+
+  startLuaCoroutine(Global, 'coroutine_setCardGUID')
+end
+
+function coroutine_setCardGUID()
+  local playerData = data_playerData
+  local playerRoles = data_playerRoles
+
+  for i=1,50 do
+    coroutine.yield()
+  end
+
+  for color,role in pairs(playerRoles) do
+    while playerData[color].Card.isSmoothMoving() do
+      coroutine.yield()
+    end
+    playerData[color].Card = playerData[color].Card.getGUID()
+
     if playerData[color].Setup ~= nil then
       playerData[color].Setup(color)
     end
-
-    print(color .. ": " ..playerData[color].Output())
-    --printToColor(playerData[color].Output(), color, {1,1,1})
   end
+
+  return 1
+end
+
+
+
+
+function option_investigator()
+  local data = {}
+  data["Deal Team"] = function()
+    local invest = getObjectFromGUID(ref_tokens["Investigator"]).clone({
+      position     = {0,1,15},
+    })
+    invest.setScale({1.64,1,1.66})
+    invest.setName("Investigator")
+    invest.setLock(false)
+    invest.interactable = true
+
+    table.insert(objects_teamToken, invest)
+
+    data_optionData["Investigator"]["Investigator Player"] = ""
+  end
+  data["Investigator Player"] = ""
+  data["Team Requirement"] = function()
+    -- Check Team Token area
+    for index,color in pairs(data_playersInGame) do
+      if color ~= data_currentLeader then
+        local board = getObjectFromGUID(ref_playerBoards[color])
+        local teamPos = board.positionToWorld(ref_boardPosition.Team)
+        local list = getObjectsAtPosition(teamPos, "Tile")
+        if #list > 0 then
+          if data_optionData["Investigator"]["Investigator Player"] ~= color then
+            data_optionData["Investigator"]["Investigator Player"] = color
+            objects_extraTeamCards[color] = {object = list[1], spot = "Team"}
+            data_extraTeam["Investigator"] = color
+            update_notes()
+            return true
+          end
+        else
+          if data_optionData["Investigator"]["Investigator Player"] == color then
+            data_optionData["Investigator"]["Investigator Player"] = nil
+            objects_extraTeamCards[color] = nil
+            data_extraTeam["Investigator"] = nil
+            update_notes()
+          end
+        end
+      end
+    end
+
+    if data_optionData["Investigator"]["Investigator Player"] == nil or data_optionData["Investigator"]["Investigator Player"] == "" then
+      return false
+    else
+      return true
+    end
+  end
+  data["End Mission"] = {
+    priority = 0,
+    runFunction = function(winner)
+      local token = getObjectFromGUID(ref_tokens["Check Player"])
+      if winner == "Resistance" then
+        local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])
+        local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+        local tokenPo = token.clone({ position = teamPos })
+        tokenPo.setRotation(board.getRotation())
+        tokenPo.setLock(false)
+        tokenPo.interactable = true
+        clean_votes()
+
+        data_gamePhase = "Investigating Resistance"
+
+        return false
+      elseif winner == "Spy" then
+        local invest = data_optionData["Investigator"]["Investigator Player"]
+        local board = getObjectFromGUID(ref_playerBoards[invest])
+        local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+        local tokenPo = token.clone({ position = teamPos })
+        tokenPo.setRotation(board.getRotation())
+        tokenPo.setLock(false)
+        tokenPo.interactable = true
+        clean_votes()
+
+        data_gamePhase = "Investigating Spy"
+      end
+    end}
+  return data
+end
+function option_watching()
+  local data = {}
+  data["Deal Team"] = function()
+    local invest = getObjectFromGUID(ref_tokens["Watching"]).clone({
+      position     = {0,1,15},
+    })
+    invest.setScale({1.07,1,1.07})
+    invest.setName("Watching")
+    invest.setLock(false)
+    invest.interactable = true
+
+    table.insert(objects_teamToken, invest)
+
+    data_optionData["Watching"]["Watching Player"] = ""
+  end
+  data["Watching Player"] = ""
+  data["Team Requirement"] = function()
+    -- Check Team Token area
+    for index,color in pairs(data_playersInGame) do
+      if color ~= data_currentLeader and data_missionTeam[color] ~= nil then
+        local board = getObjectFromGUID(ref_playerBoards[color])
+        local teamPos = board.positionToWorld(ref_boardPosition.Leader)
+        local list = getObjectsAtPosition(teamPos, "Tile")
+        if #list > 0 then
+          if data_optionData["Watching"]["Watching Player"] ~= color then
+            data_optionData["Watching"]["Watching Player"] = color
+            objects_extraTeamCards[color] = {object = list[1], spot = "Team"}
+            data_extraTeam["Watching"] = color
+            update_notes()
+            return true
+          end
+        else
+          if data_optionData["Watching"]["Watching Player"] == color then
+            data_optionData["Watching"]["Watching Player"] = nil
+            objects_extraTeamCards[color] = nil
+            data_extraTeam["Watching"] = nil
+            update_notes()
+          end
+        end
+      end
+    end
+
+    if data_optionData["Watching"]["Watching Player"] == nil or data_optionData["Watching"]["Watching Player"] == "" then
+      return false
+    else
+      return true
+    end
+  end
+  return data
 end

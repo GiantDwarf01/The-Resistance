@@ -10,18 +10,289 @@
 #include !\The-Resistance\TeamFunctions
 #include !\The-Resistance\MissionFunctions
 #include !\The-Resistance\VoteFunctions
+#include !\The-Resistance\RoleSelection
 
 function update_notes()
+  local playersInGame = data_playersInGame
+  local missionCount = data_missionCount
+  local missionTeam = data_missionTeam
+  local extraTeam = data_extraTeam
+
+  local output = ""
+
   if data_gamePhase == "Team Building" then
+    output = "╔════════════╗\n◆ Building Team ◆   \n╚════════════╝"
+    output = output .. "\nLeader: " .. output_name(data_currentLeader)
 
-    local output = "╔════════════╗\n◆ Building Team ◆   \n╚════════════╝"
+    if extraTeam ~= nil then
+      for item, color in pairs(extraTeam) do
+        output = output .. "\n[ffffff]" .. item .. ": "
+        if color ~= nil then
+          output = output .. output_name(color)
+        end
+      end
+    end
 
+    output = output .. "\n[ffffff]Team (" .. table.size(missionTeam) .. "/" .. missionCount.. "):"
 
+    for miscolor,_ in pairs(missionTeam) do
+      output = output .. " " .. output_name(miscolor)
+    end
   elseif data_gamePhase == "Voting Phase" then
+    output = "╔═══════╗\n◆ Voting ◆   \n╚═══════╝"
+    output = output .. "\nLeader: " .. output_name(data_currentLeader)
+
+    if extraTeam ~= nil then
+      for item, color in pairs(extraTeam) do
+        output = output .. "\n[ffffff]" .. item .. ": "
+
+        if color ~= nil then
+          output = output .. output_name(color)
+        end
+      end
+    end
+
+    output = output .. "\n[ffffff]Team:"
+
+    for miscolor,_ in pairs(missionTeam) do
+      output = output .. " " .. output_name(miscolor)
+    end
+
+    output = output .. "\n\n[ffffff]◆ Required Votes ◆\n"
+    local votes = data_playerVotes
+    for _,votecolor in pairs(data_playersInGame) do
+      if votes[votecolor] == nil then
+        output = output .. " " .. output_name(votecolor)
+      end
+    end
   elseif data_gamePhase == "Mission" then
+    output = "╔═══════════════╗\n◆ Attempting Mission ◆   \n╚═══════════════╝"
+    output = output .. "\nCards Required:"
+    for miscolor,_ in pairs(missionTeam) do
+      if data_playedCards[miscolor] == nil then
+        output = output .. " " .. output_name(miscolor)
+      end
+    end
   end
+
+  local record = data_record
+  local past = "[ffffff]╔═══════════╗\n◆ Past Missions ◆   \n╚═══════════╝\n"
+  if record ~= {} then
+    for mission, data in pairs(record) do
+      if data["Team 1"] ~= nil then
+        local i = 1
+        while data["Team " .. i] ~= nil and data["Team " .. i]["Victory"] ~= nil do
+          local team = data["Team " .. i]
+          local leader = team["Leader"]
+          local victory = team["Victory"]
+          local missionTeam = team["Team"]
+
+          past = past .. ref_colorCodes[victory] .. mission .. ": "
+          past = past .. output_name(leader) .. " [FFFFFF]▸"
+          for _,miscolor in pairs(missionTeam) do
+            past = past .. " " .. output_name(miscolor)
+          end
+
+          local extraToken = team["Extra Tokens"]
+          if extraToken ~= nil then
+            for name,color in pairs(extraToken) do
+              past = past .. "\n[FFFFFF]" .. name .. ": " .. output_name(color)
+            end
+          end
+
+          local missionCards = team["Mission Cards"]
+          local card = {}
+          for _,name in pairs(missionCards) do
+            if name ~= "Success" then
+              if card[name] == nil then
+                card[name] = 1
+              else
+                card[name] = card[name] + 1
+              end
+            end
+          end
+
+          local unqiueCards = ""
+          for name,num in pairs(card) do
+            if name ~= "Fail" then
+              unqiueCards = unqiueCards .. " " .. ref_colorCodes[name] .. name
+              if num > 1 then
+                unqiueCards = unqiueCards .. " x" .. num
+              end
+            elseif num > 1 then
+              unqiueCards = unqiueCards .. " " .. ref_colorCodes[name] .. name.. " x" .. num
+            end
+          end
+          if unqiueCards ~= "" then
+            past = past .. "\n[FFFFFF]Unique Cards: " .. unqiueCards
+          end
+
+          local rejected = team["Reject"]
+          if #rejected > 0 then
+            past = past .. "\n[FF0000]Rejected By:"
+            for _,color in pairs(rejected) do
+              past = past .. " " .. output_name(color)
+            end
+          else
+            past = past .. "\n[00aaff]Approved By All"
+          end
+
+          i = i + 1
+        end
+
+        past = past .. "\n\n"
+      end
+    end
+  end
+
+  if past ~= "[ffffff]╔═══════════╗\n◆ Past Missions ◆   \n╚═══════════╝\n" then
+    output = output .. "\n\n[sup]" .. past
+  end
+
+  setNotes(output)
 end
 
+
+function update_notebook()
+  local record = data_record
+  local output = ""
+
+  for mission,data in pairs(record) do
+    local outTeam = true
+    local i = 0
+    while outTeam and i < 10 do
+      i = i + 1
+
+      if data["Team " .. i] == nil then
+        outTeam = false
+      else
+        local team = data["Team " .. i]
+        local leader = team["Leader"]
+        local victory = team["Victory"]
+        local missionTeam = team["Team"]
+
+        output = output .. "[000000]" .. mission .. " - " .. ref_colorCodes[victory] .. victory
+        output = output .. "\n[000000]Leader: " .. output_name(leader, true)
+
+        output = output .. "\n[000000]Team:"
+        for _,color in pairs(missionTeam) do
+          output = output .. " " .. output_name(color, true)
+        end
+
+        local extraToken = team["Extra Tokens"]
+        if extraToken ~= nil then
+          for name,color in pairs(extraToken) do
+            output = output .. "\n[000000]" .. name .. ": " .. output_name(color, true)
+          end
+        end
+
+        local missionCards = team["Mission Cards"]
+        local card = {}
+        for _,name in pairs(missionCards) do
+          if card[name] == nil then
+            card[name] = 1
+          else
+            card[name] = card[name] + 1
+          end
+        end
+
+        output = output .. "\n[000000]Played Cards:"
+        for name,num in pairs(card) do
+          output = output .. " " .. ref_colorCodes[name] .. name
+          if num > 1 then
+            output = output .. " x" .. num
+          end
+        end
+
+        local approve = team["Approve"]
+        local reject = team["Reject"]
+        output = output .."[sup]"
+        if #approve > 0 then
+          output = output .. "\n[00AAFF]Approved by:"
+          for _,color in pairs(approve) do
+            output = output .. " " .. output_name(color, true)
+          end
+        end
+        if #reject > 0 then
+          output = output .. "\n[FF0000]Rejected by:"
+          for _,color in pairs(reject) do
+            output = output .. " " .. output_name(color, true)
+          end
+        end
+        output = output .."[/sup]\n"
+      end
+    end
+
+    local outDown = true
+    i = 0
+    while outDown and i < 10 do
+      i = i + 1
+
+      if data["Vote " .. i] == nil then
+        outDown = false
+      else
+        local outCount = true
+        local j = 0
+        while outCount and j < 10 do
+          j = j + 1
+
+          if data["Vote " .. i][j] == nil then
+            outCount = false
+          else
+            local leader = data["Vote " .. i][j]["Leader"]
+            local missionTeam = data["Vote " .. i][j]["Team"]
+            local approve = data["Vote " .. i][j]["Approve"]
+            local reject = data["Vote " .. i][j]["Reject"]
+
+            output = output .. "\n[000000]Rejected Vote " .. i .. ":"
+            output = output .. "\n[000000]Leader: " .. output_name(leader, true)
+            output = output .. "\n[000000]Proposed Team:"
+            for _,color in pairs(missionTeam) do
+              output = output .. " " .. output_name(color, true)
+            end
+
+            local extraToken = data["Vote " .. i][j]["Extra Tokens"]
+            if extraToken ~= nil then
+              for name,color in pairs(extraToken) do
+                output = output .. "\n[000000]" .. name .. ": " .. output_name(color, true)
+              end
+            end
+
+
+            output = output .."[sup]"
+            if #approve > 0 then
+              output = output .. "\n[00AAFF]Approved by:"
+              for _,color in pairs(approve) do
+                output = output .. " " .. output_name(color, true)
+              end
+            end
+            if #reject > 0 then
+              output = output .. "\n[FF0000]Rejected by:"
+              for _,color in pairs(reject) do
+                output = output .. " " .. output_name(color, true)
+              end
+            end
+            output = output .."[/sup]\n"
+          end
+        end
+      end
+    end
+
+    output = output .. "\n\n"
+  end
+
+  local tabs = getNotebookTabs()
+    -- getNotebookTabs returns:
+    -- {{int index, string title, string body, string color}, ...}
+    if #tabs >= 13 then
+      removeNotebookTab(13)
+    end
+
+    addNotebookTab({
+      title = "HISTORY",
+      body  = output,
+    })
+end
 
 
 function place_object(data)
@@ -61,7 +332,6 @@ function onLoad(save_state)
   position = {0, 0.1, 1}, scale = {0.1, 0.1, 0.1}, width = 3500, height = 700, font_size = 700}
 
   getObjectFromGUID('18eb21').createButton(data)
-  --startGame()
 end
 
 function startGame()
@@ -79,7 +349,7 @@ function startGame()
 
   data_playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
 
-  -- Deal Role Cards
+  -- Deal Role Cardsc
   setup_hiddenZones()
   setup_playBoard()
   load_roles()
@@ -107,21 +377,55 @@ function coroutine_replaceCard()
   local callback = coroutine_savedData["Callback"]
   local table = coroutine_savedData["Table"]
 
-  local newName = newCard.getName()
+  local newName = ""
+  if newCard.tag ~= nil then
+    newName = newCard.getName()
+  else
+    newName = newCard
+  end
 
-  if newName ~= card.getName() then
-    while newCard.isSmoothMoving() do coroutine.yield() end
+  if type(card) == "table" and type(color) == "table" then
+    for i,_ in pairs(color) do
+      local curColor = color[i]
+      local curCard = card[i]
+      while curCard.isSmoothMoving() do coroutine.yield() end
 
-    local missionCard = getObjectFromGUID(ref_cardGuids[newName]).clone({})
-    missionCard.setLock(true)
-    missionCard.setRotation(card.getRotation())
-    missionCard.setPosition(card.getPosition())
-    missionCard.setScale(card.getScale())
+      if newName ~= curCard.getName() then
+        if newCard.tag == "Card" then
+          while newCard.isSmoothMoving() do coroutine.yield() end
+        end
 
-    local saved = Global.getTable(table)
-    saved[color] = missionCard
-    Global.setTable(table, saved)
-    card.destruct()
+        local missionCard = getObjectFromGUID(ref_cardGuids[newName]).clone({})
+        missionCard.setLock(true)
+        missionCard.setRotation(curCard.getRotation())
+        missionCard.setPosition(curCard.getPosition())
+        missionCard.setScale(curCard.getScale())
+
+        local saved = Global.getTable(table)
+        saved[curColor] = missionCard
+        Global.setTable(table, saved)
+        curCard.destruct()
+      end
+    end
+  else
+    while card.isSmoothMoving() do coroutine.yield() end
+
+    if newName ~= card.getName() then
+      if newCard.tag == "Card" then
+        while newCard.isSmoothMoving() do coroutine.yield() end
+      end
+
+      local missionCard = getObjectFromGUID(ref_cardGuids[newName]).clone({})
+      missionCard.setLock(true)
+      missionCard.setRotation(card.getRotation())
+      missionCard.setPosition(card.getPosition())
+      missionCard.setScale(card.getScale())
+
+      local saved = Global.getTable(table)
+      saved[color] = missionCard
+      Global.setTable(table, saved)
+      card.destruct()
+    end
   end
 
   if callback ~= nil then
@@ -131,7 +435,7 @@ function coroutine_replaceCard()
 end
 
 function create_scrollOptions(caller, colors, funct)
-  local guid = ref_playerBoards[caller]
+  local guid = data_playerData[caller].Card
   local board = getObjectFromGUID(guid)
   local savedWitness = {
     ["Index"] = 1,
@@ -146,7 +450,7 @@ function create_scrollOptions(caller, colors, funct)
   end
 
   local mainSelectData = {click_function = funct, function_owner = self,
-  label = colors[1], position = {0, 0.1, 3.2}, scale = {0.3, 0.3, 0.3},
+  label = colors[1], position = {0, 0, 1.2}, scale = {0.3, 0.3, 0.3},
   width = 1300, height = 400, font_size = 400, color = selectColor}
 
   board.createButton(mainSelectData)
@@ -196,7 +500,6 @@ function create_scrollOptions(caller, colors, funct)
       color          = selectColor,
     })
 
-
     local prevIndex = index - 1
     if prevIndex < 1 then
       prevIndex = #colors
@@ -214,7 +517,7 @@ function create_scrollOptions(caller, colors, funct)
   Global.setVar(nextName, nextSelect)
 
   local nextData = {click_function = nextName, function_owner = self,
-  label = ">", position = {0.6, 0.1, 3.2}, scale = {0.3, 0.3, 0.3},
+  label = ">", position = {0.6, 0, 1.2}, scale = {0.3, 0.3, 0.3},
   width = 400, height = 400, font_size = 400, color = selectColor}
 
   board.createButton(nextData)
@@ -282,7 +585,7 @@ function create_scrollOptions(caller, colors, funct)
   Global.setVar(prevName, prevSelect)
 
   local nextData = {click_function = prevName, function_owner = self,
-  label = "<", position = {-0.6, 0.1, 3.2}, scale = {0.3, 0.3, 0.3},
+  label = "<", position = {-0.6, 0, 1.2}, scale = {0.3, 0.3, 0.3},
   width = 400, height = 400, font_size = 400, color = selectColor}
 
   board.createButton(nextData)
@@ -294,21 +597,25 @@ end
 option_hiddenDefectors = false
 
 function deal_defectorCard()
+  print("Deal Defector")
   if data_defectorCards[data_currentMission] == nil then
     if data_defectorCards[data_currentMission - 1] ~= nil then
       if data_defectorCards[data_currentMission - 1].Card ~= nil then
         data_defectorCards[data_currentMission - 1].Card.destruct()
       end
     end
-
+    print("Deck")
     local deck = getObjectFromGUID(ref_extraDecks["Defector Deck"])
     deck.shuffle()
+    print("Deck Shuffled")
+
     data_defectorCards[data_currentMission] = {["Swap"] = false, ["Card"] = nil}
 
     data_defectorCards[data_currentMission].Card = deck.takeObject({
       position       = {-21,1.1,0},
       rotation       = {0,180,0},
     })
+    data_defectorCards[data_currentMission].Card.setScale({2,1,2})
 
     if data_defectorCards[data_currentMission].Card.getName() == "Switch Allegiance" then
       data_defectorCards[data_currentMission].Swap = true
@@ -330,96 +637,6 @@ function revealColor(color)
   local zone = getObjectFromGUID(playerZones[color])
   --zone.setRotationSmooth({0,0,0})
   zone.translate({0,-2,0})
-end
-
-function option_investigator()
-  local data = {}
-  data["Deal Team"] = function()
-    local invest = getObjectFromGUID(ref_tokens["Investigator"]).clone({
-      position     = {0,1,15},
-    })
-    invest.setScale({1.64,1,1.66})
-
-    table.insert(objects_teamToken, invest)
-
-    data_optionData["Investigator"]["Investigator Player"] = ""
-  end
-  data["Investigator Player"] = ""
-  data["Team Requirement"] = function()
-    -- Check Team Token area
-    for index,color in pairs(data_playersInGame) do
-      if color ~= data_currentLeader then
-        local board = getObjectFromGUID(ref_playerBoards[color])
-        local teamPos = board.positionToWorld(ref_boardPosition.Team)
-        local list = getObjectsAtPosition(teamPos, "Tile")
-        if #list > 0 then
-          data_optionData["Investigator"]["Investigator Player"] = color
-          objects_extraTeamCards[color] = {object = list[1], spot = "Team"}
-          return true
-        end
-      end
-    end
-
-    return false
-  end
-  data["End Mission"] = {
-    priority = 0,
-    runFunction = function(winner)
-      local token = getObjectFromGUID(ref_tokens["Check Player"])
-      if winner == "Resistance" then
-        local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])
-        local teamPos = board.positionToWorld(ref_boardPosition.Vote)
-        local tokenPo = token.clone({ position = teamPos })
-        tokenPo.setRotation(board.getRotation())
-        clean_votes()
-
-        data_gamePhase = "Investigating Resistance"
-
-        return false
-      elseif winner == "Spy" then
-        local invest = data_optionData["Investigator"]["Investigator Player"]
-        local board = getObjectFromGUID(ref_playerBoards[invest])
-        local teamPos = board.positionToWorld(ref_boardPosition.Vote)
-        local tokenPo = token.clone({ position = teamPos })
-        tokenPo.setRotation(board.getRotation())
-        clean_votes()
-
-        data_gamePhase = "Investigating Spy"
-      end
-    end}
-  return data
-end
-function option_watching()
-  local data = {}
-  data["Deal Team"] = function()
-    local invest = getObjectFromGUID(ref_tokens["Watching"]).clone({
-      position     = {0,1,15},
-    })
-    invest.setScale({1.07,1,1.07})
-
-    table.insert(objects_teamToken, invest)
-
-    data_optionData["Watching"]["Watching Player"] = ""
-  end
-  data["Watching Player"] = ""
-  data["Team Requirement"] = function()
-    -- Check Team Token area
-    for index,color in pairs(data_playersInGame) do
-      if color ~= data_currentLeader and data_missionTeam[color] ~= nil then
-        local board = getObjectFromGUID(ref_playerBoards[color])
-        local teamPos = board.positionToWorld(ref_boardPosition.Leader)
-        local list = getObjectsAtPosition(teamPos, "Tile")
-        if #list > 0 then
-          data_optionData["Watching"]["Watching Player"] = color
-          objects_extraTeamCards[color] = {object = list[1], spot = "Leader"}
-          return true
-        end
-      end
-    end
-
-    return false
-  end
-  return data
 end
 
 function activate_reveal(obj, color)
@@ -459,11 +676,10 @@ end
 object_tokens = {}
 
 function assignOptions()
-  local options = ref_options
   local optionData = data_optionData
 
   for _,option in pairs(data_includedOptions) do
-    optionData[option] = options[option]()
+    optionData[option] = ref_options[option]()
   end
 
   data_optionData = optionData
@@ -472,8 +688,9 @@ end
 -- [[ Grouped Functions ]] --
 -- All functions for the inital set up of the game
 function setup_functionCall()
-  setup_roleCards()
-  --setup_lockObjects()
+  --setup_roleCards()
+  setup_lockObjects()
+  create_selectButtons()
 end
 -- All functions that are repeating
 function repeating_functionCalls()
@@ -504,12 +721,19 @@ function repeating_playerBoardChecks()
   end
 end
 
-function output_name(color)
+option_outputName = true
+
+function output_name(color, easyColor)
   local name = color
-  if Player[color].steam_name ~= nil then
+  if Player[color].steam_name ~= nil and option_outputName then
     name = Player[color].steam_name
   end
-  return ref_colorCodes[color] .. name
+
+  if easyColor and ref_colorCodes[color.." Easy"] ~= nil then
+    return ref_colorCodes[color.." Easy"] .. name
+  else
+    return ref_colorCodes[color] .. name
+  end
 end
 
 function repeating_blamingCheck()
@@ -524,10 +748,10 @@ function repeating_blamingCheck()
         list[1].destruct()
 
         if data_playerData[color].Role == "Pretender" then
-          print(output_name(deepAgent) .. ref_colorCodes.Resistance .. " has found the Pretender, " .. output_name(color) .. ref_colorCodes.Resistance .. "!")
+          broadcastToAll(output_name(deepAgent) .. ref_colorCodes.Resistance .. " has found the Pretender, " .. output_name(color) .. ref_colorCodes.Resistance .. "!", {1,1,1})
           data_playerData[deepAgent]["Swap Pretender"](deepAgent,color)
         else
-          print(output_name(color) .. "[ff0000] is not the Pretender!")
+          broadcastToAll(output_name(color) .. "[ff0000] is not the Pretender!", {1,1,1})
         end
 
         data_gamePhase = "Team Building"
@@ -555,22 +779,20 @@ function repeating_investigateCheck(winner)
 
         if #data_playersInGame < 7 then
           if string.match(data_playerData[color].Role, "Chief") or data_playerData[color].Role == "Dummy Agent" then
-            print(output_name(color) .. "[ff0000] is a Chief!")
-            --broadcastToColor(output_name(color) .. "[ff0000] is a Chief!", player, {1,1,0})
+            broadcastToColor(output_name(color) .. "[ff0000] is a Chief!", player, {1,1,0})
           else
-            print(output_name(color) .. "[ffffff] is not a Chief!")
-            --broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
+            broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
           end
         else
           if data_playerData[color].Role == "Resistance Chief" or data_playerData[color].Role == "Dummy Agent" then
-            print(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!")
-            --broadcastToColor(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!", player, {1,1,0})
+            --print(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!")
+            broadcastToColor(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!", player, {1,1,0})
           elseif data_playerData[color].Role == "Spy Chief" then
-            print(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!")
-            --broadcastToColor(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!", player, {1,1,1})
+            --print(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!")
+            broadcastToColor(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!", player, {1,1,1})
           else
-            print(output_name(color) .. "[ffffff] is not a Chief!")
-            --broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
+          --  print(output_name(color) .. "[ffffff] is not a Chief!")
+            broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
           end
         end
 
@@ -606,16 +828,30 @@ function repeating_hunterCheck(team)
           else
             local token = object_victoryTokens[data_currentMission - 1]
 
+            local altTeam = ""
+
             if team == "Resistance" then
               token.setRotationSmooth({0,180,180})
               data_victories.Spy = data_victories.Spy + 1
               data_victories.Resistance = data_victories.Resistance - 1
               roundWinner = "Spy"
+              altTeam = "Resistance Hunter Failed"
             else
               token.setRotationSmooth({0,180,0})
               data_victories.Spy = data_victories.Spy - 1
               data_victories.Resistance = data_victories.Resistance + 1
               roundWinner = "Resistance"
+              altTeam = "Spy Hunter Failed"
+            end
+
+            local mission = "Mission " .. data_currentMission
+            local i = 0
+            while true do
+              i = i + 1
+              if data_record[mission]["Team " .. i] == nil and data_record[mission]["Team " .. (i-1)] ~= nil then
+                data_record[mission]["Team " .. i]["Victory"] = altTeam
+                break
+              end
             end
 
             local endWinner = ""
@@ -676,6 +912,7 @@ end
 
 function check_nextRound(winner)
   data_gamePhase = "Checking Next Round"
+  update_notes()
 
   data_missionWinner = winner
   local endMission = {priority = -1}
@@ -705,8 +942,6 @@ function check_victory(winner)
   data_gamePhase = "End Game"
 
   if winner ~= "" then
-    print("Checking Victory")
-
     local endGame = {priority = -1}
     local hasEndGame = false
     for _,color in pairs(data_playersInGame) do
@@ -721,7 +956,6 @@ function check_victory(winner)
     end
 
     if hasEndGame then
-      print("Running end: " .. endGame.role)
       table.insert(data_endGamesCompleted, endGame.role)
       endGame.runFunction(winner, endGame.color)
     else
@@ -784,6 +1018,17 @@ function setup_lockObjects()
       object.interactable = false
     end
   end
+
+  for _,guid in pairs(ref_hiddenObjectGUIDs) do
+    local object = getObjectFromGUID(guid)
+    if object ~= nil then
+      object.setLock(true)
+      object.setPosition({0,0,0})
+      object.setScale({0,0,0})
+      object.interactable = false
+    end
+  end
+
 end
 -- Sets hiddenzones over player hand areas
 function setup_hiddenZones()
@@ -813,8 +1058,8 @@ function setup_roleCards()
     for index, card in pairs(cards) do
       local obj = getObjectFromGUID(card)
       obj.setLock(true)
-      obj.setPosition({xPos,-1,zPos})
-      obj.setScale({0,0,0})
+      obj.setPosition({xPos,3,zPos})
+      obj.setScale({1,1,1})
       obj.setRotation({0,0,0})
 
       xPos = xPos + spacing

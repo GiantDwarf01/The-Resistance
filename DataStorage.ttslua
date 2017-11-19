@@ -11,6 +11,8 @@ data_teams = { ["Resistance"] = {}, ["Spy"] = {} }
 data_victories = { ["Resistance"] = 0, ["Spy"] = 0 }
 -- Current Game Phase
 data_gamePhase = "Waiting on Start"
+-- Past Data
+data_record = {}
 
 
 
@@ -22,7 +24,7 @@ data_playerRoles = {}
 -- Stores role data as [Color] = {Data}
 data_playerData = {}
 -- Selected special roles, selected by the option boards
-data_specialRoles = { resistance = {"Resistance Reverser","Resistance Rogue"}, spies = {"Spy Chief","Corruptor","Politician","Deep Agent"}, secondary = {"Amnesiac"} }
+data_specialRoles = { resistance = {"Resistance Defector", "Confidant", "Pilot", "Pathologist"}, spies = {"Spy Defector","Bioterrorist"}, secondary = {} }
 
 
 
@@ -51,6 +53,8 @@ data_missionResultFunctions = {}
 data_endMissionCompleted = {}
 -- Winner of previous mission
 data_missionWinner = ""
+-- Extra team info
+data_extraTeam = {}
 
 
 -- Finished ["End Game"] functions
@@ -66,3 +70,5 @@ data_downvotes = 1
 
 -- Alternate defector card
 data_defectorCards = {}
+-- Defected Swaps
+data_defectorSwaps = {}

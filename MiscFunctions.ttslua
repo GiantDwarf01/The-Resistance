@@ -97,7 +97,12 @@ function getObjectsAtPosition(pos, ...)
           end
         end
     end
-    return foundItems
+
+    if foundItems == {} then
+      return nil
+    else
+      return foundItems
+    end
 end
 -- Removes objects that match exeception GUIDs from table
 function objectListException(list, ...)

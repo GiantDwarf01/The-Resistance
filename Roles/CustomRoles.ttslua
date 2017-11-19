@@ -8,12 +8,12 @@ function role_Mayor(color)
   data["Revealed"] = false
   data["Setup"] = function(color)
     if not data["Revealed"] then
-      printToColor('Click the Reveal button or type "!reveal"', color, {1,0,0})
+      --printToColor('Click the Reveal button or type "!reveal"', color, {1,0,0})
 
-      local buttondata = {click_function = "activate_reveal", function_owner = self, label = "Reveal",
-        position = {0, 0.2, 3.2}, scale = {0.3, 0.3, 0.3}, width = 2500, height = 400, font_size = 400}
+      local buttondata = {click_function = "activate_reveal", function_owner = Global, label = "Reveal",
+        position = {0, 0, 1.2}, scale = {0.3, 0.3, 0.3}, width = 2500, height = 400, font_size = 400}
 
-      local board = getObjectFromGUID(data.Board)
+      local board = getObjectFromGUID(data.Card)
       board.createButton(buttondata)
     end
   end
@@ -53,7 +53,7 @@ function role_Witness(color)
   data["Deal Mission"] = function(color)
     if data_missionTeam[color] ~= nil then
       local colorOptions = table.removeItems(data_missionColors,color)
-      local board = getObjectFromGUID(data.Board)
+      local board = getObjectFromGUID(data.Card)
       local clickName = "witness_selectMain"
       local func = function(obj, co)
         if co == color then
@@ -70,7 +70,7 @@ function role_Witness(color)
     if object_revealedMission[color] ~= nil then
       local card = object_revealedMission[color]
 
-      local guid = data.Board
+      local guid = data.Card
       local data = Global.getTable("table_savedData"..guid)
 
       local newCard = object_revealedMission[data.Selected]
@@ -105,7 +105,7 @@ function role_Hacker(color)
     create_scrollOptions(color, data_playersInGame, clickName)
   end
   data["Vote Reveal"] = function(color)
-    local guid = data.Board
+    local guid = data.Card
     local board = getObjectFromGUID(guid)
 
     local data = Global.getTable("table_savedData"..guid)
@@ -118,6 +118,43 @@ function role_Hacker(color)
   end
   return data
 end
+function role_Pilot(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Pilot"
+  data["Mission Cards"] = {"Success", "Extract"}
+
+  if #data_playersInGame >= 7 then
+    data["Card Limits"] = {["Extract"] = 2}
+  else
+    data["Card Limits"] = {["Extract"] = 1}
+  end
+
+  return data
+end
+function role_Confidant(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Confidant"
+  data["Output"] = function()
+    local output = ""
+    local object = find_playersByRole({"Resistance Defector","Spy Defector"})
+
+    local defector = object["Resistance Defector"]
+    local falsecommander = object["Spy Defector"]
+
+    if math.random(100) >= 50 then falsecommander, defector = defector, falsecommander end
+
+    return ref_colorCodes.Resistance .. "You are the Defector's Confidant!\n" .. output_name(defector) .. " [00aaff]is a Defector!"
+  end
+  return data
+end
+function role_Pathologist(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Pathologist"
+  data["Mission Cards"] = {"Success", "Cure"}
+
+  return data
+end
+
 
 -- Spy Roles
 function role_Politician(color)
@@ -129,9 +166,9 @@ function role_Politician(color)
       printToColor('Click the Reveal button or type "!reveal"', color, {1,0,0})
 
       local buttondata = {click_function = "activate_reveal", function_owner = self, label = "Reveal",
-        position = {0, 0.2, 3.2}, scale = {0.3, 0.3, 0.3}, width = 2500, height = 400, font_size = 400}
+        position = {0, 0, 1.2}, scale = {0.3, 0.3, 0.3}, width = 2500, height = 400, font_size = 400}
 
-      local board = getObjectFromGUID(data.Board)
+      local board = getObjectFromGUID(data.Card)
       board.createButton(buttondata)
     end
   end
@@ -215,7 +252,7 @@ function role_Corruptor(color)
     create_scrollOptions(color, data_playersInGame, clickName)
   end
   data["Vote Reveal"] = function(color)
-    local guid = data.Board
+    local guid = data.Card
     local board = getObjectFromGUID(guid)
 
     local data = Global.getTable("table_savedData"..guid)
@@ -246,6 +283,142 @@ function role_Corruptor(color)
   end
   return data
 end
+function role_Bioterrorist(color)
+  local data = role_Spy(color)
+  data["Role"] = "Bioterrorist"
+  data["Activate Mutate"] = false
+  data["Deal Mission"] = function(color)
+    if data_missionTeam[color] ~= nil then
+      local colorOptions = table.removeItems(data_missionColors,color)
+      local board = getObjectFromGUID(data.Card)
+      local clickName = "bioterrorist_selectMain"
+      local func = function(obj, co)
+        if co == color then
+          local selectTable = Global.getTable("table_savedData"..obj.getGUID())
+          local selected = selectTable.Selected
+          printToColor("Infecting "..ref_colorCodes[selected]..selected, co, {1,0,0})
+        end
+      end
+      Global.setVar(clickName, func)
+      create_scrollOptions(color, colorOptions, clickName)
+    else
+      local infected = data["Infected Players"]
+      local hasInfected = false
+      for _,misColor in pairs(data_missionColors) do
+        if table.contains(infected, misColor) then
+          hasInfected = true
+          break
+        end
+      end
+
+      if hasInfected then
+        local buttondata = {click_function = "activate_outbreak", function_owner = self, label = "Mutate",
+          position = {0, 0, 1.2}, scale = {0.3, 0.3, 0.3}, width = 2500, height = 400, font_size = 400}
+
+        local board = getObjectFromGUID(data.Card)
+        board.createButton(buttondata)
+      end
+    end
+  end
+  data["Infected Players"] = {}
+  data["Mutate Players"] = {}
+  data["Mission Results"] = function(color)
+    local board = getObjectFromGUID(data.Card)
+    board.clearButtons()
+
+    local infected = data["Infected Players"]
+    local outbreak = data["Mutate Players"]
+
+    if object_revealedMission[color] ~= nil then
+      local guid = data.Card
+      local savedData = Global.getTable("table_savedData"..guid)
+      local infectColor =  savedData.Selected
+
+      if not table.contains(data["Infected Players"], infectColor) then
+        table.insert(data["Infected Players"], infectColor)
+        --print("You've infected " .. output_name(infectColor))
+        printToColor("You've infected " .. output_name(infectColor), color, {1,0,0})
+      end
+
+      startLuaCoroutine(Global, 'calculate_missionResults')
+    else
+      local mutatedCards = {}
+      local mutatedColors = {}
+
+      for _,misColor in pairs(data_missionColors) do
+        -- Check if mission member has been infected
+        if table.contains(data["Infected Players"], misColor) then
+          -- Check if a mutation is active
+          if outbreak[misColor] then
+            -- Trigger mutation
+            local infectedCard = object_revealedMission[misColor]
+            outbreak[misColor] = false
+
+            infected = table.removeItems(infected, misColor)
+
+            table.insert(mutatedCards, infectedCard)
+            table.insert(mutatedColors, misColor)
+          else
+            -- Infect other player
+            local colorOptions = table.removeItems(data_missionColors,misColor)
+            local infectedPlayer = colorOptions[math.random(#colorOptions)]
+
+            if not table.contains(data["Infected Players"], infectedPlayer) then
+              table.insert(infected, infectedPlayer)
+              --print("The infection has spread to " .. output_name(infectedPlayer))
+              printToColor("The infection has spread to " .. output_name(infectedPlayer), color, {1,0,0})
+            end
+          end
+        end
+      end
+
+      if #mutatedColors ~= 0 then
+        replace_card(mutatedColors, mutatedCards, "Fail", "calculate_missionResults", "object_revealedMission")
+        --print("Your virus has mutated!")
+        printToColor("Your virus has mutated!", color, {1,0,0})
+      else
+        startLuaCoroutine(Global, 'calculate_missionResults')
+      end
+    end
+
+    data["Infected Players"] = infected
+    data["Mutate Players"] = outbreak
+    data["Activate Mutate"] = false
+  end
+  return data
+end
+
+
+function activate_outbreak(obj, color)
+  if data_playerData[color].Role == "Bioterrorist" then
+    local infected = data_playerData[color]["Infected Players"]
+    local outbreak = {}
+
+    local toggle = data_playerData[color]["Activate Mutate"]
+
+    if not toggle then
+      for _,col in pairs(data_missionColors) do
+        if table.contains(infected, col) then
+          outbreak[col] = true
+        end
+      end
+      toggle = true
+      printToColor("Your virus will mutate during this mission", color, {1,0,0})
+    else
+      for _,col in pairs(data_missionColors) do
+        if table.contains(infected, col) then
+          outbreak[col] = false
+        end
+      end
+      toggle = false
+      printToColor("You will prevent your virus from mutating", color, {1,0,0})
+    end
+
+    data_playerData[color]["Mutate Players"] = outbreak
+    data_playerData[color]["Activate Mutate"] = toggle
+  end
+end
+
 
 -- Neutral Roles
 function role_Amnesiac(color)
@@ -267,7 +440,6 @@ function role_Amnesiac(color)
   }
 
   for _,role in pairs(data_specialRoles.resistance) do
-    print(role)
     if specialCards[role] ~= nil then
       if not table.contains(data["Mission Cards"],specialCards[role]) then
         table.insert(data["Mission Cards"], specialCards[role])
@@ -275,7 +447,6 @@ function role_Amnesiac(color)
     end
   end
   for _,role in pairs(data_specialRoles.spies) do
-    print(role)
     if specialCards[role] ~= nil then
       if not table.contains(data["Mission Cards"],specialCards[role]) then
         table.insert(data["Mission Cards"], specialCards[role])

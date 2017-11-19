@@ -1,0 +1,244 @@
+role_data = {
+  ["Commander"] = {
+    ["Team"] = "Resistance",
+    ["Children"] = {"Assassin", "Body Guard", "Deep Cover"},
+  },
+  ["Body Guard"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Commander",
+    ["Children"] = {"False Commander"},
+  },
+  ["Assassin"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Commander",
+  },
+  ["Deep Cover"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Commander",
+  },
+  ["False Commander"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Body Guard",
+  },
+
+
+  ["Resistance Chief"] = {
+    ["Team"] = "Resistance",
+    ["Siblings"] = {"Resistance Hunter","Spy Chief","Spy Hunter"},
+    ["Children"] = {"Dummy Agent", "Coordinator"},
+  },
+  ["Resistance Hunter"] = {
+    ["Team"] = "Resistance",
+    ["Siblings"] = {"Resistance Chief","Spy Chief","Spy Hunter"}
+  },
+  ["Dummy Agent"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Resistance Chief"
+  },
+  ["Coordinator"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Resistance Chief"
+  },
+  ["Spy Chief"] = {
+    ["Team"] = "Spy",
+    ["Siblings"] = {"Resistance Chief","Resistance Hunter","Spy Hunter"}
+  },
+  ["Spy Hunter"] = {
+    ["Team"] = "Spy",
+    ["Siblings"] = {"Resistance Chief","Resistance Hunter","Spy Chief"}
+  },
+
+
+  ["Deep Agent"] = {
+      ["Team"] = "Spy",
+      ["Children"] = {"Pretender"},
+  },
+  ["Pretender"] = {
+      ["Team"] = "Resistance",
+      ["Parent"] = "Deep Agent",
+  },
+
+
+  ["Resistance Defector"] = {
+    ["Team"] = "Resistance",
+    ["Siblings"] = {"Spy Defector"},
+    ["Children"] = {"Confidant"},
+  },
+  ["Spy Defector"] = {
+    ["Team"] = "Spy",
+    ["Siblings"] = {"Resistance Defector"}
+  },
+  ["Confidant"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Resistance Defector",
+  },
+
+
+  ["Mayor"] = {
+    ["Team"] = "Resistance",
+    ["Children"] = {"Politician", "Hitman"},
+  },
+  ["Politician"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Mayor",
+  },
+  ["Hitman"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Mayor",
+  },
+
+
+  ["Hacker"] = {
+    ["Team"] = "Resistance",
+    ["Children"] = {"Corruptor"},
+  },
+  ["Corruptor"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Hacker",
+  },
+
+
+  ["Bioterrorist"] = {
+    ["Team"] = "Spy",
+    ["Children"] = {"Pathologist"},
+  },
+  ["Pathologist"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Bioterrorist",
+  },
+
+
+  ["Blind Spy"] = {
+    ["Team"] = "Spy",
+  },
+  ["Resistance Reverser"] = {
+    ["Team"] = "Resistance",
+  },
+  ["Spy Reverser"] = {
+    ["Team"] = "Spy",
+  },
+  ["Resistance Rogue"] = {
+    ["Team"] = "Resistance",
+  },
+  ["Spy Rogue"] = {
+    ["Team"] = "Spy",
+  },
+  ["Mole"] = {
+    ["Team"] = "Spy",
+  },
+  ["Witness"] = {
+    ["Team"] = "Resistance",
+  },
+  ["Pilot"] = {
+    ["Team"] = "Resistance",
+  },
+
+  ["Amnesiac"] = {
+    ["Team"] = "Secondary",
+  },
+}
+
+function create_selectButtons()
+  local roleCards = ref_roleCards
+  local buttondata = {click_function = "click_role", function_owner = self, position = {0,0,0}, label = " ", scale = {0.5, 0.5, 0.5}, width = 1300, height = 1900, font_size = 400, tooltip = " "}
+
+  for role,data in pairs(role_data) do
+    local cardGUIDs = roleCards[role]
+    buttondata.tooltip = role
+
+    for _,guid in pairs(cardGUIDs) do
+      local functionName = "click_role"--..guid
+      data.click_function = functionName
+      getObjectFromGUID(guid).createButton(buttondata)
+    end
+  end
+end
+
+function click_role(obj, player)
+  local roleName = obj.getName()
+  toggle_role(roleName)
+end
+
+function toggle_role(role, force)
+  if force ~= nil then
+    if force then
+      role_data[role]["Selected"] = true
+
+      if role_data[role]["Siblings"] ~= nil then
+        for _,sib in pairs(role_data[role]["Siblings"]) do
+          if not role_data[sib]["Selected"] then
+            toggle_role(sib, true)
+          end
+        end
+      end
+
+      if role_data[role]["Parent"] ~= nil then
+        toggle_role(role_data[role]["Parent"], true)
+      end
+    else
+      role_data[role]["Selected"] = false
+
+      if role_data[role]["Siblings"] ~= nil then
+        for _,sib in pairs(role_data[role]["Siblings"]) do
+          if role_data[sib]["Selected"] then
+            toggle_role(sib, false)
+          end
+        end
+      end
+
+      if role_data[role]["Children"] ~= nil then
+        for _,child in pairs(role_data[role]["Children"]) do
+          toggle_role(child, false)
+        end
+      end
+    end
+  else
+    if role_data[role]["Selected"] then
+      role_data[role]["Selected"] = false
+
+      if role_data[role]["Siblings"] ~= nil then
+        for _,sib in pairs(role_data[role]["Siblings"]) do
+          if role_data[sib]["Selected"] then
+            toggle_role(sib, false)
+          end
+        end
+      end
+
+      if role_data[role]["Children"] ~= nil then
+        for _,child in pairs(role_data[role]["Children"]) do
+          toggle_role(child, false)
+        end
+      end
+    else
+      role_data[role]["Selected"] = true
+
+      if role_data[role]["Siblings"] ~= nil then
+        for _,sib in pairs(role_data[role]["Siblings"]) do
+          if not role_data[sib]["Selected"] then
+            toggle_role(sib, true)
+          end
+        end
+      end
+
+      if role_data[role]["Parent"] ~= nil then
+        toggle_role(role_data[role]["Parent"], true)
+      end
+    end
+  end
+
+
+  for _,guid in pairs(ref_roleCards[role]) do
+    if role_data[role]["Selected"] then
+      local color = {0,1,0}
+      if role_data[role]["Team"] == "Spy" then
+        color = {1,0,0}
+      elseif role_data[role]["Team"] == "Resistance" then
+        color = {0,0.7,1}
+      end
+
+      getObjectFromGUID(guid).highlightOn(color)
+    else
+      getObjectFromGUID(guid).highlightOff()
+    end
+  end
+end

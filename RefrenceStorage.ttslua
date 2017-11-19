@@ -24,6 +24,9 @@ ref_roles = {
   ["Mayor"] = role_Mayor,
   ["Witness"] = role_Witness,
   ["Hacker"] = role_Hacker,
+  ["Pilot"] = role_Pilot,
+  ["Confidant"] = role_Confidant,
+  ["Pathologist"] = role_Pathologist,
 
   -- Spy
   ["Spy"] = role_Spy,
@@ -41,15 +44,12 @@ ref_roles = {
   ["Hitman"] = role_Hitman,
   ["Mole"] = role_Mole,
   ["Corruptor"] = role_Corruptor,
+  ["Bioterrorist"] = role_Bioterrorist,
 
   -- Neutral Roles
   ["Amnesiac"] = role_Amnesiac,
 }
--- Command Constructors
-ref_commands = {
-  ["help"] = command_displayHelp,
-  ["role"] = command_showRole,
-}
+
 
 -- [ Command Functions ] --
 -- Key to check beginning for
@@ -83,9 +83,16 @@ ref_colorCodes = {
   ["Teal"] = '[21B19B]', ["Blue"] = '[1F62FF]',["Purple"] = '[A020F0]',
   ["Pink"] = '[F570CE]', ["Black"] = '[000000]',
 
-  ["Resistance"] = '[00a6ff]', ["Spy"] = '[BB0000]',
+  ["White Easy"] = '[aaaaaa]', ["Yellow Easy"] = '[aaa820]',
+
+  ["Success"] = '[00a6ff]', ["Fail"] = '[BB0000]', ["Chief Fail"] = '[FF0000]',
+  ["Extract"] = '[D3A300]', ["Sabotage"] = '[D3673D]', ["Rogue Success"] = '[00FF6B]',
+  ["Reverse"] = '[aaa820]', ["Hit"] = '[FF0000]',
+
+  ["Resistance"] = '[00a6ff]', ["Spy"] = '[BB0000]', ["Extracted"] = '[D3A300]',
   ["Resistance Rogue"] = '[00FF6B]', ["Spy Rogue"] = '[77FF00]',
   ["Mole"] = '[D3673D]',
+  ["Resistance Hunter Failed"] = '[BB0000]', ["Spy Hunter Failed"] = '[00a6ff]',
 }
 --Images for game board based on number of players
 ref_boardImages = {
@@ -206,6 +213,13 @@ ref_lockedObjectGUIDs = {
   "5da177","7f6197","2b2ec4","ca80e3",
   "b14953","0de4b7","87f7db","871c40",
   "19fa07","ad320b","4a64a9",
+}
+
+ref_hiddenObjectGUIDs = {
+  '3b5169', '431ad8', '67e5a7', 'c1d136', 'f270a7', '3f1de5',
+  'b2d6fa', 'cf0d76', '65ba5e', '8eb95a', 'eb469b', 'bd701c',
+  '4e729a', 'f91171', '8553d1', '0a0e3b', 'f84d31', '30b307',
+  '574254'
 }
 
 

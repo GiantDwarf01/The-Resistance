@@ -11,7 +11,7 @@ function role_Resistance(color)
   data["Card"] = nil
   data["Card Count"] = {}
   data["Place Card"] = function(color, instant)
-    local card = data.Card
+    local card = getObjectFromGUID(data.Card)
 
     local playerHand = Player[color].getPlayerHand()
     local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 6.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 6.6}
@@ -26,8 +26,13 @@ function role_Resistance(color)
     end
     card.setScale({2.12, 1, 2.12})
   end
+  data["Saved Output"] = ""
   data["Output"] = function()
-    return ref_colorCodes.Resistance .. "You are a member of the Resistance!"
+    if data.Role ~= "Resistance" then
+      return ref_colorCodes.Resistance .. "You are the " .. data.Role .. "!"
+    else
+      return ref_colorCodes.Resistance .. "You are a member of the Resistance!"
+    end
   end
   data["Help"] = ref_colorCodes.Resistance .. "As a member of the Resistance, your goal is to help the Resistance take down the evil Empire! You win when 3 missions Succeed."
 
@@ -44,7 +49,7 @@ function role_Spy(color)
   data["Card"] = nil
   data["Card Count"] = {}
   data["Place Card"] = function(color, instant)
-    local card = data.Card
+    local card = getObjectFromGUID(data.Card)
 
     local playerHand = Player[color].getPlayerHand()
     local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 6.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 6.6}
@@ -68,7 +73,12 @@ function role_Spy(color)
     else
       output = "\nYour fellow spies are " .. output
     end
-    return ref_colorCodes.Spy .. "You are a undercover Spy!" .. output
+
+    if data.Role ~= "Spy" then
+      return ref_colorCodes.Spy .. "You are the " .. data.Role .. "!" .. output
+    else
+      return ref_colorCodes.Spy .. "You are a undercover Spy!" .. output
+    end
   end
   return data
 end

@@ -15,13 +15,19 @@ end
 -- Displays player's role
 function command_showRole(player, args)
   if #args == 0 then
-    local role = data_playerRoles[player]
-    printToColor("Your role is the " .. role, player, {1,1,0})
+    local data = data_playerData[player.color]
+    local output = data["Saved Output"]
+    printToColor(output, player.color, {1,1,0})
   end
 
   return false
 end
 
+-- Command Constructors
+ref_commands = {
+  ["help"] = command_displayHelp,
+  ["role"] = command_showRole,
+}
 
 --[[ API Function ]]--
 -- Runs whenever anyone uses the chat
@@ -35,8 +41,10 @@ function onChat(message, player)
 
     -- Get command and command arguements from input
     for value in string.gmatch(fullString, "%w+") do
-      if index == 0 then command = value
-      else command_args[index] = value
+      if index == 0 then
+        command = value
+      else
+        command_args[index] = value
       end
       index = index + 1
     end

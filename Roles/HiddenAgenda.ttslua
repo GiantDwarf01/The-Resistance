@@ -58,14 +58,14 @@ function role_ResistanceDefector(color)
           local spy = data_playerData[spyColor]
           local resist = data_playerData[color]
 
-          local oldSpyCard = spy["Card"]
-          local oldResistCard = resist["Card"]
+          local oldSpyCard = getObjectFromGUID(spy["Card"])
+          local oldResistCard = getObjectFromGUID(resist["Card"])
 
-          spy["Card"].setPosition({0,-1,0})
-          spy["Card"] = resist["DefectorCard"]
+          getObjectFromGUID(spy["Card"]).setPosition({0,-1,0})
+          spy["Card"] = resist["DefectorCard"].getGUID()
 
-          resist["Card"].setPosition({0,-1,0})
-          resist["Card"] = spy["DefectorCard"]
+          getObjectFromGUID(resist["Card"]).setPosition({0,-1,0})
+          resist["Card"] = spy["DefectorCard"].getGUID()
 
           spy["DefectorCard"] = oldSpyCard
           resist["DefectorCard"] = oldResistCard
