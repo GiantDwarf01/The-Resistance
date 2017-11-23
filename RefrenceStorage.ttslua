@@ -48,6 +48,8 @@ ref_roles = {
 
   -- Neutral Roles
   ["Amnesiac"] = role_Amnesiac,
+  ["ASI"] = role_NeutralASI,
+  ["SCP Agent"] = role_NeutralSCPAgent,
 }
 
 
@@ -112,6 +114,7 @@ ref_tokens = {
   ["Leader"] = "d8bd7c", ["Assassin"] = "0a0e3b",
   ["Hunter"] = "8553d1", ["Investigator"] = "f84d31",
   ["Check Player"] = "30b307", ["Watching"] = "f91171",
+  ["SCP"] = "5a2c0d",
 
   ["Spy"] = "431ad8", ["Resistance"] = "3b5169",
   ["Spy Rogue"] = "f270a7", ["Resistance Rogue"] = "3f1de5",
@@ -178,8 +181,8 @@ ref_roleCards = {
   ["Clone"]                 = {"cfa5e7"},
   ["Failed Clone"]          = {"c5dfb9"},
   ["Amnesiac"]              = {"449b78"},
-  ["Neutral ASI"]           = {"a37d32"},
-  ["Neutral SCP Agent"]     = {"3b24ec"},
+  ["ASI"]                   = {"a37d32"},
+  ["SCP Agent"]             = {"3b24ec"},
 }
 -- Defector Deck GUID
 ref_extraDecks = { ["Defector Deck"] = "574254" }
@@ -241,30 +244,7 @@ ref_winMessages = {
   ["Spy Rogue"] = {"The Spy Rogue has completed their mission!"},
   ["Mole"] = {"The Mole has completed their mission!"},
 }
--- Roles that won't be show during spy reveals
-ref_hiddenSpies = {
-  ["Commander"] = {
-    ["Deep Cover"] = function() return "[BB0000]a Deep Cover spy" end,
-    ["Spy Rogue"] = function() return "[BB0000]a Spy who has gone Rogue" end,
-  },
-  ["Spy Team"] = {
-    ["Blind Spy"] = function() return "[BB0000]a Blinded Spy" end,
-    ["Spy Rogue"] = function() return "[BB0000]a Spy who has gone Rogue" end,
-    ["Deep Agent"] = function()
-      local role = find_playersByRole({"Pretender","Deep Agent"})
-      if table.size(role) == 2 then
-        local pretender = role["Pretender"]
-        local deep = role["Deep Agent"]
-        if math.random(100) >= 50 then pretender, deep = deep, pretender end
-        return "[BB0000]a Deep Agent, who is either " .. ref_colorCodes[pretender] .. pretender .. "[BB0000] or " .. ref_colorCodes[deep] .. deep
-      else
-        local deep = role["Deep Agent"]
-        return "[BB0000]a Deep Agent, ".. ref_colorCodes[deep] .. deep
-      end
-    end,
-    ["Spy Chief"] = function(color) return "[BB0000]your Chief, " .. output_name(color) end,
-  },
-}
+
 
 
 

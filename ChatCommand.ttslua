@@ -22,11 +22,58 @@ function command_showRole(player, args)
 
   return false
 end
+-- Force Votes
+function command_skipVote(player, args)
+  if data_gamePhase == "Voting Phase" then
+    if #args == 1 then
+      local card = ""
+      if args[1] == "Approve" then
+        card = "Approve"
+      elseif args[1] == "Reject" then
+        card = "Reject"
+      else
+        return false
+      end
+
+      for index,color in pairs(data_playersInGame) do
+        if data_playerVotes[color] ~= nil then
+          data_playerVotes[color].destruct()
+        end
+
+        local board = getObjectFromGUID(ref_playerBoards[color])
+        local pos = board.positionToWorld(ref_boardPosition.Vote)
+        local rot = board.getRotation()
+        data_playerVotes[color] = getObjectFromGUID(ref_cardGuids[card]).clone({position = pos})
+        rot.z = 0
+        --data_playerVotes[color].interactable = false
+        data_playerVotes[color].setScale({1.25, 1.00, 1.25})
+        data_playerVotes[color].setPosition(pos)
+        data_playerVotes[color].setRotationSmooth(rot)
+        data_playerVotes[color].setLock(true)
+      end
+
+      return false
+    end
+  end
+
+  return false
+end
+
+function coroutine_forceVotes()
+  for i=0,50 do
+    coroutine.yield()
+  end
+
+  place_votes()
+  return 1
+end
+
 
 -- Command Constructors
 ref_commands = {
   ["help"] = command_displayHelp,
   ["role"] = command_showRole,
+  ["force"] = command_skipVote,
 }
 
 --[[ API Function ]]--

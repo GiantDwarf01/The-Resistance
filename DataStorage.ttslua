@@ -24,7 +24,7 @@ data_playerRoles = {}
 -- Stores role data as [Color] = {Data}
 data_playerData = {}
 -- Selected special roles, selected by the option boards
-data_specialRoles = { resistance = {"Resistance Defector", "Confidant", "Pilot", "Pathologist"}, spies = {"Spy Defector","Bioterrorist"}, secondary = {} }
+data_specialRoles = { resistance = {}, spies = {}, secondary = {} }
 
 
 

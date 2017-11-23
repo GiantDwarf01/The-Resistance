@@ -71,6 +71,18 @@ function repeating_voteChecks()
   end
 end
 
+function place_votes(color, vote)
+  local board = getObjectFromGUID(ref_playerBoards[color])
+  local pos = board.positionToWorld(ref_boardPosition.Vote)
+  local rot = board.getRotation()
+  rot.z = 0
+  --vote.interactable = false
+  vote.setScale({1.25, 1.00, 1.25})
+  vote.setPosition(pos)
+  vote.setRotationSmooth(rot)
+  vote.setLock(true)
+end
+
 function set_voteTrack()
   local token = getObjectFromGUID(ref_tokens["Vote Marker"])
   token.setPosition(ref_voteTrackPosition[data_downvotes])
@@ -78,7 +90,6 @@ function set_voteTrack()
 end
 
 function calculate_votes()
-  print("Calculating Votes")
   for color,data in pairs(data_playerData) do
     if data["Vote Reveal"] ~= nil and not data_voteFunctions[color] then
       data_voteFunctions[color] = true
@@ -86,7 +97,6 @@ function calculate_votes()
       return 1
     end
   end
-  print("Vote Reveal")
 
   data_voteFunctions = {}
 
@@ -98,14 +108,9 @@ function calculate_votes()
   }
 
   local calculations = { approves = 0, rejects = 0 }
+
   for color, vote in pairs(data_playerVotes) do
-    local board = getObjectFromGUID(ref_playerBoards[color])
-    local pos = board.positionToWorld(ref_boardPosition.Vote)
-    local rot = board.getRotation()
-    rot.z = 0
-    vote.setPosition(pos)
-    vote.setRotationSmooth(rot)
-    vote.setLock(true)
+    place_votes(color, vote)
   end
 
   print("Revealed Vote")

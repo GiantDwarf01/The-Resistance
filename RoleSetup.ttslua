@@ -10,12 +10,55 @@ function helper_returnKnownSpies(player)
   local others = {}
   local playerRole = data_playerRoles[player]
   local spies = table.removeItems(data_teams.Spy, player)
+
   return spies
 end
 
 spyOrder = {
+  ["ASI"] = 15,
   ["Deep Agent"] = 15,
   ["Spy Chief"] = 10,
+}
+
+-- Roles that won't be show during spy reveals
+ref_hiddenSpies = {
+  ["Commander"] = {
+    ["Deep Cover"] = function() return "[BB0000]a Deep Cover spy" end,
+    ["Spy Rogue"] = function() return "[BB0000]a Spy who has gone Rogue" end,
+    ["ASI"] = function()
+      local role = find_playersByRole({"ASI","SCP Agent"})
+      if table.size(role) == 2 then
+        local pretender, deep = role["ASI"], role["SCP Agent"]
+        if math.random(100) >= 50 then pretender, deep = deep, pretender end
+        return "[00aaff]incoming reinforcement, either " .. output_name(pretender) .. "[00aaff] or " .. output_name(deep)
+      end
+    end,
+  },
+  ["Spy Team"] = {
+    ["Blind Spy"] = function() return "[BB0000]a Blinded Spy" end,
+    ["Spy Rogue"] = function() return "[BB0000]a Spy who has gone Rogue" end,
+    ["Deep Agent"] = function()
+      local role = find_playersByRole({"Pretender","Deep Agent"})
+      if table.size(role) == 2 then
+        local pretender = role["Pretender"]
+        local deep = role["Deep Agent"]
+        if math.random(100) >= 50 then pretender, deep = deep, pretender end
+        return "[BB0000]a Deep Agent, who is either " .. ref_colorCodes[pretender] .. pretender .. "[BB0000] or " .. ref_colorCodes[deep] .. deep
+      else
+        local deep = role["Deep Agent"]
+        return "[BB0000]a Deep Agent, ".. ref_colorCodes[deep] .. deep
+      end
+    end,
+    ["Spy Chief"] = function(color) return "[BB0000]your Chief, " .. output_name(color) end,
+    ["ASI"] = function()
+      local role = find_playersByRole({"ASI","SCP Agent"})
+      if table.size(role) == 2 then
+        local pretender, deep = role["ASI"], role["SCP Agent"]
+        if math.random(100) >= 50 then pretender, deep = deep, pretender end
+        return "[BB0000]future reinforcement, either " .. output_name(pretender) .. "[BB0000] or " .. output_name(deep)
+      end
+    end,
+  },
 }
 
 function output_returnSpies(player, team)
@@ -158,16 +201,18 @@ function assign_roles()
     local color = playersInGame[randomIndex]
 
     local oldRole = playerRoles[color]
-    while table.contains(ref_secondaryRestrictions[role], oldRole) do
-      randomIndex = randomIndex + 1
+    if ref_secondaryRestrictions[role] ~= nil then
+      while table.contains(ref_secondaryRestrictions[role], oldRole) do
+        randomIndex = randomIndex + 1
 
-      if #playersInGame < randomIndex then randomIndex = 1 end
+        if #playersInGame < randomIndex then randomIndex = 1 end
 
-      color = playersInGame[randomIndex]
-      oldRole = playerRoles[color]
+        color = playersInGame[randomIndex]
+        oldRole = playerRoles[color]
 
-      if randomIndex == startIndex then
-        error("No available Amnesiac role")
+        if randomIndex == startIndex then
+          error("No available Amnesiac role")
+        end
       end
     end
 
@@ -210,7 +255,7 @@ function deal_roleCards()
     local output = playerData[color].Output()
     playerData[color]["Saved Output"] = output
 
-    --print(color .. ": " .. output)
+    print(color .. ": " .. output)
     printToColor(output, color, {1,1,1})
   end
 
@@ -238,8 +283,6 @@ function coroutine_setCardGUID()
 
   return 1
 end
-
-
 
 
 function option_investigator()

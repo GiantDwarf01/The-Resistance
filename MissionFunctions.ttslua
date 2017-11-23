@@ -54,7 +54,7 @@ end
 
 -- Determine Result of Mission
 function calculate_missionResults()
-  clean_hands()
+  --clean_hands()
 
   local playerData = data_playerData
   for _,color in pairs(data_playersInGame) do
@@ -77,6 +77,12 @@ function calculate_missionResults()
 
   for _,card in pairs(object_revealedMission) do
     card.setRotationSmooth({0,90,0})
+  end
+
+  for _,color in pairs(data_playersInGame) do
+    if playerData[color]["Mission Revealed"] ~= nil then
+      playerData[color]["Mission Revealed"](color)
+    end
   end
 
   local missionCards = {}

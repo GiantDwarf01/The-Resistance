@@ -44,6 +44,20 @@ function table.removeItems(list, ...)
 
   return foundItems
 end
+-- Remove first instance from table
+function table.removeSingle(list, ...)
+  local exceptions = {...}
+  local foundItems = {}
+
+  for _,item in pairs(list) do
+    if #exceptions == 0 or not table.contains(exceptions, item) then
+      table.insert(foundItems, item)
+      table.removeItems(exceptions, item)
+    end
+  end
+
+  return foundItems
+end
 -- Prints tables
 function table.print(inTable, indent)
   if not indent then indent = 1 end
