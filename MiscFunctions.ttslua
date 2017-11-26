@@ -1,3 +1,55 @@
+-- [[ Player Function ]] --
+function nextPlayer(color, players)
+  local colorOrder = {
+    "White", "Brown", "Red", "Orange", "Yellow",
+    "Green", "Teal", "Blue", "Purple",  "Pink",
+    "White", "Brown", "Red", "Orange", "Yellow",
+    "Green", "Teal", "Blue", "Purple",  "Pink",
+  }
+
+  if players == nil then
+    players = getSeatedPlayers()
+  end
+
+  local start = false
+  for _, nextcolor in pairs(colorOrder) do
+    if not start then
+      if nextcolor == color then
+        start = true
+      end
+    else
+      if table.contains(players, nextcolor) then
+        return nextcolor
+      end
+    end
+  end
+end
+
+function previousPlayer(color, players)
+  local colorOrder = {
+    "Pink",   "Purple", "Blue",  "Teal", "Green",
+    "Yellow", "Orange",  "Red", "Brown", "White",
+    "Pink",   "Purple", "Blue",  "Teal", "Green",
+    "Yellow", "Orange",  "Red", "Brown", "White",
+  }
+
+  if players == nil then
+    players = getSeatedPlayers()
+  end
+
+  local start = false
+  for _, nextcolor in pairs(colorOrder) do
+    if not start then
+      if nextcolor == color then
+        start = true
+      end
+    else
+      if table.contains(players, nextcolor) then
+        return nextcolor
+      end
+    end
+  end
+end
 
 -- [[ Table Functions ]] --
 -- Swaps two indexes in array
@@ -15,6 +67,7 @@ function table.shuffle(array)
 end
 -- Checks if table contains a value
 function table.contains(table, value)
+  if #table == 0 then return false end
   for _, val in pairs(table) do
     if val == value then
       return true

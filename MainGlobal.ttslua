@@ -2,15 +2,114 @@
 
 -- [ Include Files ] --
 -- Contains Functions for Role Setup
-#include !\The-Resistance\RoleSetup
-#include !\The-Resistance\ChatCommand
 #include !\The-Resistance\MiscFunctions
+#include !\The-Resistance\RoleSetup
+#include !\The-Resistance\OptionSetup
+#include !\The-Resistance\ChatCommand
 #include !\The-Resistance\DataStorage
 #include !\The-Resistance\RefrenceStorage
 #include !\The-Resistance\TeamFunctions
 #include !\The-Resistance\MissionFunctions
 #include !\The-Resistance\VoteFunctions
 #include !\The-Resistance\RoleSelection
+#include !\The-Resistance\RepeatingFunctions
+
+
+ref_scriptingZonePlacements = {
+  ["Team Building"] = {
+    ["Team Token"] = "Team",
+    ["Sergeant"] = "Leader",
+    ["Watching"] = "Leader",
+    ["Investigator"] = "Team",
+  },
+  ["Voting Phase"] = {
+    ["Approve"] = "Vote",
+    ["Reject"] = "Vote",
+  },
+  ["Calculating Mission"] = {
+    ["Trap Player"] = "Vote",
+    ["Sergeant"] = "Vote",
+    ["Check Player"] = "Vote",
+  },
+  ["Checking Next Round"] = {
+    ["Trap Player"] = "Vote",
+    ["Sergeant"] = "Vote",
+    ["Check Player"] = "Vote",
+  },
+
+  ["Assassination"] = {
+    ["Assassination"] = "Team"
+  },
+  ["Containment"] = {
+    ["Contain"] = "Team"
+  },
+  ["Resistance Hunting"] = {
+    ["Hunting"] = "Team"
+  },
+  ["Spy Hunting"] = {
+    ["Hunting"] = "Team"
+  },
+  ["Investigating Resistance"] = {
+    ["Check Player"] = "Vote"
+  },
+  ["Investigating Spy"] = {
+    ["Check Player"] = "Vote"
+  },
+  ["Blaming"] = {
+    ["Check Player"] = "Vote"
+  },
+  ["Inquisitor Check"] = {
+    ["Check Player"] = "Vote"
+  },
+  ["Trap Player"] = {
+    ["Trap Player"] = "Vote"
+  },
+  ["Sergeant Check"] = {
+    ["Sergeant"] = "Vote"
+  },
+}
+
+ref_zoneColor = {
+  ["55da55"] = "Red",
+  ["47739a"] = "Brown",
+  ["38103b"] = "White",
+  ["313996"] = "Pink",
+  ["8a25e4"] = "Purple",
+  ["9bce72"] = "Blue",
+  ["cfd538"] = "Teal",
+  ["9da41f"] = "Green",
+  ["3d9d3a"] = "Yellow",
+  ["b76012"] = "Orange",
+
+  ["Red"] = "55da55",
+  ["Brown"] = "47739a",
+  ["White"] = "38103b",
+  ["Pink"] = "313996",
+  ["Purple"] = "8a25e4",
+  ["Blue"] = "9bce72",
+  ["Teal"] = "cfd538",
+  ["Green"] = "9da41f",
+  ["Yellow"] = "3d9d3a",
+  ["Orange"] = "b76012",
+}
+
+function onObjectEnterScriptingZone(zone, enter_object)
+  if enter_object.getName() == nil then return end
+  if ref_scriptingZonePlacements[data_gamePhase] ~= nil then
+    local loc = ref_scriptingZonePlacements[data_gamePhase][enter_object.getName()]
+    if loc ~= nil then
+      local player = ref_zoneColor[zone.getGUID()]
+      if player ~= nil then
+        local boardGUID = ref_playerBoards[player]
+        local board = getObjectFromGUID(ref_playerBoards[player])
+        local teamPos = board.positionToWorld(ref_boardPosition[loc])
+        enter_object.setPosition(teamPos)
+        enter_object.setRotation(board.getRotation())
+      end
+    end
+  end
+end
+
 
 function update_notes()
   local playersInGame = data_playersInGame
@@ -348,7 +447,7 @@ function startGame(obj,player)
     return
   end
 
-
+  set_leaderToken()
 
   -- Deal Role Cardsc
   setup_hiddenZones()
@@ -374,7 +473,7 @@ function coroutine_dealDelay()
   for i=0,50 do
     coroutine.yield()
   end
-  deal_teamTokens()
+  deal_teamTokens(true)
   return 1
 end
 
@@ -466,6 +565,8 @@ function create_scrollOptions(caller, colors, funct)
   if ref_playerRGB[colors[1]] ~= nil then
     selectColor = ref_playerRGB[colors[1]]
   end
+
+  board.clearButtons()
 
   local mainSelectData = {click_function = funct, function_owner = self,
   label = colors[1], position = {0, 0, 1.2}, scale = {0.3, 0.3, 0.3},
@@ -614,36 +715,36 @@ end
 option_hiddenDefectors = false
 
 function deal_defectorCard()
-  if data_defectorCards[data_currentMission] == nil then
-    if data_defectorCards[data_currentMission - 1] ~= nil then
-      if data_defectorCards[data_currentMission - 1].Card ~= nil then
-        data_defectorCards[data_currentMission - 1].Card.destruct()
+  if data_defectorCards[data_completedMission] == nil then
+    if data_defectorCards[data_completedMission - 1] ~= nil then
+      if data_defectorCards[data_completedMission - 1].Card ~= nil then
+        data_defectorCards[data_completedMission - 1].Card.destruct()
       end
     end
     local deck = getObjectFromGUID(ref_extraDecks["Defector Deck"])
     deck.shuffle()
 
-    data_defectorCards[data_currentMission] = {["Swap"] = false, ["Card"] = nil}
+    data_defectorCards[data_completedMission] = {["Swap"] = false, ["Card"] = nil}
 
-    data_defectorCards[data_currentMission].Card = deck.takeObject({
+    data_defectorCards[data_completedMission].Card = deck.takeObject({
       position       = {-21,1.1,0},
       rotation       = {0,180,0},
     })
-    data_defectorCards[data_currentMission].Card.setScale({2,1,2})
+    data_defectorCards[data_completedMission].Card.setScale({2,1,2})
 
-    if data_defectorCards[data_currentMission].Card.getName() == "Switch Allegiance" then
-      data_defectorCards[data_currentMission].Swap = true
+    if data_defectorCards[data_completedMission].Card.getName() == "Switch Allegiance" then
+      data_defectorCards[data_completedMission].Swap = true
     end
 
     if option_hiddenDefectors then
-      data_defectorCards[data_currentMission].Card.destruct()
+      data_defectorCards[data_completedMission].Card.destruct()
     else
-      data_defectorCards[data_currentMission].Card.setLock(true)
+      data_defectorCards[data_completedMission].Card.setLock(true)
       broadcastToAll("The Defectors have switched teams!", {1,1,0})
     end
   end
 
-  return data_defectorCards[data_currentMission].Swap
+  return data_defectorCards[data_completedMission].Swap
 end
 
 function revealColor(color)
@@ -693,6 +794,7 @@ function assignOptions()
   local optionData = data_optionData
 
   for _,option in pairs(data_includedOptions) do
+    print(option)
     optionData[option] = ref_options[option]()
   end
 
@@ -734,6 +836,14 @@ function repeating_playerBoardChecks()
     repeating_investigateCheck("Spy")
   elseif data_gamePhase == "Blaming" then
     repeating_blamingCheck()
+  elseif data_gamePhase == "Inquisitor Check" then
+    repeating_inquistiorCheck()
+  elseif data_gamePhase == "Trap Player" then
+    repeating_trapCheck()
+  elseif data_gamePhase == "Sergeant Check" then
+    repeating_sergeantCheck()
+  elseif data_gamePhase == "Choose Round" then
+    repeating_roundCheck()
   end
 end
 
@@ -752,142 +862,10 @@ function output_name(color, easyColor)
   end
 end
 
-function repeating_blamingCheck()
-  for index,color in pairs(data_playersInGame) do
-    if data_playerData[color].Role ~= "Deep Agent" then
-      local board = getObjectFromGUID(ref_playerBoards[color])
-      local teamPos = board.positionToWorld(ref_boardPosition.Vote)
-      local list = getObjectsAtPosition(teamPos, "Tile")
-
-      if #list > 0 then
-        local deepAgent = list[1].getDescription()
-        list[1].destruct()
-
-        if data_playerData[color].Role == "Pretender" then
-          broadcastToAll(output_name(deepAgent) .. ref_colorCodes.Resistance .. " has found the Pretender, " .. output_name(color) .. ref_colorCodes.Resistance .. "!", {1,1,1})
-          data_playerData[deepAgent]["Swap Pretender"](deepAgent,color)
-        else
-          broadcastToAll(output_name(color) .. "[ff0000] is not the Pretender!", {1,1,1})
-        end
-
-        data_gamePhase = "Team Building"
-      end
-    end
-  end
+-- Custom error handling cause why not
+function print_error(num)
+  print("[FF0000][Error " .. num .. "] - " - ref_errors[num])
 end
-
-function repeating_investigateCheck(winner)
-  local player = nil
-  if winner == "Resistance" then
-    player = data_currentLeader
-  else
-    player = data_optionData["Investigator"]["Investigator Player"]
-  end
-
-  for index,color in pairs(data_playersInGame) do
-    if color ~= player then
-      local board = getObjectFromGUID(ref_playerBoards[color])
-      local teamPos = board.positionToWorld(ref_boardPosition.Vote)
-      local list = getObjectsAtPosition(teamPos, "Tile")
-
-      if #list > 0 then
-        list[1].destruct()
-
-        if #data_playersInGame < 7 then
-          if string.match(data_playerData[color].Role, "Chief") or data_playerData[color].Role == "Dummy Agent" then
-            broadcastToColor(output_name(color) .. "[ff0000] is a Chief!", player, {1,1,0})
-          else
-            broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
-          end
-        else
-          if data_playerData[color].Role == "Resistance Chief" or data_playerData[color].Role == "Dummy Agent" then
-            --print(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!")
-            broadcastToColor(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!", player, {1,1,0})
-          elseif data_playerData[color].Role == "Spy Chief" then
-            --print(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!")
-            broadcastToColor(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!", player, {1,1,1})
-          else
-          --  print(output_name(color) .. "[ffffff] is not a Chief!")
-            broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
-          end
-        end
-
-        check_nextRound(data_missionWinner)
-      end
-    end
-  end
-end
-
-function repeating_hunterCheck(team)
-  local playerRole = data_playerRoles
-  local playerData = data_playerData
-
-  -- Check Team Token area
-  for index,color in pairs(data_playersInGame) do
-      local board = getObjectFromGUID(ref_playerBoards[color])
-      local teamPos = board.positionToWorld(ref_boardPosition.Team)
-      local list = getObjectsAtPosition(teamPos, "Tile")
-
-      if #list > 0 then
-        if playerRole[color] ~= team.." Hunter" then
-          local opposing = "Resistance"
-          if team == "Resistance" then opposing = "Spy" end
-
-          if playerRole[color] == opposing .. " Chief" then
-            if team == "Resistance" then
-              broadcastToAll("The Resistance has successfully killed the Spy Chief!", {0,0.65,1})
-              check_victory("Resistance")
-            else
-              broadcastToAll("The Spies has successfully killed the Resistance Chief!", {1,0,0})
-              check_victory("Spy")
-            end
-          else
-            local token = object_victoryTokens[data_currentMission - 1]
-
-            local altTeam = ""
-
-            if team == "Resistance" then
-              token.setRotationSmooth({0,180,180})
-              data_victories.Spy = data_victories.Spy + 1
-              data_victories.Resistance = data_victories.Resistance - 1
-              roundWinner = "Spy"
-              altTeam = "Resistance Hunter Failed"
-            else
-              token.setRotationSmooth({0,180,0})
-              data_victories.Spy = data_victories.Spy - 1
-              data_victories.Resistance = data_victories.Resistance + 1
-              roundWinner = "Resistance"
-              altTeam = "Spy Hunter Failed"
-            end
-
-            local mission = "Mission " .. data_currentMission - 1
-            local i = 0
-            while true do
-              i = i + 1
-              if data_record[mission]["Team " .. i] ~= nil and data_record[mission]["Team " .. i]["Victory"] ~= nil then
-                data_record[mission]["Team " .. i]["Victory"] = altTeam
-                break
-              end
-            end
-
-            local endWinner = ""
-            if data_victories.Resistance == 3 then
-              endWinner = "Resistance"
-            elseif data_victories.Spy == 3 then
-              endWinner = "Spy"
-            end
-
-            if not check_victory(endWinner) then
-              check_nextRound(roundWinner)
-            end
-          end
-
-          list[1].destruct()
-        end
-      end
-  end
-end
-
 
 function activate_outbreak(obj, color)
   if data_playerData[color].Role == "Bioterrorist" then
@@ -920,75 +898,6 @@ function activate_outbreak(obj, color)
 end
 
 
-function repeating_assassinCheck()
-  local playerRole = data_playerRoles
-  local playerData = data_playerData
-  local team = data_teams["Spy"]
-
-  -- Check Team Token area
-  for index,color in pairs(data_playersInGame) do
-    if playerData[color].Team ~= "Spy" then
-      local boardGUID = ref_playerBoards[color]
-      local board = getObjectFromGUID(ref_playerBoards[color])
-
-      local teamPos = board.positionToWorld(ref_boardPosition.Team)
-      local list = getObjectsAtPosition(teamPos, "Tile")
-
-      if #list > 0 then
-        if playerRole[color] == "Commander" then
-          broadcastToAll("The Spies have successfully assassinated the Commander!", {1,0,0})
-          list[1].destruct()
-          check_victory("Spy")
-        else
-          broadcastToAll("The Spies failed to assassinate the Commander!", {0,0.65,1})
-          list[1].destruct()
-          check_victory("Resistance")
-        end
-      end
-    end
-  end
-end
-
-function repeating_containmentCheck()
-  local playerRole = data_playerRoles
-  local playerData = data_playerData
-  local team = data_teams["Spy"]
-  local colors = find_playersByRole({"SCP Agent"})
-  local SCPAgent = colors["SCP Agent"]
-
-  -- Check Team Token area
-  for index,color in pairs(data_playersInGame) do
-    if playerRole[color] ~= "SCP Agent" then
-      local boardGUID = ref_playerBoards[color]
-      local board = getObjectFromGUID(ref_playerBoards[color])
-      local teamPos = board.positionToWorld(ref_boardPosition.Team)
-      local list = getObjectsAtPosition(teamPos, "Tile")
-      if #list > 0 then
-        if playerRole[color] == "ASI" then
-          broadcastToAll("The SCP has captured the escaped AI!", {1,0,0})
-          list[1].destruct()
-          if data_playerData[color].Team == "Spy" then
-            data_playerData[color].Team = "Resistance"
-            data_playerData[SCPAgent].Team = "Spy"
-          else
-            data_playerData[color].Team = "Spy"
-            data_playerData[SCPAgent].Team = "Resistance"
-          end
-
-          check_victory(data_playerData[SCPAgent].Team)
-        else
-          broadcastToAll("The ASI has escaped into the world!", {0,0.65,1})
-          list[1].destruct()
-          if data_playerData[SCPAgent].Team == "Spy" then
-            check_victory("Resistance")
-          else
-            check_victory("Spy")
-          end
-        end
-      end
-    end
-  end
-end
 
 function clean_hands()
   for _,color in pairs(data_playersInGame) do
@@ -1020,8 +929,8 @@ function check_nextRound(winner)
   end
 
   if hasEndMission then
-    endMission.runFunction(winner)
     table.insert(data_endMissionCompleted, endMission.name)
+    endMission.runFunction(winner)
   else
     deal_teamTokens()
   end
@@ -1122,17 +1031,24 @@ end
 -- Sets hiddenzones over player hand areas
 function setup_hiddenZones()
   local playerZones = ref_playerZones
+  local scriptZones = ref_zoneColor
   local playersInGame = data_playersInGame
+  local playerBoards = ref_playerBoards
 
   for index, color in pairs(playersInGame) do
     local playerHand = Player[color].getPlayerHand()
     local zone = getObjectFromGUID(playerZones[color])
-
     local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 2.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 2.6}
     local rot = {playerHand['rot_x'] + 337.95, playerHand['rot_y'] + 180, 0}
     zone.setPosition(pos)
     zone.setRotation(rot)
     zone.setScale({16, 4.7, 11.8})
+
+    pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 3.5, 1, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 3.5}
+    local script = getObjectFromGUID(scriptZones[color])
+    script.setPosition(pos)
+    script.setRotation(getObjectFromGUID(playerBoards[color]).getRotation())
+    script.setScale({16,0.1,11})
   end
 end
 -- Hides rolecards under the table

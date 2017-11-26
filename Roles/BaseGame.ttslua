@@ -73,6 +73,7 @@ function role_Base(color)
   end
   data["Saved Output"] = ""
   data["Output"] = function()
+    print_error(84)
     return "Error: If you're seeing this... whoops"
   end
   return data

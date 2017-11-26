@@ -14,21 +14,9 @@ function set_leaderToken()
   }
 
   if data_currentLeader == "" then
-    data_currentLeader = playersInGame[math.random(#data_playersInGame)]
+    data_currentLeader = playersInGame[math.random(#playersInGame)]
   else
-    local start = false
-    for _, color in pairs(colorOrder) do
-      if not start then
-        if data_currentLeader == color then
-          start = true
-        end
-      else
-        if table.contains(playersInGame, color) then
-          data_currentLeader = color
-          break
-        end
-      end
-    end
+    data_currentLeader = nextPlayer(data_currentLeader, playersInGame)
   end
 
   local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])
@@ -56,22 +44,38 @@ function set_roundMarker()
   token.setLock(true)
 end
 
+
+data_usedSetupTeams = {}
 -- Deal out round team tokens
-function deal_teamTokens()
-  set_leaderToken()
+function deal_teamTokens(skipLeader)
+  if not skipLeader then
+    set_leaderToken()
+  end
+
   set_voteTrack()
   set_roundMarker()
   clean_teamTokens()
   update_notes()
   data_missionTeam = {}
-
   objects_extraTeamCards = {}
+
+  for _,option in pairs(data_includedOptions) do
+    if data_optionData[option]["Setup Team"] ~= nil and not table.contains(data_usedSetupTeams, option) then
+      table.insert(data_usedSetupTeams, option)
+      data_optionData[option]["Setup Team"]()
+      return
+    end
+  end
+
+  data_usedSetupTeams = {}
 
   data_gamePhase = "Team Building"
 
+  local missionMembers = ref_missionCount[#data_playersInGame][data_currentMission]
+
   for _,option in pairs(data_includedOptions) do
     if data_optionData[option]["Deal Team"] ~= nil then
-      data_optionData[option]["Deal Team"]()
+      missionMembers = data_optionData[option]["Deal Team"](missionMembers)
     end
   end
 
@@ -81,7 +85,7 @@ function deal_teamTokens()
     end
   end
 
-  local missionMembers = ref_missionCount[#data_playersInGame][data_currentMission]
+
   local tokenPosition = ref_tokenPosition[missionMembers]
   local cards = ref_cardGuids["Team Token"]
 
@@ -106,8 +110,18 @@ function repeating_teamChecks()
   for index,color in pairs(data_playersInGame) do
     local boardGUID = ref_playerBoards[color]
     local board = getObjectFromGUID(ref_playerBoards[color])
-
     local teamPos = board.positionToWorld(ref_boardPosition.Team)
+
+    local playerHand = Player[color].getHandObjects()
+    if #playerHand > 0 then
+      for _,card in pairs(playerHand) do
+        if card.getName() == "Team Token" then
+          card.setPosition(teamPos)
+          card.setRotation(board.getRotation())
+        end
+      end
+    end
+
     local teamList = getObjectsAtPosition(teamPos, "Card")
 
     if #teamList > 0 then
@@ -171,11 +185,15 @@ end
 -- Clean up team tokens
 function clean_teamTokens()
   for _, token in pairs(object_teamCards) do
-    token.destruct()
+    if token ~= nil then
+      token.destruct()
+    end
   end
 
   for _, token in pairs(objects_teamToken) do
-    token.destruct()
+    if token ~= nil then
+      token.destruct()
+    end
   end
 
   object_teamCards = {}

@@ -24,13 +24,13 @@ data_playerRoles = {}
 -- Stores role data as [Color] = {Data}
 data_playerData = {}
 -- Selected special roles, selected by the option boards
-data_specialRoles = { resistance = {}, spies = {}, secondary = {} }
+data_specialRoles = { resistance = {}, spies = {}, neutral = {}, secondary = {} }
 
 
 
 -- [ Option Data ] --
 -- Options to include stored as "Option"
-data_includedOptions = {}
+data_includedOptions = {"Trapper", "Sergeant", "Targeted"}
 -- Option data stored as [Option] = {Data}
 data_optionData = {}
 
@@ -43,6 +43,8 @@ data_missionTeam = {}
 data_missionColors = {}
 -- Active mission number
 data_currentMission = 1
+-- Missions completed
+data_completedMission = 0
 -- Number of Team Members
 data_missionCount = 0
 -- Previous mission team

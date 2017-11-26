@@ -133,16 +133,20 @@ role_data = {
 
 
   ["ASI"] = {
-    ["Team"] = "Resistance",
-    ["Color"] = "Neutral",
+    ["Team"] = "Neutral",
     ["Siblings"] = {"SCP Agent"},
     ["Info"] = "The ASI is a rogue AI. At the beginning of the game they will choose which team they wish to join. They will also be allowed to play any card currently in the game"
   },
-  ["SCP Agent"]= {
-    ["Team"] = "Spy",
-    ["Color"] = "Neutral",
+  ["SCP Agent"] = {
+    ["Team"] = "Neutral",
     ["Siblings"] = {"ASI"},
     ["Info"] = "The SCP Agent is on the opposite team of the one the ASI chooses. Their goal is to figure out who the ASI is and prevent them from winning, or capture them at the end of the game. They are allowed to play a copy of any card they see played in missions"
+  },
+
+  ["Clone"] = {
+    ["Team"] = "Neutral",
+    ["Add"] = {resistance = {"Clone"}, spy = {"Clone"}},
+    ["Info"] = "T"
   },
 
 
@@ -188,8 +192,8 @@ role_data = {
 
 function create_selectButtons()
   local roleCards = ref_roleCards
-  local buttondata = {click_function = "click_role", function_owner = self, label = " ", position = {0, 0.1, 0.3}, scale = {0.5, 0.5, 0.5}, width = 1300, height = 1300, font_size = 400, tooltip = " "}
-  local descrpdata = {click_function = "click_explain", function_owner = self, label = " ", position = {0, 0.1, -0.7}, scale = {0.5, 0.5, 0.5}, width = 1300, height = 600, font_size = 400, tooltip = " "}
+  local buttondata = {click_function = "click_role", function_owner = self, label = " ", position = {0, 0.1, 0.3}, scale = {0.5, 0.5, 0.5}, width = 1300, height = 1300, font_size = 400, tooltip = " ", color = {0,0,0,0}}
+  local descrpdata = {click_function = "click_explain", function_owner = self, label = " ", position = {0, 0.1, -0.7}, scale = {0.5, 0.5, 0.5}, width = 1300, height = 600, font_size = 400, tooltip = " ", color = {0,0,0,0}}
 
   for role,data in pairs(role_data) do
     local cardGUIDs = roleCards[role]
@@ -220,6 +224,7 @@ function click_role(obj, player)
 
   if Player[player].admin then
     toggle_role(roleName)
+    update_roleNotes()
   else
     click_explain(obj, player)
   end
@@ -307,6 +312,26 @@ function toggle_role(role, force)
         if not table.contains(data_specialRoles.spies, role) then
           table.insert(data_specialRoles.spies, role)
         end
+      elseif role_data[role]["Team"] == "Neutral" then
+        color = {0,1,0}
+
+        if role_data[role]["Add"] ~= nil then
+          for _,_ in pairs(role_data[role]["Add"].resistance) do
+            if not table.contains(data_specialRoles.resistance, role) then
+              table.insert(data_specialRoles.resistance, role)
+            end
+          end
+
+          for _,_ in pairs(role_data[role]["Add"].spy) do
+            if not table.contains(data_specialRoles.spies, role) then
+              table.insert(data_specialRoles.spies, role)
+            end
+          end
+        else
+          if not table.contains(data_specialRoles.neutral, role) then
+            table.insert(data_specialRoles.neutral, role)
+          end
+        end
       else
         color = {0,1,0}
 
@@ -337,6 +362,24 @@ function toggle_role(role, force)
         if table.contains(data_specialRoles.spies, role) then
           data_specialRoles.spies = table.removeItems(data_specialRoles.spies, role)
         end
+      elseif role_data[role]["Team"] == "Neutral" then
+        if role_data[role]["Add"] ~= nil then
+          for _,_ in pairs(role_data[role]["Add"].resistance) do
+            if table.contains(data_specialRoles.resistance, role) then
+              data_specialRoles.resistance = table.removeItems(data_specialRoles.resistance, role)
+            end
+          end
+
+          for _,_ in pairs(role_data[role]["Add"].spy) do
+            if table.contains(data_specialRoles.spies, role) then
+              data_specialRoles.spies = table.removeItems(data_specialRoles.spies, role)
+            end
+          end
+        else
+          if table.contains(data_specialRoles.neutral, role) then
+            data_specialRoles.neutral = table.removeItems(data_specialRoles.neutral, role)
+          end
+        end
       else
         if table.contains(data_specialRoles.secondary, role) then
           data_specialRoles.secondary = table.removeItems(data_specialRoles.secondary, role)
@@ -355,4 +398,58 @@ function toggle_role(role, force)
       end
     end
   end
+end
+
+function update_roleNotes()
+  local output = "╔═══════════╗\n◆ Selected Roles ◆   \n╚═══════════╝\n"
+  local specialRoles = data_specialRoles
+
+  local numPlayer = #getSeatedPlayers()
+
+  if numPlayer <= 1 then numPlayer = 10 end
+
+  if numPlayer < 5 then numPlayer = 5 end
+
+  local resistance = ref_resistanceCount[numPlayer]
+  local spies = numPlayer - resistance
+  local neutralRoles = #specialRoles.neutral/2
+  resistance = resistance - neutralRoles
+  spies = spies - neutralRoles
+
+  if #specialRoles.resistance > resistance then
+    output = output .. "\nTOO MANY RESISTANCE ROLES"
+  end
+  if #specialRoles.spies > spies then
+    output = output .. "\nTOO MANY SPY ROLES"
+  end
+
+  output = output .. "\n\n[00aaff][u]Resistance Roles (".. #specialRoles.resistance .. "/" .. resistance .. ")[/u]"
+  if #specialRoles.resistance > 0 then
+    for _,role in pairs(specialRoles.resistance) do
+      output = output .. "\n◆" .. role
+    end
+  end
+
+  output = output .. "\n\n[ff0000][u]Spy Roles (".. #specialRoles.spies .. "/" .. spies .. ")[/u]"
+  if #specialRoles.spies > 0 then
+    for _,role in pairs(specialRoles.spies) do
+      output = output .. "\n◆" .. role
+    end
+  end
+
+  if #specialRoles.neutral > 0 then
+    output = output .. ref_colorCodes.Neutral .. "\n\n[u]Neutral Roles[/u]"
+    for _,role in pairs(specialRoles.neutral) do
+      output = output .. "\n◆" .. role
+    end
+  end
+
+  if #specialRoles.secondary > 0 then
+    output = output .. ref_colorCodes.Secondary .. "\n\n[u]Secondary Roles[/u]"
+    for _,role in pairs(specialRoles.secondary) do
+      output = output .. "\n◆" .. role
+    end
+  end
+
+  setNotes(output)
 end

@@ -48,9 +48,9 @@ function role_ResistanceDefector(color)
     return ref_colorCodes.Resistance .. "You are a Defector - you are currently allied with the Resistance!"
   end
   data["Deal Team"] = function(color)
-    if data_currentMission > 2 then
+    if data_completedMission > 2 then
 
-      if data_defectorSwaps[data_currentMission] == nil and deal_defectorCard() then
+      if data_defectorSwaps[data_completedMission] == nil and deal_defectorCard() then
         local object = find_playersByRole({"Spy Defector"})
         if table.size(object) == 1 then
           local spyColor = object["Spy Defector"]
@@ -79,7 +79,7 @@ function role_ResistanceDefector(color)
           broadcastToColor(data_playerData[color]["Output"](color), color, {1,1,1})
           broadcastToColor(data_playerData[spyColor]["Output"](spyColor), spyColor, {1,1,1})
 
-          data_defectorSwaps[data_currentMission] = true
+          data_defectorSwaps[data_completedMission] = true
         end
       end
     end
@@ -103,6 +103,7 @@ function role_Assassin(color)
         local board = getObjectFromGUID(data.Board)
         local pos = board.positionToWorld(ref_boardPosition.Team)
         local assassinToken = getObjectFromGUID(ref_tokens["Assassin"]).clone({position = pos})
+        assassinToken.setName("Assassination")
         assassinToken.setDescription("Drop on the player you think is the Commander")
         assassinToken.setScale({1.21, 1.00, 1.26})
         assassinToken.setRotation(board.getRotation())

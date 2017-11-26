@@ -4,6 +4,71 @@ object_revealedMission = {}
 
 data_playedCards = {}
 
+function remove_missionCard(player)
+  local cardName = ""
+  if data_gamePhase == "Mission" then
+    local placard = getObjectFromGUID(ref_tokens["Played Board"])
+    local deckList = getObjectsAtPosition(placard.positionToWorld({0,0.2,0}), "Deck")
+
+
+    if #deckList > 0 then
+      local deck = deckList[1]
+
+      for _,card in pairs(deck.getObjects()) do
+        if player == card.description then
+          local card = deck.takeObject({
+            position       = {0,-1,0},
+            index          = card.index
+          })
+          cardName = card.getName()
+          card.destruct()
+        end
+      end
+    else
+      local cardList = getObjectsAtPosition(placard.positionToWorld({0,0.2,0}), "Card")
+      if #cardList > 0 then
+        if player == cardList[1].getDescription() then
+          cardName = cardList[1].getName()
+          cardList[1].destruct()
+        end
+      end
+    end
+  elseif data_gamePhase == "Trap Player" then
+    cardName = object_revealedMission[player].getName()
+    object_revealedMission[player].destruct()
+    object_revealedMission[player] = nil
+    data_missionColors = table.removeItems(data_missionColors, player)
+    data_missionTeam[player].destruct()
+
+    data_missionTeam[player] = getObjectFromGUID(ref_tokens["Trap Token"]).clone()
+
+    table.insert(objects_teamToken, data_missionTeam[player])
+
+    local boardGUID = ref_playerBoards[player]
+    local board = getObjectFromGUID(ref_playerBoards[player])
+    local teamPos = board.positionToWorld(ref_boardPosition.Team)
+    data_missionTeam[player].setPosition(teamPos)
+    data_missionTeam[player].setRotation(board.getRotation())
+    data_missionTeam[player].setScale({1.65,1,1.7})
+    data_missionTeam[player].setLock(true)
+
+    local mission = "Mission " .. data_currentMission
+    local i = 0
+    while true do
+      i = i + 1
+      if data_record[mission]["Team " .. i]["Extra Tokens"] == nil then
+        data_record[mission]["Team " .. i]["Extra Tokens"] = {}
+        data_record[mission]["Team " .. i]["Extra Tokens"]["Trapped"] = player
+        break
+      elseif data_record[mission]["Team " .. i]["Extra Tokens"]["Trapped"] == nil then
+        data_record[mission]["Team " .. i]["Extra Tokens"]["Trapped"] = player
+        break
+      end
+    end
+  end
+
+  return cardName
+end
 
 -- Check for placed mission cards
 function repeating_checkMission()
@@ -15,9 +80,12 @@ function repeating_checkMission()
 
     for _,card in pairs(deck.getObjects()) do
       data_playedCards[card.description] = true
+
+      local objects = Player[card.description].getHandObjects()
+      for _,card in pairs(objects) do
+        card.destruct()
+      end
     end
-      -- Deck.getObjects() returns:
-      -- {{int index, string nickname, string description, string guid, string lua_script}, ...})
 
     if deck.getQuantity() == data_missionCount then
       reveal_missionCards(deck)
@@ -26,6 +94,11 @@ function repeating_checkMission()
     local cardList = getObjectsAtPosition(placard.positionToWorld({0,0.2,0}), "Card")
     if #cardList > 0 then
       data_playedCards[cardList[1].getDescription()] = true
+
+      local objects = Player[cardList[1].getDescription()].getHandObjects()
+      for _,card in pairs(objects) do
+        card.destruct()
+      end
     end
   end
 
@@ -49,18 +122,27 @@ function reveal_missionCards(deck)
     card.setDescription("")
   end
 
+  data_gamePhase = "Revealing Mission"
+
   startLuaCoroutine(Global, 'calculate_missionResults')
 end
 
 -- Determine Result of Mission
 function calculate_missionResults()
-  --clean_hands()
-
+  data_gamePhase = "Calculating Mission"
   local playerData = data_playerData
   for _,color in pairs(data_playersInGame) do
     if playerData[color]["Mission Results"] ~= nil and not table.contains(data_missionResultFunctions, color) then
       table.insert(data_missionResultFunctions, color)
       playerData[color]["Mission Results"](color)
+      return 1
+    end
+  end
+
+  for _,option in pairs(data_includedOptions) do
+    if data_optionData[option]["Mission Results"] ~= nil and not table.contains(data_missionResultFunctions, option) then
+      table.insert(data_missionResultFunctions, option)
+      data_optionData[option]["Mission Results"]()
       return 1
     end
   end
@@ -136,6 +218,8 @@ function calculate_missionResults()
       played_cards["Extract"] = true
     elseif cardname == "Cure" then
       played_cards["Cure"] = true
+    elseif cardname == "Infect" then
+      played_cards["Infect"] = true
     end
 
     local cardCount = playerData[color]["Card Count"]
@@ -225,6 +309,22 @@ function calculate_missionResults()
       data_playerData[color]["Infected Players"] = infected
     end
   end
+  if played_cards["Infect"] then
+    local bio = find_playersByRole({"Bioterrorist"})
+    for _,color in pairs(bio) do
+      local infected = data_playerData[color]["Infected Players"]
+
+      for _,misColor in pairs(data_missionColors) do
+        if not table.contains(infected, misColor) then
+          table.insert(infected, misColor)
+        end
+      end
+
+      broadcastToColor("Everyone on the Mission has been Infected!", color, {1,0,0})
+
+      data_playerData[color]["Infected Players"] = infected
+    end
+  end
 
   local card = getObjectFromGUID(ref_tokens["Victory Token"]).clone({
     position     = ref_victoryPosition[data_currentMission],
@@ -271,6 +371,7 @@ function calculate_missionResults()
   object_victoryTokens[data_currentMission] = card
 
   data_currentMission = data_currentMission + 1
+  data_completedMission = data_completedMission + 1
 
   local endWinner = ""
   if data_victories.Resistance == 3 then
@@ -287,6 +388,7 @@ function calculate_missionResults()
 
   if not check_victory(endWinner) then
     clean_teamTokens()
+    data_endGamesCompleted = {}
     check_nextRound(roundWinner)
   end
 

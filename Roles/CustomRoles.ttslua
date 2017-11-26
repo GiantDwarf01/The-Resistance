@@ -232,6 +232,7 @@ function role_ResistanceSCPAgent(color)
         local board = getObjectFromGUID(data.Board)
         local pos = board.positionToWorld(ref_boardPosition.Team)
         local assassinToken = getObjectFromGUID(ref_tokens["SCP"]).clone({position = pos})
+        assassinToken.setName("Contain")
         assassinToken.setDescription("Drop on the player you think is the ASI")
         assassinToken.setScale({1.66, 1.00, 1.70})
         assassinToken.setRotation(board.getRotation())
@@ -246,6 +247,125 @@ function role_ResistanceSCPAgent(color)
   return data
 end
 
+
+function role_ResistanceClone(color)
+  local data = role_Resistance(color)
+  data["Role"] = "Clone"
+  data["Mission Cards"] = {"Success", "Fail"}
+  data["Can't Clone"] = {"ASI", "SCP Agent", "Resistance Defector", "Spy Defector", "Spy Chief", "Resistance Chief"}
+  data["Mission Revealed"] = function(color)
+    if data_completedMission == 1 then
+      local clones = find_playersByRole({"Clone"})
+
+      local altRoles = {
+        ["Spy"] = "Resistance",
+        ["Resistance"] = "Spy",
+
+        ["Commander"] = "False Commander",
+        ["False Commander"] = "Commander",
+
+        ["Mayor"] = "Politician",
+        ["Politician"] = "Mayor",
+
+        ["Pretender"] = "Deep Agent",
+        ["Deep Agent"] = "Pretender",
+
+        ["Hacker"] = "Corruptor",
+        ["Corruptor"] = "Hacker",
+
+        ["Pathologist"] = "Bioterrorist",
+        ["Bioterrorist"] = "Pathologist",
+
+        ["Resistance Reverser"] = "Spy Reverser",
+        ["Spy Reverser"] = "Resistance Reverser",
+
+        ["Resistance Rogue"] = "Spy Rogue",
+        ["Spy Rogue"] = "Resistance Rogue",
+      }
+
+      local updateRoles = {
+        ["Commander"] = {"Body Guard"},
+        ["False Commander"] = {"Body Guard"},
+      }
+
+      if table.size(clones) == 2 then
+        local clone1, clone2 = clones["Clone"], clones["Clone1"]
+        if math.random(0,100) >= 50 then clone1, clone2 = clone2, clone1 end
+
+        local cloneTeam = data_playerData[clone1]["Team"]
+
+        local all = table.removeItems(data_playersInGame, clone1)
+        local clonedPlayer = all[math.random(#all)]
+        local clonedPlayerData = data_playerData[clonedPlayer]
+        local clonedPlayerTeam = clonedPlayerData.Team
+        local clonedPlayerRole = clonedPlayerData.Role
+
+        if clonedPlayerTeam ~= cloneTeam and altRoles[clonedPlayerRole] ~= nil then
+          clonedPlayerRole = altRoles[clonedPlayerRole]
+        elseif clonedPlayerTeam ~= cloneTeam then
+          while (clonedPlayerTeam ~= cloneTeam and altRoles[clonedPlayerRole] == nil) do
+            clonedPlayer = all[math.random(#all)]
+            clonedPlayerData = data_playerData[clonedPlayer]
+            clonedPlayerTeam = clonedPlayerData.Team
+            clonedPlayerRole = clonedPlayerData.Role
+          end
+        end
+
+
+        local roles = ref_roleCards[clonedPlayerRole]
+        local card = getObjectFromGUID(roles[math.random(#roles)]).clone({position = {0,-1,0}})
+        getObjectFromGUID(data_playerData[clone1].Card).destruct()
+        data_playerData[clone1] = ref_roles[clonedPlayerRole](clone1)
+        data_playerData[clone1]["Saved Output"] = ref_colorCodes[cloneTeam] .. "You have successfully cloned " .. output_name(clonedPlayer) .. "!\n" .. data_playerData[clone1]["Output"](clone1)
+        data_playerData[clone1].Card = card
+        printToColor(data_playerData[clone1]["Saved Output"], clone1, {1,1,0})
+
+        if updateRoles[clonedPlayerRole] ~= nil then
+          local update = find_playersByRole(updateRoles[clonedPlayerRole])
+          for role,upcolor in pairs(update) do
+            printToColor(output_name(clone1) .. " has cloned a " .. clonedPlayerRole, upcolor, {1,1,0})
+            data_playerData[upcolor]["Saved Output"] = data_playerData[upcolor]["Saved Output"] .. "\n" .. output_name(clone1) .. " has cloned a " .. clonedPlayerRole
+          end
+        end
+
+        roles = ref_roleCards["Failed Clone"]
+        card = getObjectFromGUID(roles[math.random(#roles)]).clone({position = {0,-1,0}})
+        getObjectFromGUID(data_playerData[clone2].Card).destruct()
+        data_playerData[clone2] = role_failedClone(clone2, data_playerData[clone2]["Team"])
+        data_playerData[clone2]["Saved Output"] = data_playerData[clone2]["Output"](clone2)
+        data_playerData[clone2].Card = card
+        printToColor(data_playerData[clone2]["Saved Output"], clone2, {1,1,0})
+
+        startLuaCoroutine(Global, 'place_CloneCards')
+      end
+    end
+  end
+  return data
+end
+
+function place_CloneCards()
+  for i=0,25 do
+    coroutine.yield()
+  end
+  local colors = find_playersByRole({"Clone"})
+
+  if colors["Clone"] ~= nil and colors["Clone1"] ~= nil then
+    local color, spyColor = colors["Clone"], colors["Clone1"]
+    data_playerData[color].Card = data_playerData[color].Card.getGUID()
+    data_playerData[color]["Place Card"](color, true)
+
+    data_playerData[spyColor].Card = data_playerData[spyColor].Card.getGUID()
+    data_playerData[spyColor]["Place Card"](spyColor, true)
+    return 1
+  end
+end
+
+function role_SpyClone(color)
+  local data = role_Spy(color)
+  data["Role"] = "Clone"
+  data["Mission Cards"] = {"Success", "Fail"}
+  return data
+end
 
 -- Spy Roles
 function role_Politician(color)
@@ -318,7 +438,7 @@ function role_Mole(color)
   data["End Game"] = {
     priority = 2,
     runFunction = function(winner, color)
-      if table.contains(object_missionCards, "Sabotage") and data_currentMission == 5 then
+      if table.contains(object_missionCards, "Sabotage") and data_completedMission == 5 then
         end_game("Mole")
       else
         check_victory(winner)
@@ -429,7 +549,6 @@ function role_Bioterrorist(color)
 
       if not table.contains(data["Infected Players"], infectColor) then
         table.insert(data["Infected Players"], infectColor)
-        --print("You've infected " .. output_name(infectColor))
         printToColor("You've infected " .. output_name(infectColor), color, {1,0,0})
       end
 
@@ -465,7 +584,6 @@ function role_Bioterrorist(color)
 
               if not table.contains(data["Infected Players"], infectedPlayer) then
                 table.insert(infected, infectedPlayer)
-                --print("The infection has spread to " .. output_name(infectedPlayer))
                 printToColor("The infection has spread to " .. output_name(infectedPlayer), color, {1,0,0})
               end
             end
@@ -475,7 +593,6 @@ function role_Bioterrorist(color)
 
       if #mutatedColors ~= 0 then
         replace_card(mutatedColors, mutatedCards, "Fail", "calculate_missionResults", "object_revealedMission")
-        --print("Your virus has mutated!")
         printToColor("Your virus has mutated!", color, {1,0,0})
       else
         startLuaCoroutine(Global, 'calculate_missionResults')
@@ -644,7 +761,7 @@ function role_Amnesiac(color)
 
   data["Old Deal Mission"] = data["Deal Mission"]
   data["Deal Mission"] = function()
-    if data_currentMission == 5 then
+    if data_completedMission == 4 then
       data["Remember"]()
     end
   end
@@ -819,6 +936,27 @@ function role_NeutralSCPAgent(color)
 
   return data
 end
+
+function role_failedClone(color, team)
+  local data = {}
+  if team == "Resistance" then
+    data = role_Resistance(color)
+  else
+    data = role_Spy(color)
+  end
+  data["Role"] = "Failed Clone"
+  data["Mission Cards"] = {"Success", "Fail"}
+
+  local team = table.removeItems(data_teams[data.Team], color)
+  data["Teammate"] = team[math.random(#team)]
+  data["Output"] = function()
+    local teammate = data["Teammate"]
+    return "[ffff00]You've attempted to clone " .. output_name(teammate) .. "[ffff00], but failed..."
+  end
+
+  return data
+end
+
 
 
 function coroutine_setASICard()

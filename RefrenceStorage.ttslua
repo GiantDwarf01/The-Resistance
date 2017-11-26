@@ -1,11 +1,20 @@
 -- Contains refrence tables that won't change after load
 
 
+ref_errors = {
+  [26] = "Role has no team assigned", -- No team found during Inquistor
+  [84] = "Base role has no output", -- Outputting base
+}
+
 -- [ Constructors ] --
 -- Option constructors
 ref_options = {
   ["Investigator"] = option_investigator,
   ["Watching"] = option_watching,
+  ["Inquisitor"] = option_inquistor,
+  ["Trapper"] = option_trapper,
+  ["Sergeant"] = option_sergeant,
+  ["Targeted"] = option_targeted,
 }
 -- Role constructors
 ref_roles = {
@@ -27,6 +36,7 @@ ref_roles = {
   ["Pilot"] = role_Pilot,
   ["Confidant"] = role_Confidant,
   ["Pathologist"] = role_Pathologist,
+  ["Resistance Clone"] = role_ResistanceClone,
 
   -- Spy
   ["Spy"] = role_Spy,
@@ -45,21 +55,17 @@ ref_roles = {
   ["Mole"] = role_Mole,
   ["Corruptor"] = role_Corruptor,
   ["Bioterrorist"] = role_Bioterrorist,
+  ["Spy Clone"] = role_SpyClone,
 
   -- Neutral Roles
   ["Amnesiac"] = role_Amnesiac,
   ["ASI"] = role_NeutralASI,
   ["SCP Agent"] = role_NeutralSCPAgent,
+
 }
 
 
--- [ Command Functions ] --
--- Key to check beginning for
-ref_commandKey = "!"
--- Help display for commands
-ref_commandsDisplay = {
-  ["role"] = "Displays your current role",
-}
+
 
 -- [ Display ] --
 -- Player color in RGB
@@ -93,7 +99,7 @@ ref_colorCodes = {
 
   ["Resistance"] = '[00a6ff]', ["Spy"] = '[BB0000]', ["Extracted"] = '[D3A300]',
   ["Resistance Rogue"] = '[00FF6B]', ["Spy Rogue"] = '[77FF00]',
-  ["Mole"] = '[D3673D]',
+  ["Mole"] = '[D3673D]', ["Neutral"]  = '[fff000]', ["Secondary"]  = '[fff000]',
   ["Resistance Hunter Failed"] = '[BB0000]', ["Spy Hunter Failed"] = '[00a6ff]',
 }
 --Images for game board based on number of players
@@ -114,7 +120,9 @@ ref_tokens = {
   ["Leader"] = "d8bd7c", ["Assassin"] = "0a0e3b",
   ["Hunter"] = "8553d1", ["Investigator"] = "f84d31",
   ["Check Player"] = "30b307", ["Watching"] = "f91171",
-  ["SCP"] = "5a2c0d",
+  ["SCP"] = "5a2c0d", ["Inquisitor"] = "880453",
+  ["Trap Player"] = "205787", ["Trap Token"] = "bf4e08",
+  ["Sergeant"] = "1e06ab",
 
   ["Spy"] = "431ad8", ["Resistance"] = "3b5169",
   ["Spy Rogue"] = "f270a7", ["Resistance Rogue"] = "3f1de5",
@@ -178,7 +186,7 @@ ref_roleCards = {
   ["Resistance Rogue"]      = {"b52c6c"},
   ["Spy Rogue"]             = {"8e0577"},
   ["Mole"]                  = {"f3a74a"},
-  ["Clone"]                 = {"cfa5e7"},
+  ["Clone"]                 = {"cfa5e7","cfa5e7"},
   ["Failed Clone"]          = {"c5dfb9"},
   ["Amnesiac"]              = {"449b78"},
   ["ASI"]                   = {"a37d32"},
