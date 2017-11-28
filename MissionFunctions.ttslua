@@ -127,6 +127,8 @@ function reveal_missionCards(deck)
   startLuaCoroutine(Global, 'calculate_missionResults')
 end
 
+data_showCards = true
+
 -- Determine Result of Mission
 function calculate_missionResults()
   data_gamePhase = "Calculating Mission"
@@ -282,7 +284,12 @@ function calculate_missionResults()
     while true do
       i = i + 1
       if data_record[mission]["Team " .. i]["Mission Cards"] == nil then
-        data_record[mission]["Team " .. i]["Mission Cards"] = missionCards
+        if not data_showCards then
+          data_record[mission]["Team " .. i]["Mission Cards"] = {}
+        else
+          data_record[mission]["Team " .. i]["Mission Cards"] = missionCards
+        end
+
         data_record[mission]["Team " .. i]["Victory"] = "Extracted"
         break
       end
@@ -362,7 +369,12 @@ function calculate_missionResults()
   while true do
     i = i + 1
     if data_record[mission]["Team " .. i]["Mission Cards"] == nil then
-      data_record[mission]["Team " .. i]["Mission Cards"] = missionCards
+      if not data_showCards then
+        data_record[mission]["Team " .. i]["Mission Cards"] = {}
+      else
+        data_record[mission]["Team " .. i]["Mission Cards"] = missionCards
+      end
+
       data_record[mission]["Team " .. i]["Victory"] = roundWinner
       break
     end

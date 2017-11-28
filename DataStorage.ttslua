@@ -24,13 +24,13 @@ data_playerRoles = {}
 -- Stores role data as [Color] = {Data}
 data_playerData = {}
 -- Selected special roles, selected by the option boards
-data_specialRoles = { resistance = {}, spies = {}, neutral = {}, secondary = {} }
+data_specialRoles = { resistance = {}, spies = {}, neutral = {}, secondary = {"Psionic"} }
 
 
 
 -- [ Option Data ] --
 -- Options to include stored as "Option"
-data_includedOptions = {"Trapper", "Sergeant", "Targeted"}
+data_includedOptions = {}
 -- Option data stored as [Option] = {Data}
 data_optionData = {}
 

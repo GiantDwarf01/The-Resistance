@@ -16,7 +16,7 @@ function role_ResistanceChief(color)
     object = find_playersByRole({"Coordinator"}, color)
     if table.size(object) == 1 then
       local chief = object["Coordinator"]
-      output = output .. "\nThe Resistance Coordinator is " .. output_name(chief)
+      output = output .. "\n[00aaff]The Resistance Coordinator is " .. output_name(chief)
     end
 
     return ref_colorCodes.Resistance .. "You are the Resistance Chief!" .. output
@@ -62,6 +62,17 @@ end
 function role_Pretender(color)
   local data = role_Resistance(color)
   data["Role"] = "Pretender"
+
+  data["Output"] = function()
+    if option_knowDeepAgent then
+      local object = find_playersByRole({"Deep Agent"})
+      if table.size(object) == 1 then
+        return ref_colorCodes.Resistance .. "You are the Resistance Pretender! The Deep Agent is " .. output_name(object["Deep Agent"])
+      end
+    else
+      return ref_colorCodes.Resistance .. "You are the Resistance Pretender!"
+    end
+  end
   return data
 end
 function role_ResistanceReverser(color)
@@ -139,7 +150,7 @@ function role_DeepAgent(color)
   local data = role_Spy(color)
   data["Role"] = "Deep Agent"
   data["Output"] = function()
-    return ref_colorCodes.Spy .. "You are a undercover Spy!\nBut you are deep undercover..."
+    return ref_colorCodes.Spy .. "You are a undercover Spy!\nBut you are deep undercover and don't know your fellow Spies..."
   end
 
   data["Blamed"] = false

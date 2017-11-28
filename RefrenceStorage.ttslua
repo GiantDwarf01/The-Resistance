@@ -15,6 +15,12 @@ ref_options = {
   ["Trapper"] = option_trapper,
   ["Sergeant"] = option_sergeant,
   ["Targeted"] = option_targeted,
+  ["Communication Silence"] = option_commSilence,
+  ["Blind Mode"] = option_blindSpy,
+  ["Random Roles"] = option_randomRoles,
+  ["Hidden Defectors"] = option_hiddenDefector,
+  ["Know Defectors"] = option_knowDefector,
+  ["Know Deep Agent"] = option_knowDeep
 }
 -- Role constructors
 ref_roles = {
@@ -61,7 +67,7 @@ ref_roles = {
   ["Amnesiac"] = role_Amnesiac,
   ["ASI"] = role_NeutralASI,
   ["SCP Agent"] = role_NeutralSCPAgent,
-
+  ["Psionic"] = role_Psionic,
 }
 
 
@@ -181,6 +187,8 @@ ref_roleCards = {
   ["Bioterrorist"]          = {"817d8a"},
   ["Spy ASI"]               = {"b9c87c"},
   ["Spy SCP Agent"]         = {"533527"},
+  ["Psionic"]            = {"d2c55f","d16a29","31b164","95a640","cb95a1","816875","ac9fcc","54ecf0","a786a7","7100e5","86e6a3","3e9346","3e8230"},
+
 
   -- Solo Members
   ["Resistance Rogue"]      = {"b52c6c"},

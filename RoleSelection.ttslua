@@ -1,6 +1,7 @@
 role_data = {
   ["Commander"] = {
     ["Team"] = "Resistance",
+    ["Random Siblings"] = {"Assassin"},
     ["Children"] = {"Assassin", "Body Guard", "Deep Cover"},
     ["Info"] = "The Commander is a Resistance member who is told who the spies are",
   },
@@ -32,7 +33,8 @@ role_data = {
     ["Siblings"] = {"Resistance Hunter","Spy Chief","Spy Hunter"},
     ["Children"] = {"Dummy Agent", "Coordinator"},
     ["Option"] = "Investigator",
-    ["Info"] = "The Resistance Chief wants to remain hidden from the Spy Hunter. With 7+ players there will be 2 Resistance Chiefs and they will know each other."
+    ["Info"] = "The Resistance Chief wants to remain hidden from the Spy Hunter. With 7+ players there will be 2 Resistance Chiefs and they will know each other.",
+    ["Double"] = 7
   },
   ["Resistance Hunter"] = {
     ["Team"] = "Resistance",
@@ -52,7 +54,8 @@ role_data = {
   ["Spy Chief"] = {
     ["Team"] = "Spy",
     ["Siblings"] = {"Resistance Chief","Resistance Hunter","Spy Hunter"},
-    ["Info"] = "The Spy Chief wants to remain hidden from the Resistance Hunter"
+    ["Info"] = "The Spy Chief wants to remain hidden from the Resistance Hunter",
+    ["Double"] = 10,
   },
   ["Spy Hunter"] = {
     ["Team"] = "Spy",
@@ -69,6 +72,7 @@ role_data = {
   ["Pretender"] = {
       ["Team"] = "Resistance",
       ["Parent"] = "Deep Agent",
+      ["Variants"] = {["Know Deep Agent"] = "The Pretender will be told who the Deep Agent is"},
       ["Info"] = "The Pretender is a Resistance member who will appear as a Deep Agent to the Spies. The Deep Agent can reveal and try to Blame them to swtich roles"
   },
 
@@ -82,6 +86,7 @@ role_data = {
   ["Spy Defector"] = {
     ["Team"] = "Spy",
     ["Siblings"] = {"Resistance Defector"},
+    ["Variants"] = {["Hidden Defectors"] = "Defector swap cards are hidden", ["Know Defectors"] = "Defectors are told who the other is"},
     ["Info"] = "The Defectors are players who will have a chance to swap teams after Missions 2, 3, and 4"
   },
   ["Confidant"] = {
@@ -93,17 +98,20 @@ role_data = {
 
   ["Mayor"] = {
     ["Team"] = "Resistance",
+    ["Random Siblings"] = {"Hitman"},
     ["Children"] = {"Politician", "Hitman"},
     ["Info"] = "The Mayor is a Resistance member who can reveal themselves during the game"
   },
   ["Politician"] = {
     ["Team"] = "Spy",
+    ["Random Parent"] = "",
     ["Parent"] = "Mayor",
     ["Info"] = "The Politician is a Spy who can reveal themselves as a Mayor during the game"
   },
   ["Hitman"] = {
     ["Team"] = "Spy",
     ["Parent"] = "Mayor",
+    ["Random Siblings"] = {"Mayor"},
     ["Info"] = "The Hitman is a Spy who can play a Hit card during a Mission with the Mayor to win for the Spies"
   },
 
@@ -133,12 +141,14 @@ role_data = {
 
 
   ["ASI"] = {
-    ["Team"] = "Neutral",
+    ["Team"] = "Spy",
+    ["Color"] = "Neutral",
     ["Siblings"] = {"SCP Agent"},
     ["Info"] = "The ASI is a rogue AI. At the beginning of the game they will choose which team they wish to join. They will also be allowed to play any card currently in the game"
   },
   ["SCP Agent"] = {
-    ["Team"] = "Neutral",
+    ["Team"] = "Resistance",
+    ["Color"] = "Neutral",
     ["Siblings"] = {"ASI"},
     ["Info"] = "The SCP Agent is on the opposite team of the one the ASI chooses. Their goal is to figure out who the ASI is and prevent them from winning, or capture them at the end of the game. They are allowed to play a copy of any card they see played in missions"
   },
@@ -188,6 +198,17 @@ role_data = {
     ["Team"] = "Secondary",
     ["Info"] = "The Amnesiac is a secondary role that will overwrite another role. The Amnesiac will not know their team or role, but they will be told one player who is on their team. On Mission 5, their role will be revealed to them"
   },
+
+  ["Psionic"] = {
+    ["Team"] = "Secondary",
+    ["Info"] = "",
+  },
+}
+
+role_options = {
+  ["Psionic Corruption"] = {["Option"] = "Psionic", ["Type"]="Role", ["Info"] = "One Spy will be told they are part of the Resistance, but any success they play will become a fail", ["click_function"] = "click_psionic"},
+  ["Random Roles"] = {["Option"] = "Random Roles", ["Type"]="Option", ["Info"] = "Roles will be randomly selected", ["click_function"] = "click_randomRoles", ["Extra Clicks"] = {"show_randomButtons"}},
+
 }
 
 function create_selectButtons()
@@ -206,16 +227,245 @@ function create_selectButtons()
       if obj.getPosition().y < 2 and obj.getPosition().y > 0.1 then
         obj.createButton(buttondata)
         obj.createButton(descrpdata)
+
+        if data["Variants"] ~= nil then
+          Global.setTable("temp_variant"..obj.getGUID(), {
+            ['Variant'] = data["Variants"],
+            ["Clicked"] = false})
+
+          local funcName = "click_showVariants"..role
+          local func = function(obj, player)
+            click_variantOptions(obj)
+          end
+          Global.setVar(funcName, func)
+
+          local optButton = {click_function = funcName, function_owner = self, label = " ",
+          position = {0.9, 0.1, -0.8}, scale = {0.5, 0.5, 0.5}, width = 400, height = 400,
+          font_size = 400, color = {0.7573, 0.7573, 0.7573, 0}, tooltip = "Variant Options"}
+          obj.createButton(optButton)
+        end
       end
     end
   end
+
+  local opt_obj = getObjectFromGUID('f8f9bb')
+  local data = {click_function = "click_roleOption", function_owner = self, label = " ",
+  position = {0, 0.1, 0}, scale = {0.5, 0.5, 0.5}, width = 1500, height = 1500, font_size = 400,
+  tooltip = "Role Options", color = {0,0,0,0}}
+  opt_obj.createButton(data)
+end
+
+data_roleOptionClicked = false
+function click_roleOption()
+  local opt_obj = getObjectFromGUID('f8f9bb')
+
+  if data_roleOptionClicked then
+    data_roleOptionClicked = false
+    opt_obj.clearButtons()
+    local data = {click_function = "click_roleOption", function_owner = self, label = " ",
+    position = {0, 0.1, 0}, scale = {0.5, 0.5, 0.5}, width = 1500, height = 1500, font_size = 400,
+    tooltip = "Role Options", color = {0,0,0,0}}
+    opt_obj.createButton(data)
+  else
+    data_roleOptionClicked = true
+    local clickData = {click_function = "INSERT_FUNCTION", function_owner = self, label = "Psionic Corruption",
+    position = {-0.2, 0, 1.1}, scale = {0.5, 0.5, 0.5}, width = 3300, height = 400, font_size = 400}
+
+    local explainData = {click_function = "INSERT_FUNCTION", function_owner = self, label = "?",
+    position = {1.7, 0, 1.1}, scale = {0.5, 0.5, 0.5}, width = 400, height = 400, font_size = 400}
+
+    for name,option in pairs(role_options) do
+      local funcName = option["click_function"]
+      local func = nil
+      if option["Type"] == "Role" then
+        func = function(obj, play)
+          toggle_role(option["Option"])
+          update_roleNotes()
+
+          if not role_data[option["Option"]]["Selected"] then
+            for ind,objD in pairs(obj.getButtons()) do
+              if objD.label == name then
+                opt_obj.editButton({ index = ind-1, color = {1, 0, 0, 10} })
+              end
+            end
+
+            role_options[name]["Selected"] = false
+          else
+            for ind,objD in pairs(obj.getButtons()) do
+              if objD.label == name then
+                opt_obj.editButton({ index = ind-1, color = {0.192, 0.701, 0.168, 10} })
+              end
+            end
+
+            role_options[name]["Selected"] = true
+          end
+        end
+      else
+        func = function(obj, play)
+          if table.contains(data_includedOptions, option["Option"]) then
+            data_includedOptions = table.removeItems(data_includedOptions, option["Option"])
+            for ind,objD in pairs(obj.getButtons()) do
+              if objD.label == name then
+                opt_obj.editButton({ index = ind-1, color = {1, 0, 0, 10} })
+              end
+            end
+            role_options[name]["Selected"] = true
+          else
+            table.insert(data_includedOptions, option["Option"])
+            for ind,objD in pairs(obj.getButtons()) do
+              if objD.label == name then
+                opt_obj.editButton({ index = ind-1, color = {0.192, 0.701, 0.168, 10} })
+              end
+            end
+            role_options[name]["Selected"] = false
+          end
+
+          if role_options[name]["Extra Clicks"] ~= nil then
+            for _,ext in pairs(role_options[name]["Extra Clicks"]) do
+              print(ext)
+              Global.call("show_randomButtons", {})
+            end
+          end
+          update_roleNotes()
+        end
+      end
+
+      Global.setVar(funcName, func)
+
+      clickData.click_function = funcName
+      clickData.label = name
+
+      if option["Selected"] then
+        clickData.color = {0.192, 0.701, 0.168, 10}
+      else
+        clickData.color = {1, 0, 0, 10}
+      end
+
+      local exfuncName = option["click_function"].."Explain"
+      local exfunc = function(obj, play)
+        printToColor(option["Info"], play, {1,1,0})
+      end
+      Global.setVar(exfuncName, exfunc)
+
+      explainData.click_function = exfuncName
+
+      opt_obj.createButton(clickData)
+      opt_obj.createButton(explainData)
+
+      clickData.position[3] = clickData.position[3] + 0.5
+      explainData.position[3] = explainData.position[3] + 0.5
+    end
+  end
+end
+
+function show_ExtraOptions(obj, play)
+  local base = {
+    position = {0,0,2.60},
+    width = 1500,
+  }
+
+  local values = { 0,1,2,3,4,5,6,7,8,9,10 }
+  local labels = {[0] = "Min: 0","Min: 1","Min: 2","Min: 3","Min: 4","Min: 5","Min: 6","Min: 7","Min: 8","Min: 9","Min: 10"}
+  createScrolling(getObjectFromGUID('f8f9bb'), "RandomMin", base, nil,nil, values, labels, "data_randomMin", 8)
+
+  local baseX = {
+    position = {0,0,3.60},
+    width = 1500,
+  }
+
+  local valuesX = { 1,2,3,4,5,6,7,8,9,10 }
+  local labelsX = {"Max: 1","Max: 2","Max: 3","Max: 4","Max: 5","Max: 6","Max: 7","Max: 8","Max: 9","Max: 10"}
+  createScrolling(getObjectFromGUID('f8f9bb'), "RandomMax", baseX, nil,nil, valuesX, labelsX, "data_randomMax", 10)
+end
+
+function show_randomButtons()
+  local extraData = {click_function = "show_ExtraOptions", function_owner = self, label = ">",
+  position = {2.1, 0, 1.6}, scale = {0.5, 0.5, 0.5}, width = 400, height = 400, font_size = 400}
+
+  getObjectFromGUID('f8f9bb').createButton(extraData)
+end
+data_randomMin = 7
+data_randomMax = 10
+
+function click_variantOptions(obj)
+  local data = {click_function = "INSERT_FUNCTION", function_owner = self,
+  label = "", position = {2, 0.1, -0.85}, scale = {0.3, 0.3, 0.3},
+  width = 3100, height = 400, font_size = 400, color = {1, 0, 0, 10}}
+  local expdata = {click_function = "INSERT_FUNCTION", function_owner = self,
+  label = "?", position = {3.1, 0.1, -0.85}, scale = {0.3, 0.3, 0.3},
+  width = 400, height = 400, font_size = 400, color = {1, 1, 1, 10}}
+
+  local savedData = Global.getTable("temp_variant"..obj.getGUID())
+  if savedData["Clicked"] then
+    savedData["Clicked"] = false
+
+    local but = #obj.getButtons() - 3
+    for i=1,but do
+      obj.removeButton(#obj.getButtons() - i)
+    end
+  else
+    savedData["Clicked"] = true
+
+    local i = 0
+    for opt,explain in pairs(savedData["Variant"]) do
+      local funcName = "click_option"..i..obj.getGUID()
+      local func = function(objec, player)
+        if not table.contains(data_includedOptions, opt) then
+          table.insert(data_includedOptions, opt)
+          for ind,objD in pairs(objec.getButtons()) do
+            if objD.label == opt then
+              objec.editButton({
+                index          = ind-1, -- int    (required),
+                color          = {0.192, 0.701, 0.168, 10}-- Color,
+              })
+            end
+          end
+        else
+          data_includedOptions = table.removeItems(data_includedOptions, opt)
+          for ind,objD in pairs(objec.getButtons()) do
+            if objD.label == opt then
+              objec.editButton({
+                index          = ind-1, -- int    (required),
+                color          = {1, 0, 0, 10}-- Color,
+              })
+            end
+          end
+        end
+      end
+      Global.setVar(funcName, func)
+      data.click_function = funcName
+      data.label = opt
+
+      if table.contains(data_includedOptions, opt) then
+        data.color = {0.192, 0.701, 0.168, 10}
+      else
+        data.color = {1, 0, 0, 10}
+      end
+
+
+      local exfuncName = "click_optionEx"..i..obj.getGUID()
+      local exfunc =function(obj, color)
+        printToColor(explain, color, {1,1,0})
+      end
+      Global.setVar(exfuncName, exfunc)
+      expdata.click_function = exfuncName
+
+      obj.createButton(data)
+      obj.createButton(expdata)
+
+      data.position[3] = data.position[3] + 0.3
+      expdata.position[3] = expdata.position[3] + 0.3
+      i = i + 1
+    end
+  end
+
+  Global.setTable("temp_variant"..obj.getGUID(), savedData)
 end
 
 function click_explain(obj, player)
   local roleName = obj.getName()
   local role = role_data[roleName]
-  local color = role["Team"]
-  if role["Color"] ~= nil then color = role["Color"] end
+  local color = (role["Color"] or role["Team"])
   printToColor(ref_colorCodes[color] .. "\u{25c6}" .. role["Info"], player, {1,1,1})
 end
 
@@ -231,6 +481,11 @@ function click_role(obj, player)
 end
 
 function toggle_role(role, force)
+  local playerCount = #getSeatedPlayers()
+  if playerCount <= 1 then playerCount = 10 end
+
+  local randomRoles = table.contains(data_includedOptions, "Random Roles")
+
   if force ~= nil then
     if force then
       role_data[role]["Selected"] = true
@@ -243,8 +498,12 @@ function toggle_role(role, force)
         end
       end
 
-      if role_data[role]["Parent"] ~= nil then
+      if not randomRoles and role_data[role]["Parent"] ~= nil then
         toggle_role(role_data[role]["Parent"], true)
+      elseif randomRoles and role_data[role]["Children"] ~= nil then
+        for _,child in pairs(role_data[role]["Children"]) do
+          toggle_role(child, true)
+        end
       end
     else
       role_data[role]["Selected"] = false
@@ -257,10 +516,12 @@ function toggle_role(role, force)
         end
       end
 
-      if role_data[role]["Children"] ~= nil then
+      if not randomRoles and role_data[role]["Children"] ~= nil then
         for _,child in pairs(role_data[role]["Children"]) do
           toggle_role(child, false)
         end
+      elseif randomRoles and role_data[role]["Parent"] ~= nil then
+        toggle_role(role_data[role]["Parent"], false)
       end
     end
   else
@@ -275,10 +536,12 @@ function toggle_role(role, force)
         end
       end
 
-      if role_data[role]["Children"] ~= nil then
+      if not randomRoles and role_data[role]["Children"] ~= nil then
         for _,child in pairs(role_data[role]["Children"]) do
           toggle_role(child, false)
         end
+      elseif randomRoles and role_data[role]["Parent"] ~= nil then
+        toggle_role(role_data[role]["Parent"], false)
       end
     else
       role_data[role]["Selected"] = true
@@ -291,8 +554,12 @@ function toggle_role(role, force)
         end
       end
 
-      if role_data[role]["Parent"] ~= nil then
+      if not randomRoles and role_data[role]["Parent"] ~= nil then
         toggle_role(role_data[role]["Parent"], true)
+      elseif randomRoles and role_data[role]["Children"] ~= nil then
+        for _,child in pairs(role_data[role]["Children"]) do
+          toggle_role(child, true)
+        end
       end
     end
   end
@@ -305,12 +572,18 @@ function toggle_role(role, force)
 
         if not table.contains(data_specialRoles.resistance, role) then
           table.insert(data_specialRoles.resistance, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+            table.insert(data_specialRoles.resistance, role)
+          end
         end
       elseif role_data[role]["Team"] == "Spy" then
         color = {1,0,0}
 
         if not table.contains(data_specialRoles.spies, role) then
           table.insert(data_specialRoles.spies, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+            table.insert(data_specialRoles.spies, role)
+          end
         end
       elseif role_data[role]["Team"] == "Neutral" then
         color = {0,1,0}
@@ -319,17 +592,26 @@ function toggle_role(role, force)
           for _,_ in pairs(role_data[role]["Add"].resistance) do
             if not table.contains(data_specialRoles.resistance, role) then
               table.insert(data_specialRoles.resistance, role)
+              if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+                table.insert(data_specialRoles.resistance, role)
+              end
             end
           end
 
           for _,_ in pairs(role_data[role]["Add"].spy) do
             if not table.contains(data_specialRoles.spies, role) then
               table.insert(data_specialRoles.spies, role)
+              if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+                table.insert(data_specialRoles.spies, role)
+              end
             end
           end
         else
           if not table.contains(data_specialRoles.neutral, role) then
             table.insert(data_specialRoles.neutral, role)
+            if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+              table.insert(data_specialRoles.neutral, role)
+            end
           end
         end
       else
@@ -337,6 +619,9 @@ function toggle_role(role, force)
 
         if not table.contains(data_specialRoles.secondary, role) then
           table.insert(data_specialRoles.secondary, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+            table.insert(data_specialRoles.secondary, role)
+          end
         end
       end
 
@@ -350,6 +635,11 @@ function toggle_role(role, force)
       if role_data[role]["Color"] == "Neutral" then
         color = {0,1,0}
       end
+
+      if randomRoles then
+        color = {1,0,0}
+      end
+
       if obj.getPosition().y < 2 and obj.getPosition().y > 0.1 then
         obj.highlightOn(color)
       end
@@ -401,55 +691,97 @@ function toggle_role(role, force)
 end
 
 function update_roleNotes()
-  local output = "╔═══════════╗\n◆ Selected Roles ◆   \n╚═══════════╝\n"
   local specialRoles = data_specialRoles
+  local output = ""
 
-  local numPlayer = #getSeatedPlayers()
+  if table.contains(data_includedOptions, "Random Roles") then
+    output = "╔════════════╗\n◆ Removed Roles ◆   \n╚════════════╝"
 
-  if numPlayer <= 1 then numPlayer = 10 end
+    output = output .. "\n\n[00aaff][u]Resistance Roles[/u]"
+    if #specialRoles.resistance > 0 then
+      for _,role in pairs(specialRoles.resistance) do
+        output = output .. "\n◆" .. role
+      end
+    end
 
-  if numPlayer < 5 then numPlayer = 5 end
+    output = output .. "\n\n[ff0000][u]Spy Roles[/u]"
+    if #specialRoles.spies > 0 then
+      for _,role in pairs(specialRoles.spies) do
+        output = output .. "\n◆" .. role
+      end
+    end
 
-  local resistance = ref_resistanceCount[numPlayer]
-  local spies = numPlayer - resistance
-  local neutralRoles = #specialRoles.neutral/2
-  resistance = resistance - neutralRoles
-  spies = spies - neutralRoles
+    if #specialRoles.neutral > 0 then
+      output = output .. ref_colorCodes.Neutral .. "\n\n[u]Neutral Roles[/u]"
+      for _,role in pairs(specialRoles.neutral) do
+        output = output .. "\n◆" .. role
+      end
+    end
 
-  if #specialRoles.resistance > resistance then
-    output = output .. "\nTOO MANY RESISTANCE ROLES"
-  end
-  if #specialRoles.spies > spies then
-    output = output .. "\nTOO MANY SPY ROLES"
-  end
+    if #specialRoles.secondary > 0 then
+      output = output .. ref_colorCodes.Secondary .. "\n\n[u]Secondary Roles[/u]"
+      for _,role in pairs(specialRoles.secondary) do
+        output = output .. "\n◆" .. role
+      end
+    end
+  else
+    output = "╔═══════════╗\n◆ Selected Roles ◆   \n╚═══════════╝"
 
-  output = output .. "\n\n[00aaff][u]Resistance Roles (".. #specialRoles.resistance .. "/" .. resistance .. ")[/u]"
-  if #specialRoles.resistance > 0 then
-    for _,role in pairs(specialRoles.resistance) do
-      output = output .. "\n◆" .. role
+    local numPlayer = #getSeatedPlayers()
+
+    if numPlayer <= 1 then numPlayer = 10 end
+    if numPlayer < 5 then numPlayer = 5 end
+
+    local resistance = ref_resistanceCount[numPlayer]
+    local spies = numPlayer - resistance
+    local neutralRoles = #specialRoles.neutral/2
+    resistance = resistance - neutralRoles
+    spies = spies - neutralRoles
+
+    if #specialRoles.resistance > resistance then
+      output = output .. "\nTOO MANY RESISTANCE ROLES"
+    end
+    if #specialRoles.spies > spies then
+      output = output .. "\nTOO MANY SPY ROLES"
+    end
+
+    output = output .. "\n\n[00aaff][u]Resistance Roles (".. #specialRoles.resistance .. "/" .. resistance .. ")[/u]"
+    if #specialRoles.resistance > 0 then
+      for _,role in pairs(specialRoles.resistance) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    output = output .. "\n\n[ff0000][u]Spy Roles (".. #specialRoles.spies .. "/" .. spies .. ")[/u]"
+    if #specialRoles.spies > 0 then
+      for _,role in pairs(specialRoles.spies) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    if #specialRoles.neutral > 0 then
+      output = output .. ref_colorCodes.Neutral .. "\n\n[u]Neutral Roles[/u]"
+      for _,role in pairs(specialRoles.neutral) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    if #specialRoles.secondary > 0 then
+      output = output .. ref_colorCodes.Secondary .. "\n\n[u]Secondary Roles[/u]"
+      for _,role in pairs(specialRoles.secondary) do
+        output = output .. "\n◆" .. role
+      end
     end
   end
 
-  output = output .. "\n\n[ff0000][u]Spy Roles (".. #specialRoles.spies .. "/" .. spies .. ")[/u]"
-  if #specialRoles.spies > 0 then
-    for _,role in pairs(specialRoles.spies) do
-      output = output .. "\n◆" .. role
-    end
+  local optOutput = ""
+  for ind,opt in pairs(data_includedOptions) do
+    optOutput = optOutput .. "\n◆" .. opt
+  end
+  if optOutput ~= "" then
+    optOutput = "\n\n╔════════════╗\n◆ Active Options ◆   \n╚════════════╝" .. optOutput
   end
 
-  if #specialRoles.neutral > 0 then
-    output = output .. ref_colorCodes.Neutral .. "\n\n[u]Neutral Roles[/u]"
-    for _,role in pairs(specialRoles.neutral) do
-      output = output .. "\n◆" .. role
-    end
-  end
 
-  if #specialRoles.secondary > 0 then
-    output = output .. ref_colorCodes.Secondary .. "\n\n[u]Secondary Roles[/u]"
-    for _,role in pairs(specialRoles.secondary) do
-      output = output .. "\n◆" .. role
-    end
-  end
-
-  setNotes(output)
+  setNotes(output..optOutput)
 end

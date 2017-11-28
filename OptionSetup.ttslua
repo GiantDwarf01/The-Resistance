@@ -176,7 +176,6 @@ end
 function option_trapper()
   local data = {}
   data["Deal Team"] = function(missionCount)
-    print(missionCount)
     return missionCount + 1
   end
   data["Mission Results"] = function()
@@ -280,8 +279,331 @@ function option_targeted()
 end
 function option_commSilence()
   local data = {}
+  data["Allowed Info"] = 3
   data["Mission Results"] = function()
+    data_gamePhase = "Commns Check"
+    local placard = getObjectFromGUID(ref_tokens["Played Board"])
+    placard.clearButtons()
 
+    if data["Allowed Info"] > 0 then
+      local send = {click_function = "click_sendInfo", function_owner = self, label = "Break Radio Silence",
+      position = {0, 0, 2}, scale = {0.5, 0.5, 0.5}, width = 3500, height = 400, font_size = 400}
+      local none = {click_function = "click_noInfo", function_owner = self, label = "Stay Dark",
+      position = {0, 0, 2.5}, scale = {0.5, 0.5, 0.5}, width = 2000, height = 400, font_size = 400}
+      placard.createButton(send)
+      placard.createButton(none)
+    else
+      click_noInfo(nil, data_currentLeader)
+    end
+
+    local data = {click_function = "nil_func", function_owner = self, label = "Transmissions Left: " .. data["Allowed Info"],
+    position = {0, 0, -2}, scale = {0.5, 0.5, 0.5}, width = 0, height = 0,
+    font_size = 400, color = {0.7573, 0.7573, 0.7573, 1}, font_color = {1, 1, 1, 1}}
+    placard.createButton(data)
   end
   return data
 end
+function option_blindSpy()
+  option_blindMode = true
+  return {}
+end
+function option_randomRoles()
+  local data = {}
+  data["Load Roles"] = function()
+    local totalPlayers = #data_playersInGame
+
+    local allowedRoles = role_data
+
+    local maxResistance = ref_resistanceCount[totalPlayers]
+    local maxSpies = totalPlayers - maxResistance
+
+    local maxRoles = math.random(data_randomMin, data_randomMax)
+    print(maxRoles)
+
+    allowedRoles = table.removeKey(allowedRoles, "Amnesiac")
+    allowedRoles = checkAllowedRoles(allowedRoles,maxResistance,maxSpies,maxRoles)
+
+    local selectedRoles = {}
+    while true do
+      local role = table.random(allowedRoles)
+      addRoles(role.key, selectedRoles)
+
+      local count = countRoles(role.key)
+
+      maxResistance = maxResistance - count["Resistance"]
+      maxSpies = maxSpies - count["Spies"]
+
+      maxRoles = maxRoles - (count["Spies"] + count["Resistance"])
+
+      if global_debug then
+        print("New Max: " .. count["Spies"] .. " + " .. count["Resistance"] .. " -= " .. maxRoles)
+      end
+
+      allowedRoles = checkAllowedRoles(allowedRoles, maxResistance, maxSpies, maxRoles, selectedRoles)
+
+      if table.size(allowedRoles) == 0 then
+        break
+      end
+    end
+
+    if not table.contains(data_specialRoles.secondary, "Amnesiac") and math.random(100) >= 85 then table.insert(selectedRoles, "Amnesiac") end
+    if not table.contains(data_specialRoles.secondary, "Psionic") and math.random(100) >= 90 then table.insert(selectedRoles, "Psionic") end
+
+    data_specialRoles = { resistance = {}, spies = {}, neutral = {}, secondary = {} }
+    for _,role in pairs(selectedRoles) do
+      if role_data[role]["Team"] == "Resistance" then
+        if not table.contains(data_specialRoles.resistance, role) then
+          table.insert(data_specialRoles.resistance, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+            table.insert(data_specialRoles.resistance, role)
+          end
+        end
+      elseif role_data[role]["Team"] == "Spy" then
+        if not table.contains(data_specialRoles.spies, role) then
+          table.insert(data_specialRoles.spies, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+            table.insert(data_specialRoles.spies, role)
+          end
+        end
+      elseif role_data[role]["Team"] == "Neutral" then
+        if role_data[role]["Add"] ~= nil then
+          for _,_ in pairs(role_data[role]["Add"].resistance) do
+            if not table.contains(data_specialRoles.resistance, role) then
+              table.insert(data_specialRoles.resistance, role)
+              if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+                table.insert(data_specialRoles.resistance, role)
+              end
+            end
+          end
+
+          for _,_ in pairs(role_data[role]["Add"].spy) do
+            if not table.contains(data_specialRoles.spies, role) then
+              table.insert(data_specialRoles.spies, role)
+              if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+                table.insert(data_specialRoles.spies, role)
+              end
+            end
+          end
+        else
+          if not table.contains(data_specialRoles.neutral, role) then
+            table.insert(data_specialRoles.neutral, role)
+            if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+              table.insert(data_specialRoles.neutral, role)
+            end
+          end
+        end
+      else
+        if not table.contains(data_specialRoles.secondary, role) then
+          table.insert(data_specialRoles.secondary, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+            table.insert(data_specialRoles.secondary, role)
+          end
+        end
+      end
+    end
+  end
+  return data
+end
+function option_hiddenDefector()
+  option_hiddenDefectors = true
+  return {}
+end
+function option_knowDefector()
+  option_knowDefectors = true
+  return {}
+end
+function option_knowDeep()
+  option_knowDeepAgent = true
+  return {}
+end
+function option_plotCards()
+  local data = {}
+  data["Deal Team"] = function(missionCount)
+    return missionCount
+  end
+  return data
+end
+
+option_hiddenDefectors = false
+option_knowDefectors = false
+option_knowDeepAgent = false
+
+function checkAllowedRoles(roles, resistance, spies, maxRoles, selectedRoles)
+  local maxRoles = (maxRoles or 10)
+  local selectedRoles = (selectedRoles or {})
+
+  local outRole = {}
+  local specialRoles = {}
+  for _,data in pairs(data_specialRoles) do
+    for _,role in pairs(data) do
+      table.insert(specialRoles, role)
+    end
+  end
+
+  for key,val in pairs(roles) do
+    local counts = countRoles(key)
+    if not table.contains(specialRoles, key) and counts["Spies"] + counts["Resistance"] <= maxRoles
+    and not table.contains(selectedRoles, key) and counts["Resistance"] <= resistance
+    and counts["Spies"] <= spies then
+      outRole[key] = val
+    elseif global_debug then
+      local output = "Removed " .. key .. " for "
+      if table.contains(specialRoles, key) then
+        output = output .. "being in Selected Special Roles"
+      elseif counts["Spies"] + counts["Resistance"] > maxRoles then
+        output = output .. "exceeding max Roles: " .. counts["Spies"] .. " + " .. counts["Resistance"] .. " > " .. maxRoles
+      elseif table.contains(selectedRoles, key) then
+        output = output .. "role already choosen"
+      elseif counts["Resistance"] > resistance then
+        output = output .. "too many resistance roles: " .. counts["Resistance"] .. " > " .. resistance
+      elseif counts["Spies"] > spies then
+        output = output .. "too many spy roles: " .. counts["Spies"] .. " > " .. spies
+      end
+      print(output)
+    end
+  end
+
+  return outRole
+end
+
+function addRoles(curRole, roles)
+  table.insert(roles, curRole)
+
+  if role_data[curRole]["Parent"] ~= nil then
+    if not table.contains(roles, role_data[curRole]["Parent"]) then
+      addRoles(role_data[curRole]["Parent"], roles)
+    end
+  end
+  if role_data[curRole]["Siblings"] ~= nil and role_data[curRole]["Random Siblings"] == nil then
+    for _,ro in pairs(role_data[curRole]["Siblings"]) do
+      if not table.contains(roles, ro) then
+        addRoles(ro, roles)
+      end
+    end
+  end
+  if role_data[curRole]["Random Siblings"] ~= nil then
+    for _,ro in pairs(role_data[curRole]["Random Siblings"]) do
+      if not table.contains(roles, ro) then
+        addRoles(ro, roles)
+      end
+    end
+  end
+end
+
+function countRoles(curRole, checkedRoles, prevRole)
+  local checkedRoles = (checkedRoles or {curRole})
+
+  local data = {["Resistance"] = 0, ["Spies"] = 0}
+  if curRole == "" then return data end
+  local role = role_data[curRole]
+
+  local prevRole = (prevRole or "base")
+
+  if global_debug then
+    print("     Added "..curRole.. " from " .. prevRole)
+    table.print(checkedRoles)
+  end
+
+  if role["Team"] == "Resistance" then
+    data["Resistance"] = data["Resistance"] + 1
+  elseif role["Team"] == "Spy" then
+    data["Spies"] = data["Spies"] + 1
+  elseif role["Team"] == "Neutral" then
+    data["Resistance"] = data["Resistance"] + 1
+    data["Spies"] = data["Spies"] + 1
+  end
+
+  if role["Double"] ~= nil and role["Double"] <= #data_playersInGame then
+    if role["Team"] == "Resistance" then
+      data["Resistance"] = data["Resistance"] + 1
+    elseif role["Team"] == "Spy" then
+      data["Spies"] = data["Spies"] + 1
+    elseif role["Team"] == "Neutral" then
+      data["Resistance"] = data["Resistance"] + 1
+      data["Spies"] = data["Spies"] + 1
+    end
+  end
+
+  if role["Parent"] ~= nil and role["Random Parent"] == nil then
+    if not table.contains(checkedRoles, role["Parent"]) then
+      table.insert(checkedRoles, role["Parent"])
+      local dat = countRoles(role["Parent"], checkedRoles, curRole)
+      data["Resistance"] = data["Resistance"] + dat["Resistance"]
+      data["Spies"] = data["Spies"] + dat["Spies"]
+    end
+  end
+  if role["Random Parent"] ~= nil then
+    if not table.contains(checkedRoles, role["Random Parent"]) then
+      table.insert(checkedRoles, role["Random Parent"])
+      local dat = countRoles(role["Random Parent"], checkedRoles, curRole)
+      data["Resistance"] = data["Resistance"] + dat["Resistance"]
+      data["Spies"] = data["Spies"] + dat["Spies"]
+    end
+  end
+  if role["Siblings"] ~= nil and role["Random Siblings"] == nil then
+    for _,ro in pairs(role["Siblings"]) do
+      if not table.contains(checkedRoles, ro) then
+        table.insert(checkedRoles, ro)
+        local dat = countRoles(ro, checkedRoles, curRole)
+        data["Resistance"] = data["Resistance"] + dat["Resistance"]
+        data["Spies"] = data["Spies"] + dat["Spies"]
+      end
+    end
+  end
+  if role["Random Siblings"] ~= nil then
+    for _,ro in pairs(role["Random Siblings"]) do
+      if not table.contains(checkedRoles, ro) then
+        table.insert(checkedRoles, ro)
+        local dat = countRoles(ro, checkedRoles, curRole)
+        data["Resistance"] = data["Resistance"] + dat["Resistance"]
+        data["Spies"] = data["Spies"] + dat["Spies"]
+      end
+    end
+  end
+
+  return data
+end
+
+option_blindMode = false
+
+function click_sendInfo(obj, player)
+  if player ~= data_currentLeader then return end
+
+  local count = data_optionData["Communication Silence"]["Allowed Info"]
+  local placard = getObjectFromGUID(ref_tokens["Played Board"])
+  count = count - 1
+  data_optionData["Communication Silence"]["Allowed Info"] = count
+
+  local data = {click_function = "nil_func", function_owner = self, label = "Transmissions Left: " .. count,
+  position = {0, 0, -2}, scale = {0.5, 0.5, 0.5}, width = 0, height = 0,
+  font_size = 400, color = {0.7573, 0.7573, 0.7573, 1}, font_color = {1, 1, 1, 1}}
+  placard.clearButtons()
+  placard.createButton(data)
+
+  data_showCards = true
+
+  startLuaCoroutine(Global, "calculate_missionResults")
+end
+
+function click_noInfo(obj, player)
+  if player ~= data_currentLeader then return end
+
+  local count = data_optionData["Communication Silence"]["Allowed Info"]
+  local placard = getObjectFromGUID(ref_tokens["Played Board"])
+  local data = {click_function = "nil_func", function_owner = self, label = "Transmissions Left: " .. count,
+  position = {0, 0, -2}, scale = {0.5, 0.5, 0.5}, width = 0, height = 0,
+  font_size = 400, color = {0.7573, 0.7573, 0.7573, 1}, font_color = {1, 1, 1, 1}}
+  placard.clearButtons()
+  placard.createButton(data)
+
+  data_showCards = false
+
+  for _,card in pairs(object_revealedMission) do
+    card.setScale({0,0,0})
+    card.translate({0,-0.5,0})
+  end
+
+  startLuaCoroutine(Global, "calculate_missionResults")
+end
+
+function nil_func() end

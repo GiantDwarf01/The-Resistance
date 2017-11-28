@@ -27,6 +27,10 @@ function role_Spy(color)
   data["Team"] = "Spy"
   data["Mission Cards"] = {"Success", "Fail"}
   data["Output"] = function()
+    if option_blindMode then
+      return ref_colorCodes.Spy .. "All the Spies are Blind!"
+    end
+
     local output = output_returnSpies(color, "Spy")
     local spies = helper_returnKnownSpies(color)
 
@@ -35,6 +39,8 @@ function role_Spy(color)
     else
       output = "\nYour fellow spies are " .. output
     end
+
+
 
     if data.Role ~= "Spy" then
       return ref_colorCodes.Spy .. "You are the " .. data.Role .. "!" .. output

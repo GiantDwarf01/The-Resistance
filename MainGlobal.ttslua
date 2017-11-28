@@ -302,6 +302,9 @@ function update_notebook()
             output = output .. " x" .. num
           end
         end
+        if #missionCards == 0 then
+          output = output .. " [000000]Mission Silence"
+        end
 
         local approve = team["Approve"]
         local reject = team["Reject"]
@@ -430,6 +433,16 @@ function onLoad(save_state)
   local data = {click_function = "startGame", function_owner = self, label = "Start Game",
   position = {0, 0.1, 1}, scale = {0.1, 0.1, 0.1}, width = 3500, height = 700, font_size = 700}
 
+  local s = {"d2c55f","d16a29","31b164","95a640","cb95a1","816875","ac9fcc","54ecf0","a786a7","7100e5","86e6a3","3e9346","3e8230"}
+  for _,g in pairs(s) do
+    getObjectFromGUID(g).setPosition({0,2,0})
+  end
+  local t = {"e731d8","e93fa6","785c46","7b6772","763935","1491c5","4d8bcb","d8d321"}
+  for _,g in pairs(t) do
+    getObjectFromGUID(g).setPosition({5,2,0})
+  end
+
+
   getObjectFromGUID('18eb21').createButton(data)
 end
 
@@ -452,9 +465,9 @@ function startGame(obj,player)
   -- Deal Role Cardsc
   setup_hiddenZones()
   setup_playBoard()
+  assignOptions()
   load_roles()
   assign_roles()
-  assignOptions()
   deal_roleCards()
   setup_roleCards()
 
@@ -712,8 +725,6 @@ function create_scrollOptions(caller, colors, funct)
   Global.setTable("table_savedData"..guid, savedWitness)
 end
 
-option_hiddenDefectors = false
-
 function deal_defectorCard()
   if data_defectorCards[data_completedMission] == nil then
     if data_defectorCards[data_completedMission - 1] ~= nil then
@@ -896,8 +907,6 @@ function activate_outbreak(obj, color)
     data_playerData[color]["Activate Mutate"] = toggle
   end
 end
-
-
 
 function clean_hands()
   for _,color in pairs(data_playersInGame) do

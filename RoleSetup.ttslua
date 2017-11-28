@@ -133,8 +133,14 @@ function find_playersByRole(roles, exception)
 end
 
 
--- Load random role pool
+-- Load role pool
 function load_roles()
+  for _,option in pairs(data_includedOptions) do
+    if data_optionData[option]["Load Roles"] ~= nil then
+      data_optionData[option]["Load Roles"]()
+    end
+  end
+
   local playerCount = #data_playersInGame
 
   local resistancePlayers = ref_resistanceCount[playerCount]
@@ -216,17 +222,28 @@ function assign_roles()
     local color = playersInGame[randomIndex]
 
     local oldRole = playerRoles[color]
+    local oldTeam = oldRole
+    if role_data[oldRole] ~= nil then
+      oldTeam = role_data[oldRole]["Team"]
+    end
+
     if ref_secondaryRestrictions[role] ~= nil then
-      while table.contains(ref_secondaryRestrictions[role], oldRole) do
+      local team = ref_secondaryRestrictions[role]["Team"] or "Null"
+
+      while table.contains(ref_secondaryRestrictions[role]["Roles"], oldRole) or team == oldTeam do
         randomIndex = randomIndex + 1
 
         if #playersInGame < randomIndex then randomIndex = 1 end
 
         color = playersInGame[randomIndex]
         oldRole = playerRoles[color]
+        oldTeam = oldRole
+        if role_data[oldRole] ~= nil then
+          oldTeam = role_data[oldRole]["Team"]
+        end
 
         if randomIndex == startIndex then
-          error("No available Amnesiac role")
+          error("No role compatable with " .. role)
         end
       end
     end
@@ -276,7 +293,7 @@ function deal_roleCards()
 
   startLuaCoroutine(Global, 'coroutine_setCardGUID')
 end
-
+-- Set card guids
 function coroutine_setCardGUID()
   local playerData = data_playerData
   local playerRoles = data_playerRoles

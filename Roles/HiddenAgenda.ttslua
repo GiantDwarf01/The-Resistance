@@ -41,11 +41,19 @@ function role_ResistanceDefector(color)
   data["Role"] = "Resistance Defector"
   data["Setup"] = function(color)
     local thisPlayer = data_playerData[color]
-    thisPlayer["DefectorCard"] = getObjectFromGUID(ref_roleCards["Spy Defector"][thisPlayer["CardIndex"]]).clone()
+    thisPlayer["DefectorCard"] = getObjectFromGUID(ref_roleCards["Spy Defector"][thisPlayer["CardIndex"]]).clone({position = {0,0,0}})
+    thisPlayer["DefectorCard"].setScale({0,0,0})
     data_playerData[color] = thisPlayer
   end
   data["Output"] = function()
-    return ref_colorCodes.Resistance .. "You are a Defector - you are currently allied with the Resistance!"
+    if option_knowDefectors then
+      local object = find_playersByRole({"Spy Defector"})
+      if table.size(object) == 1 then
+        return ref_colorCodes.Resistance .. "You are a Defector - you are currently allied with the Resistance! But your counterpart is " .. output_name(object["Spy Defector"])
+      end
+    else
+      return ref_colorCodes.Resistance .. "You are a Defector - you are currently allied with the Resistance!"
+    end
   end
   data["Deal Team"] = function(color)
     if data_completedMission > 2 then
@@ -137,11 +145,19 @@ function role_SpyDefector(color)
   data["Role"] = "Spy Defector"
   data["Setup"] = function(color)
     local thisPlayer = data_playerData[color]
-    thisPlayer["DefectorCard"] = getObjectFromGUID(ref_roleCards["Resistance Defector"][thisPlayer["CardIndex"]]).clone()
+    thisPlayer["DefectorCard"] = getObjectFromGUID(ref_roleCards["Resistance Defector"][thisPlayer["CardIndex"]]).clone({position = {0,0,0}})
+    thisPlayer["DefectorCard"].setScale({0,0,0})
     data_playerData[color] = thisPlayer
   end
   data["Output"] = function()
-    return ref_colorCodes.Spy .. "You are a Defector - you are currently allied with the Spies!"
+    if option_knowDefectors then
+      local object = find_playersByRole({"Resistance Defector"})
+      if table.size(object) == 1 then
+        return ref_colorCodes.Spy .. "You are a Defector - you are currently allied with the Spies! But your counterpart is " .. output_name(object["Resistance Defector"])
+      end
+    else
+      return ref_colorCodes.Spy .. "You are a Defector - you are currently allied with the Spies!"
+    end
   end
   return data
 end

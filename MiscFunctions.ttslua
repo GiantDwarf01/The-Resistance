@@ -111,6 +111,16 @@ function table.removeSingle(list, ...)
 
   return foundItems
 end
+-- Remove by key
+function table.removeKey(list, key)
+  local data = {}
+  for k,v in pairs(list) do
+    if k ~= key then
+      data[k] = v
+    end
+  end
+  return data
+end
 -- Prints tables
 function table.print(inTable, indent)
   if not indent then indent = 1 end
@@ -142,6 +152,19 @@ function table.copy(original)
     end
     return copy
 end
+-- Select random table element
+function table.random(tbl)
+  local size = table.size(tbl)
+  local random = math.random(size)
+
+  local i = 1
+  for k,v in pairs(tbl) do
+    if i == random then
+      return {key = k, value = v}
+    end
+    i = i + 1
+  end
+end
 
 
 -- [[ Object Management Functions ]] --
@@ -171,6 +194,29 @@ function getObjectsAtPosition(pos, ...)
       return foundItems
     end
 end
+--Finds objects in radius of a position, accepts optional filtering function
+--Only pos is required, the others are optional
+--Example func: function(o) return o.tag=="Deck" or o.tag=="Card" end
+function findInRadiusBy(pos, radius, func, debug)
+    local radius = (radius or 1)
+    local objList = Physics.cast({
+        origin=pos, direction={0,1,0}, type=2, size={radius,radius,radius},
+        max_distance=0, debug=(debug or false)
+    })
+
+    local refinedList = {}
+    for _, obj in ipairs(objList) do
+        if func == nil then
+            table.insert(refinedList, obj.hit_object)
+        else
+            if func(obj.hit_object) then
+                table.insert(refinedList, obj.hit_object)
+            end
+        end
+    end
+
+    return refinedList
+end
 -- Removes objects that match exeception GUIDs from table
 function objectListException(list, ...)
   local foundItems = {}
@@ -181,4 +227,110 @@ function objectListException(list, ...)
     end
   end
   return foundItems
+end
+
+
+
+function createScrolling(object, id, base, add_pos, sub_pos, values, labels, global_var, startIndex)
+  local id = (id or object.getGUID())
+  local pos = (base.position or {0,0,0})
+  local width = (base.width or 2000)
+  local height = (base.height or base.font_size or 400)
+  local font_size = (base.font_size or base.height or 400)
+  local scale = (base.scale or {0.5,0.5,0.5})
+  local color = (base.color or {1,1,1})
+  local labels = (labels or values)
+  local startIndex = (startIndex or 1)
+
+  local add_pos = (add_pos or {pos[1]+1,pos[2],pos[3]})
+
+  local sub_pos = (sub_pos or {pos[1]-1,pos[2],pos[3]})
+  local data = {}
+
+  local savedTable = {
+    selectIndex = startIndex,
+    currentValue = values[startIndex],
+    val = values,
+    lbl = labels,
+    buttonIndex = #object.getButtons(),
+  }
+  Global.setTable("scroll_track"..id, savedTable)
+
+  object.createButton({
+    click_function = "nil_func",
+    function_owner = Global,
+    label          = labels[savedTable.currentValue],
+    position       = pos,
+    scale          = scale,
+    width          = width,
+    height         = height,
+    font_size      = font_size,
+    color          = color,
+  })
+
+  object.createButton({
+    click_function = "add_value"..id,
+    function_owner = Global,
+    label          = ">",
+    position       = add_pos,
+    scale          = scale,
+    width          = height,
+    height         = height,
+    font_size      = height,
+    color          = color,
+  })
+  object.createButton({
+    click_function = "sub_value"..id,
+    function_owner = Global,
+    label          = "<",
+    position       = sub_pos,
+    scale          = scale,
+    width          = height,
+    height         = height,
+    font_size      = height,
+    color          = color,
+  })
+
+  local addFunctName = "add_value"..id
+  local addFunct = function(obj, player)
+    local tbl = Global.getTable("scroll_track"..id)
+    tbl.selectIndex = tbl.selectIndex + 1
+    if tbl.selectIndex > #tbl.val then
+      tbl.selectIndex = 1
+    end
+
+    tbl.currentValue = tbl.val[tbl.selectIndex]
+    Global.setVar(global_var, tbl.currentValue)
+
+    obj.editButton({
+      index = tbl.buttonIndex,
+      label = tbl.lbl[tbl.currentValue],
+    })
+
+    Global.setTable("scroll_track"..id, tbl)
+  end
+  Global.setVar(addFunctName, addFunct)
+
+
+  local subFunctName = "sub_value"..id
+  local subFunct = function(obj, player)
+    local tbl = Global.getTable("scroll_track"..id)
+    tbl.selectIndex = tbl.selectIndex - 1
+    if tbl.selectIndex < 1 then
+      tbl.selectIndex = #tbl.val
+    end
+
+    tbl.currentValue = tbl.val[tbl.selectIndex]
+    Global.setVar(global_var, tbl.currentValue)
+
+    obj.editButton({
+      index = tbl.buttonIndex,
+      label = tbl.lbl[tbl.currentValue],
+    })
+
+    Global.setTable("scroll_track"..id, tbl)
+  end
+  Global.setVar(subFunctName, subFunct)
+
+  Global.setVar(global_var, savedTable.currentValue)
 end

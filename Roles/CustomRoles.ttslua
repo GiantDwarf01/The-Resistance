@@ -638,7 +638,7 @@ function role_SpyASI(color)
   return data
 end
 function role_SpySCPAgent(color)
-  local data = role_Resistance(color)
+  local data = role_Spy(color)
   data["Role"] = "SCP Agent"
   data["Mission Cards"] = {"Success", "Fail"}
 
@@ -671,7 +671,6 @@ function role_SpySCPAgent(color)
       end
     end
   end
-
 
   data["End Game"] = {
     priority = 1,
@@ -936,6 +935,26 @@ function role_NeutralSCPAgent(color)
 
   return data
 end
+function role_Psionic(color)
+  local data = role_Resistance(color)
+  data["Team"] = "Spy"
+  data["Role"] = "Psionic"
+  data["Output"] = function()
+    return ref_colorCodes.Resistance .. "You are a member of the Resistance!"
+  end
+
+  data["Mission Cards"] = {"Success"}
+
+  data["Mission Results"] = function(color)
+    if object_revealedMission[color] ~= nil then
+      replace_card(color, object_revealedMission[color], "Fail", "calculate_missionResults", "object_revealedMission")
+    end
+  end
+
+  return data
+end
+
+
 
 function role_failedClone(color, team)
   local data = {}
@@ -993,5 +1012,6 @@ function click_ASISpy(obj, player)
 end
 
 ref_secondaryRestrictions = {
-  ["Amnesiac"] = { "Mayor","Politician","Deep Agent","Spy Hunter","Hacker","Corruptor","Resistance Defector","Spy Defector","ASI" }
+  ["Amnesiac"] = { ["Roles"] = {"Mayor","Pdlitician","Deep Agent","Spy Hunter","Hacker","Corruptor","Resistance Defector","Spy Defector","ASI","SCP Agent"} },
+  ["Psionic"] = { ["Team"] = "Resistance", ["Roles"] = {"Politician","Deep Agent","Corruptor","Spy Defector", "ASI", "SCP Agent"}}
 }
