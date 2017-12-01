@@ -433,24 +433,19 @@ function onLoad(save_state)
   local data = {click_function = "startGame", function_owner = self, label = "Start Game",
   position = {0, 0.1, 1}, scale = {0.1, 0.1, 0.1}, width = 3500, height = 700, font_size = 700}
 
-  local s = {"d2c55f","d16a29","31b164","95a640","cb95a1","816875","ac9fcc","54ecf0","a786a7","7100e5","86e6a3","3e9346","3e8230"}
-  for _,g in pairs(s) do
-    getObjectFromGUID(g).setPosition({0,2,0})
-  end
-  local t = {"e731d8","e93fa6","785c46","7b6772","763935","1491c5","4d8bcb","d8d321"}
-  for _,g in pairs(t) do
-    getObjectFromGUID(g).setPosition({5,2,0})
-  end
-
-
   getObjectFromGUID('18eb21').createButton(data)
 end
 
 function startGame(obj,player)
   if not Player[player].admin then return end
   data_playersInGame = {}
+
+  playersNotInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
+
   for _,color in pairs(getSeatedPlayers()) do
     table.insert(data_playersInGame, color)
+    playersNotInGame = table.removeItems(playersNotInGame, color)
+    Player[color].team = "None"
   end
 
   data_playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
@@ -458,6 +453,12 @@ function startGame(obj,player)
   if #data_playersInGame < 5 then
     broadcastToAll("Must have at least 5 players", {1,0,0})
     return
+  end
+
+  for _,color in pairs(playersNotInGame) do
+    local obj = getObjectFromGUID(ref_playerBoards[color])
+    --obj.setPosition({0,-0.5,0})
+    --obj.setScale({0,0,0})
   end
 
   set_leaderToken()
@@ -469,7 +470,7 @@ function startGame(obj,player)
   load_roles()
   assign_roles()
   deal_roleCards()
-  setup_roleCards()
+  hide_roleCards()
 
   Timer.create({
     identifier     = "Timer name of EPICNESS",
@@ -805,7 +806,6 @@ function assignOptions()
   local optionData = data_optionData
 
   for _,option in pairs(data_includedOptions) do
-    print(option)
     optionData[option] = ref_options[option]()
   end
 
@@ -815,7 +815,7 @@ end
 -- [[ Grouped Functions ]] --
 -- All functions for the inital set up of the game
 function setup_functionCall()
-  --setup_roleCards()
+  setup_roleCards()
   setup_lockObjects()
   create_selectButtons()
 end
@@ -1071,22 +1071,48 @@ function setup_roleCards()
   for role, cards in pairs(roleCards) do
     for index, card in pairs(cards) do
       local obj = getObjectFromGUID(card)
+      if obj.getPosition().y > 1 or obj.getPosition().y < 0.5 then
+        obj.setLock(true)
+        obj.setRotation({0,0,0})
+        obj.clearButtons()
+        obj.highlightOff()
+        if global_debug then
+          obj.interactable = true
+          obj.setScale({1,1,1})
+          obj.setPosition({xPos,1,zPos})
+        else
+          obj.interactable = false
+          obj.setScale({0,0,0})
+          obj.setPosition({0,0,0})
+        end
+
+        xPos = xPos + spacing
+
+        if xPos == 18 then
+          xPos = -18
+          zPos = zPos + spacing
+        end
+      end
+    end
+  end
+end
+function hide_roleCards()
+  for role, cards in pairs(ref_roleCards) do
+    for index, card in pairs(cards) do
+      local obj = getObjectFromGUID(card)
       obj.setLock(true)
-      obj.setPosition({xPos,-1,zPos})
-      obj.setScale({1,1,1})
       obj.setRotation({0,0,0})
       obj.clearButtons()
       obj.highlightOff()
       obj.interactable = false
-
-      xPos = xPos + spacing
-
-      if xPos == 18 then
-        xPos = -18
-        zPos = zPos + spacing
-      end
+      obj.setScale({0,0,0})
+      obj.setPosition({0,0,0})
     end
   end
+
+  local back = getObjectFromGUID('9f109a')
+  back.setPosition({0,-0.5,0})
+  back.setScale({0,0,0})
 end
 -- Sets up gameboard
 function setup_playBoard()

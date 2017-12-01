@@ -28,13 +28,7 @@ function set_leaderToken()
   token.setScale({1.07,1,1.07})
 end
 
-ref_roundMarkerPosition = {
-  {-11.03, 1.29, -3.40},
-  {-4.33, 1.29, -3.40},
-  {2.34, 1.29, -3.40},
-  {8.98, 1.29, -3.40},
-  {15.66, 1.29, -3.40}
-}
+
 
 -- Set mission token
 function set_roundMarker()
@@ -71,13 +65,17 @@ function deal_teamTokens(skipLeader)
 
   data_gamePhase = "Team Building"
 
+  print("Derp")
+
   local missionMembers = ref_missionCount[#data_playersInGame][data_currentMission]
+  print("Derp1")
 
   for _,option in pairs(data_includedOptions) do
     if data_optionData[option]["Deal Team"] ~= nil then
       missionMembers = data_optionData[option]["Deal Team"](missionMembers)
     end
   end
+  print("Derp2")
 
   for color,data in pairs(data_playerData) do
     if data["Deal Team"] ~= nil then
@@ -85,9 +83,11 @@ function deal_teamTokens(skipLeader)
     end
   end
 
+  print("Derp3")
 
   local tokenPosition = ref_tokenPosition[missionMembers]
   local cards = ref_cardGuids["Team Token"]
+  print("Derp4")
 
   for _, pos in pairs(tokenPosition) do
     local gottenCard = getObjectFromGUID(cards[math.random(#cards)])
@@ -99,6 +99,7 @@ function deal_teamTokens(skipLeader)
 
     table.insert(object_teamCards, card)
   end
+  print("Derp5")
 
   data_missionCount = missionMembers
 end

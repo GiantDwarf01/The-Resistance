@@ -231,7 +231,7 @@ end
 
 
 
-function createScrolling(object, id, base, add_pos, sub_pos, values, labels, global_var, startIndex)
+function createScrolling(object, id, base, add_pos, sub_pos, values, labels, global_var)
   local id = (id or object.getGUID())
   local pos = (base.position or {0,0,0})
   local width = (base.width or 2000)
@@ -246,10 +246,16 @@ function createScrolling(object, id, base, add_pos, sub_pos, values, labels, glo
 
   local sub_pos = (sub_pos or {pos[1]-1,pos[2],pos[3]})
   local data = {}
+  local curVal = Global.getVar(global_var)
+
+  local startIndex = 1
+  for ind,val in pairs(values) do
+    if val == curVal then startIndex = ind end
+  end
 
   local savedTable = {
     selectIndex = startIndex,
-    currentValue = values[startIndex],
+    currentValue = curVal,
     val = values,
     lbl = labels,
     buttonIndex = #object.getButtons(),

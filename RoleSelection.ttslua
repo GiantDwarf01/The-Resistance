@@ -208,7 +208,6 @@ role_data = {
 role_options = {
   ["Psionic Corruption"] = {["Option"] = "Psionic", ["Type"]="Role", ["Info"] = "One Spy will be told they are part of the Resistance, but any success they play will become a fail", ["click_function"] = "click_psionic"},
   ["Random Roles"] = {["Option"] = "Random Roles", ["Type"]="Option", ["Info"] = "Roles will be randomly selected", ["click_function"] = "click_randomRoles", ["Extra Clicks"] = {"show_randomButtons"}},
-
 }
 
 function create_selectButtons()
@@ -322,8 +321,7 @@ function click_roleOption()
 
           if role_options[name]["Extra Clicks"] ~= nil then
             for _,ext in pairs(role_options[name]["Extra Clicks"]) do
-              print(ext)
-              Global.call("show_randomButtons", {})
+              Global.call(ext, {})
             end
           end
           update_roleNotes()
@@ -358,31 +356,71 @@ function click_roleOption()
   end
 end
 
+
+random_optionSelected = false
 function show_ExtraOptions(obj, play)
-  local base = {
-    position = {0,0,2.60},
-    width = 1500,
-  }
+  if random_optionSelected then
+    random_optionSelected = false
+    obj.editButton({ index = buttonIndex_extraRandom["Toggle"], label = ">" })
 
-  local values = { 0,1,2,3,4,5,6,7,8,9,10 }
-  local labels = {[0] = "Min: 0","Min: 1","Min: 2","Min: 3","Min: 4","Min: 5","Min: 6","Min: 7","Min: 8","Min: 9","Min: 10"}
-  createScrolling(getObjectFromGUID('f8f9bb'), "RandomMin", base, nil,nil, values, labels, "data_randomMin", 8)
+    obj.removeButton(buttonIndex_extraRandom["Add 1"])
+    obj.removeButton(buttonIndex_extraRandom["Add 2"])
+    obj.removeButton(buttonIndex_extraRandom["Add 3"])
+    obj.removeButton(buttonIndex_extraRandom["Sub 1"])
+    obj.removeButton(buttonIndex_extraRandom["Sub 2"])
+    obj.removeButton(buttonIndex_extraRandom["Sub 3"])
+    obj.removeButton(buttonIndex_extraRandom["Show Roles"])
 
-  local baseX = {
-    position = {0,0,3.60},
-    width = 1500,
-  }
+  else
+    random_optionSelected = true
+    obj.editButton({ index = buttonIndex_extraRandom["Toggle"], label = "<" })
 
-  local valuesX = { 1,2,3,4,5,6,7,8,9,10 }
-  local labelsX = {"Max: 1","Max: 2","Max: 3","Max: 4","Max: 5","Max: 6","Max: 7","Max: 8","Max: 9","Max: 10"}
-  createScrolling(getObjectFromGUID('f8f9bb'), "RandomMax", baseX, nil,nil, valuesX, labelsX, "data_randomMax", 10)
+    local base = { position = {4, 0, 2}, width = 1500, }
+    local values = { 0,1,2,3,4,5,6,7,8,9,10 }
+    local labels = {[0] = "Min: 0","Min: 1","Min: 2","Min: 3","Min: 4","Min: 5","Min: 6","Min: 7","Min: 8","Min: 9","Min: 10"}
+    createScrolling(getObjectFromGUID('f8f9bb'), "RandomMin", base, nil,nil, values, labels, "data_randomMin", 8)
+    buttonIndex_extraRandom["Add 1"] = #obj.getButtons() - 1
+    buttonIndex_extraRandom["Add 2"] = #obj.getButtons() - 2
+    buttonIndex_extraRandom["Add 3"] = #obj.getButtons() - 3
+
+    local baseX = { position = {6.5, 0, 2}, width = 1500, }
+    local valuesX = { 1,2,3,4,5,6,7,8,9,10 }
+    local labelsX = {"Max: 1","Max: 2","Max: 3","Max: 4","Max: 5","Max: 6","Max: 7","Max: 8","Max: 9","Max: 10"}
+    createScrolling(getObjectFromGUID('f8f9bb'), "RandomMax", baseX, nil,nil, valuesX, labelsX, "data_randomMax", 10)
+    buttonIndex_extraRandom["Sub 1"] = #obj.getButtons() - 1
+    buttonIndex_extraRandom["Sub 2"] = #obj.getButtons() - 2
+    buttonIndex_extraRandom["Sub 3"] = #obj.getButtons() - 3
+
+    local clickData = {click_function = "click_showRoles", function_owner = self, label = "Show Roles",
+    position = {5.25, 0, 1.4}, scale = {0.5, 0.5, 0.5}, width = 3300, height = 400, font_size = 400, color = {1,0,0,10}}
+    getObjectFromGUID('f8f9bb').createButton(clickData)
+    buttonIndex_extraRandom["Show Roles"] = #obj.getButtons() - 1
+  end
 end
 
+function click_showRoles(obj,play)
+  if option_showRandomRoles then
+    option_showRandomRoles = false
+    obj.editButton({
+      index          = buttonIndex_extraRandom["Show Roles"],
+      color          = {1,0,0,10},
+    })
+  else
+    option_showRandomRoles = true
+    obj.editButton({
+      index          = buttonIndex_extraRandom["Show Roles"],
+      color          = {0.192, 0.701, 0.168, 10},
+    })
+  end
+end
+
+buttonIndex_extraRandom = {}
 function show_randomButtons()
   local extraData = {click_function = "show_ExtraOptions", function_owner = self, label = ">",
   position = {2.1, 0, 1.6}, scale = {0.5, 0.5, 0.5}, width = 400, height = 400, font_size = 400}
 
   getObjectFromGUID('f8f9bb').createButton(extraData)
+  buttonIndex_extraRandom["Toggle"] = #getObjectFromGUID('f8f9bb').getButtons() - 1
 end
 data_randomMin = 7
 data_randomMax = 10

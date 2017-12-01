@@ -48,13 +48,10 @@ function repeating_investigateCheck(winner)
           end
         else
           if data_playerData[color].Role == "Resistance Chief" or data_playerData[color].Role == "Dummy Agent" then
-            --print(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!")
             broadcastToColor(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!", player, {1,1,0})
           elseif data_playerData[color].Role == "Spy Chief" then
-            --print(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!")
             broadcastToColor(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!", player, {1,1,1})
           else
-          --  print(output_name(color) .. "[ffffff] is not a Chief!")
             broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
           end
         end

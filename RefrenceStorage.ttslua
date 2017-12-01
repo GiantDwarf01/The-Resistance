@@ -20,7 +20,8 @@ ref_options = {
   ["Random Roles"] = option_randomRoles,
   ["Hidden Defectors"] = option_hiddenDefector,
   ["Know Defectors"] = option_knowDefector,
-  ["Know Deep Agent"] = option_knowDeep
+  ["Know Deep Agent"] = option_knowDeep,
+  ["Plot Cards"] = option_plotCards,
 }
 -- Role constructors
 ref_roles = {
@@ -110,14 +111,13 @@ ref_colorCodes = {
 }
 --Images for game board based on number of players
 ref_boardImages = {
-  "http://cloud-3.steamusercontent.com/ugc/199680345447735908/2295EACF80880645846EB7BC94261E379EDFFA92/",
-  "http://cloud-3.steamusercontent.com/ugc/199680345447740343/EABAD3756E48718934DE9768F803540A292AA69F/",
-  "http://cloud-3.steamusercontent.com/ugc/199680345447733451/D921C48D42A713B7943760D3B7F6E0ECAFB4A494/",
-  "http://cloud-3.steamusercontent.com/ugc/199680345447742133/161AE6555434E86E773CA6908917A3DA52F77612/",
-  "http://cloud-3.steamusercontent.com/ugc/199680345447743743/65E73A00F64D6675A489783684A046BD46D6DBF4/",
-  "http://cloud-3.steamusercontent.com/ugc/199680345447736868/2FF9916E7AC14AEA72D710F55C71D22D43A95D65/"
+  "http://cloud-3.steamusercontent.com/ugc/877501262317497712/8B9E25DC24FAE7FECCA3379B721D16A1522F28E3/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317503230/F5515CEA6923DAF1AE87CCF63AE6AABCFDAC52F2/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317505110/E33AF2D4680447691DBD3C197EE1A3183E3A0A80/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317505512/6063C51383D20B16C6BEC7B33558D8DB6CA93600/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317506162/E08E0FF6C93B52EC64AC40689CBE5D6B834648E9/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317506716/DA4FE3225D89998855EBC74801D3A71ECDF9607D/"
 }
-
 
 
 -- [ GUIDs ] --
@@ -268,7 +268,9 @@ ref_winMessages = {
 -- Positions on player board based on slots
 ref_boardPosition = { ["Team"] = {-0.19,0.15,0}, ["Leader"] = {2.4,0.15,0}, ["Hand"] = {0,0.5,5.5}, ["Vote"] = {-2.42, 0.15, 0.00} }
 -- Position for vote track token per downvotes
-ref_voteTrackPosition = { {-13.95,1.3,-9.31}, {-8.8,1.3,-9.1}, {-4.1,1.3,-9.1}, {1,1.3,-9.1}, {5.9,1.3,-9.1} }
+ref_voteTrackPosition = { {-13.1,1.3,-8.75}, {-8.5,1.3,-8.75}, {-3.9,1.3,-8.75}, {0.75,1.3,-8.75}, {5.4,1.3,-8.75} }
+-- Position for round marker
+ref_roundMarkerPosition = { {-10.50, 1.30, -3.00}, {-4.20, 1.30, -3.00}, {2.10, 1.30, -3.00}, {8.40, 1.30, -3.00}, {14.60, 1.30, -3.00} }
 -- Team token positions based on mission count
 ref_tokenPosition = {
   [2] = {{-5, 1.32, 8}, {5, 1.32, 8}},
@@ -291,4 +293,4 @@ ref_extraTokensPosition = {
   [2] = {{-4.75, 1, 15},{4.75, 1, 15}}
 }
 -- Mission victory token position
-ref_victoryPosition = { {-13.6, 1.3, -0.7}, {-6.95, 1.3, -0.7}, {-0.2, 1.3, -0.7}, {6.45, 1.3, -0.7}, {13.15, 1.3, -0.7} }
+ref_victoryPosition = { {-13, 1.3, -0.76}, {-6.6, 1.3, -0.6}, {-0.3, 1.3, -0.6}, {6, 1.3, -0.6}, {12.2, 1.3, -0.6} }

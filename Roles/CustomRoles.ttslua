@@ -948,6 +948,8 @@ function role_Psionic(color)
   data["Mission Results"] = function(color)
     if object_revealedMission[color] ~= nil then
       replace_card(color, object_revealedMission[color], "Fail", "calculate_missionResults", "object_revealedMission")
+    else
+      startLuaCoroutine(Global, 'calculate_missionResults')
     end
   end
 

@@ -123,7 +123,6 @@ function reveal_missionCards(deck)
   end
 
   data_gamePhase = "Revealing Mission"
-
   startLuaCoroutine(Global, 'calculate_missionResults')
 end
 
@@ -133,6 +132,7 @@ data_showCards = true
 function calculate_missionResults()
   data_gamePhase = "Calculating Mission"
   local playerData = data_playerData
+
   for _,color in pairs(data_playersInGame) do
     if playerData[color]["Mission Results"] ~= nil and not table.contains(data_missionResultFunctions, color) then
       table.insert(data_missionResultFunctions, color)

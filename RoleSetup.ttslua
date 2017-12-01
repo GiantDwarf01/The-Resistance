@@ -287,7 +287,10 @@ function deal_roleCards()
     local output = playerData[color].Output()
     playerData[color]["Saved Output"] = output
 
-    print(color .. ": " .. output)
+    if global_debug then
+      print(color .. ": " .. output)
+    end
+
     printToColor(output, color, {1,1,1})
   end
 

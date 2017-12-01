@@ -15,6 +15,12 @@ function deal_voteCards()
     end
   end
 
+  for _,option in pairs(data_includedOptions) do
+    if data_optionData[option]["Deal Votes"] ~= nil then
+      data_optionData[option]["Deal Votes"]()
+    end
+  end
+
   for index,color in pairs(data_playersInGame) do
     local boardGUID = ref_playerBoards[color]
     local board = getObjectFromGUID(ref_playerBoards[color])
@@ -113,8 +119,6 @@ function calculate_votes()
     place_votes(color, vote)
   end
 
-  print("Revealed Vote")
-
   for color, vote in pairs(data_playerVotes) do
     if vote.getName() == "Approve" then
       calculations.approves = calculations.approves + 1
@@ -125,15 +129,11 @@ function calculate_votes()
     end
   end
 
-  print("Added Votes")
-
   for color,data in pairs(data_playerData) do
     if data["Calculate Votes"] ~= nil then
       calculations = data["Calculate Votes"](color, calculations)
     end
   end
-
-  print("Unique Votes")
 
   clean_hands()
 
@@ -145,7 +145,6 @@ function calculate_votes()
   end
 
   if calculations.approves > calculations.rejects then
-    print("Votes approved")
 
     -- Check if mission has been attempted and try again if it has
     local i = 0
@@ -168,7 +167,6 @@ function calculate_votes()
 
     deal_missionCards()
   else
-    print("Votes rejected")
 
     if data_record[mission]["Vote " .. data_downvotes] == nil then
       data_record[mission]["Vote " .. data_downvotes] = {}

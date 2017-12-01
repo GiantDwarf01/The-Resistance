@@ -318,7 +318,6 @@ function option_randomRoles()
     local maxSpies = totalPlayers - maxResistance
 
     local maxRoles = math.random(data_randomMin, data_randomMax)
-    print(maxRoles)
 
     allowedRoles = table.removeKey(allowedRoles, "Amnesiac")
     allowedRoles = checkAllowedRoles(allowedRoles,maxResistance,maxSpies,maxRoles)
@@ -349,6 +348,7 @@ function option_randomRoles()
     if not table.contains(data_specialRoles.secondary, "Amnesiac") and math.random(100) >= 85 then table.insert(selectedRoles, "Amnesiac") end
     if not table.contains(data_specialRoles.secondary, "Psionic") and math.random(100) >= 90 then table.insert(selectedRoles, "Psionic") end
 
+    local outTeams = {resistance = {}, spies = {}, neutral = {}, secondary = {}}
     data_specialRoles = { resistance = {}, spies = {}, neutral = {}, secondary = {} }
     for _,role in pairs(selectedRoles) do
       if role_data[role]["Team"] == "Resistance" then
@@ -356,14 +356,18 @@ function option_randomRoles()
           table.insert(data_specialRoles.resistance, role)
           if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
             table.insert(data_specialRoles.resistance, role)
+            table.insert(outTeams.resistance, role)
           end
+          table.insert(outTeams.resistance, role)
         end
       elseif role_data[role]["Team"] == "Spy" then
         if not table.contains(data_specialRoles.spies, role) then
           table.insert(data_specialRoles.spies, role)
           if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
             table.insert(data_specialRoles.spies, role)
+            table.insert(outTeams.spies, role)
           end
+          table.insert(outTeams.spies, role)
         end
       elseif role_data[role]["Team"] == "Neutral" then
         if role_data[role]["Add"] ~= nil then
@@ -384,12 +388,14 @@ function option_randomRoles()
               end
             end
           end
+          table.insert(outTeams.neutral, role)
         else
           if not table.contains(data_specialRoles.neutral, role) then
             table.insert(data_specialRoles.neutral, role)
             if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
               table.insert(data_specialRoles.neutral, role)
             end
+            table.insert(outTeams.neutral, role)
           end
         end
       else
@@ -398,8 +404,48 @@ function option_randomRoles()
           if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
             table.insert(data_specialRoles.secondary, role)
           end
+          table.insert(outTeams.secondary, role)
+
         end
       end
+    end
+
+    local resout = "[u][00aaFF]Resistance Roles[/u]"
+    for _,rol in pairs(outTeams.resistance) do
+      resout = resout .. "\n ◆ "..rol
+    end
+
+    local spyout = "[u][BB0000]Spy Roles[/u]"
+    for _,rol in pairs(outTeams.spies) do
+      spyout = spyout .. "\n [bb0000]◆ "..rol
+    end
+
+    local neuout = "[u][FFFF00]Neutral Roles[/u]"
+    for _,rol in pairs(outTeams.neutral) do
+      neuout = neuout .. "\n [ffff00]◆ "..rol
+    end
+
+    local secout = "[u][FFFF00]Secondary Roles[/u]"
+    for _,rol in pairs(outTeams.secondary) do
+      secout = secout .. "\n [ffff00]◆ "..rol
+    end
+
+    local out = ""
+    if resout ~= "[u][00aaFF]Resistance Roles[/u]" then
+      out = resout
+    end
+    if spyout ~= "[u][BB0000]Spy Roles[/u]" then
+      out = out .. "\n" .. spyout
+    end
+    if neuout ~= "[u][FFFF00]Neutral Roles[/u]" then
+      out = out .. "\n" .. neuout
+    end
+    if secout ~= "[u][FFFF00]Secondary Roles[/u]" then
+      out = out .. "\n" .. secout
+    end
+
+    if out ~= "" and option_showRandomRoles then
+      printToAll(out, {1,1,1})
     end
   end
   return data
@@ -418,11 +464,79 @@ function option_knowDeep()
 end
 function option_plotCards()
   local data = {}
-  data["Deal Team"] = function(missionCount)
-    return missionCount
+
+  local playersInGame = data_playersInGame
+  for index, color in pairs(playersInGame) do
+    local playerHand = Player[color].getPlayerHand()
+    local card = getObjectFromGUID(ref_plotCardPlacardGUIDs[color])
+
+    local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 16, 1.1, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 16}
+    local rot = {playerHand['rot_x'], playerHand['rot_y'] + 180, 0}
+    card.setPosition(pos)
+    card.setRotation(rot)
+    card.setScale({2.30, 1.00, 2.30})
   end
+
+  data["Cards"] = {}
+  data["Setup Team"] = function()
+    local plotData = ref_plotCardDeck[#data_playersInGame]
+    local deck = getObjectFromGUID(plotData.Deck)
+    deck.shuffle()
+
+    for i=1,plotData.Cards do
+      local leaderBoard = getObjectFromGUID(ref_playerBoards[data_currentLeader])
+      local card = deck.takeObject({ position = leaderBoard.positionToWorld(ref_plotCardDealPos[i]) })
+      card.setRotation(leaderBoard.getRotation())
+      data["Cards"][card.getGUID()] = "null"
+    end
+
+    broadcastToColor("Hand out Plot Cards", data_currentLeader, {1,1,0})
+
+    data_gamePhase = "Check Plot Cards"
+  end
+
   return data
 end
+
+function check_dealtPlotCards()
+  
+end
+
+ref_plotCardResponse = {
+  ["Strong Leader"] = function(card, color)
+    local funcName = "click_strongLeader"..card.getGUID()
+    local func = function() return end
+    Global.setVar(funcName, func)
+    local data = {click_function = funcName, function_owner = self, label = "Become Leader",
+    position = {0, 0, 1.9}, scale = {0.25, 0.5, 0.5}, width = 2700, height = 400, font_size = 400}
+    card.createButton(data)
+  end,
+  ["In the Spotlight"] = function() return end,
+  ["In the Spotlight"] = function() return end,
+  ["In the Spotlight"] = function() return end,
+  ["In the Spotlight"] = function() return end,
+  ["In the Spotlight"] = function() return end,
+}
+
+ref_plotCardPlacardGUIDs = {
+  ["White"]   = "18a267", ["Brown"]   = "e2083c",
+  ["Red"]     = "f2ea78", ["Orange"]  = "3bc006",
+  ["Yellow"]  = "6e9f40", ["Green"]   = "87dd60",
+  ["Teal"]    = "87dd25", ["Blue"]    = "059e1d",
+  ["Purple"]  = "aa7e2e", ["Pink"]    = "8845c2",
+}
+ref_plotCardDealPos = { {0,0,-3.7}, {2,0,-3.7}, {-2,0,-3.7} }
+ref_plotCardPlacard = { {0,0,0},{-2.09,0,0},{2.09,0,0},{-1.04,0,0},{1.04,0,0} }
+
+
+ref_plotCardDeck = {
+  [5] = {["Deck"] = "e152a6", ["Cards"] = 1},
+  [6] = {["Deck"] = "e152a6", ["Cards"] = 1},
+  [7] = {["Deck"] = "e152a6", ["Cards"] = 2},
+  [8] = {["Deck"] = "e152a6", ["Cards"] = 2},
+  [9] = {["Deck"] = "e152a6", ["Cards"] = 3},
+  [10] = {["Deck"] = "e152a6", ["Cards"] = 3}
+}
 
 option_hiddenDefectors = false
 option_knowDefectors = false
@@ -459,7 +573,6 @@ function checkAllowedRoles(roles, resistance, spies, maxRoles, selectedRoles)
       elseif counts["Spies"] > spies then
         output = output .. "too many spy roles: " .. counts["Spies"] .. " > " .. spies
       end
-      print(output)
     end
   end
 
