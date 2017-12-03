@@ -663,7 +663,7 @@ function toggle_role(role, force)
         end
       end
 
-      if role_data[role]["Option"] ~= nil then
+      if not randomRoles and role_data[role]["Option"] ~= nil then
         if not table.contains(data_includedOptions, role_data[role]["Option"]) then
           table.insert(data_includedOptions, role_data[role]["Option"])
         end
@@ -817,7 +817,7 @@ function update_roleNotes()
     optOutput = optOutput .. "\n◆" .. opt
   end
   if optOutput ~= "" then
-    optOutput = "\n\n╔════════════╗\n◆ Active Options ◆   \n╚════════════╝" .. optOutput
+    optOutput = "\n\n[ffffff]╔════════════╗\n◆ Active Options ◆   \n╚════════════╝" .. optOutput
   end
 
 

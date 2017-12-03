@@ -1,0 +1,43 @@
+option_data = {
+  ["Blind Mode"] = {option="Blind Mode", explain="Spies will not be told who their fellow spies are", guid = "a42ddb"},
+  ["Sergeant Mode"] = {option="Sergeant", explain="The Leader on each mission must choose another mission member to be the Sergeant. The Sergeant will be allowed to force opponent cards to swap to their opposing card (Success to Fail and vice versa)", guid = "d29c45"},
+  ["Targeted Mode"] = {option="Targeted", explain="The Leader will be allowed to choose which mission to attempt in any order.", guid = "bfa185"},
+  ["Communications Mode"] = {option="Communication Silence", explain="The Leader will choose if the mission cards are revealed at the end of the mission", guid = "5fea6f"},
+  ["Inquisitor Mode"] = {option="Inquisitor", explain="The Inquisitor is a moving role that will allow players to check the loyalty of other players", guid = "65970e"},
+  ["Trapper Mode"] = {option="Trapper", explain="Leaders will put one extra player on each mission and choose one to Trap and remove their mission card after all cards have been played", guid = "82f394"},
+}
+
+
+function create_optionSelectButtons()
+  local roleCards = ref_roleCards
+  local clickdata = {click_function = "click_option", function_owner = self, label = "", position = {0, 0.1, -0.3}, scale = {0.5, 0.5, 0.5}, width = 3600, height = 1300, font_size = 400, color = {0,0,0,0}}
+  local descrdata = {click_function = "click_explainOption", function_owner = self, label = "", position = {0, 0.1, 0.7}, scale = {0.5, 0.5, 0.5}, width = 3600, height = 600, font_size = 400, color = {0,0,0,0}}
+
+  for option,data in pairs(option_data) do
+    clickdata.tooltip = option
+    descrdata.tooltip = option
+    local obj = getObjectFromGUID(data.guid)
+    obj.setName(option)
+    obj.createButton(clickdata)
+    obj.createButton(descrdata)
+  end
+end
+
+function click_option(obj, player)
+  if not Player[player].admin then click_explainOption(obj, player) return end
+
+  local data = option_data[obj.getName()]
+  if table.contains(data_includedOptions, data.option) then
+    data_includedOptions = table.removeItems(data_includedOptions, data.option)
+    obj.highlightOff()
+  else
+    table.insert(data_includedOptions, data.option)
+    obj.highlightOn({0,1,0})
+  end
+
+  update_roleNotes()
+end
+
+function click_explainOption(obj, player)
+  printToColor(option_data[obj.getName()].explain, player, {1,1,0})
+end

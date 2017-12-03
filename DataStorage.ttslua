@@ -30,7 +30,7 @@ data_specialRoles = { resistance = {}, spies = {}, neutral = {}, secondary = {} 
 
 -- [ Option Data ] --
 -- Options to include stored as "Option"
-data_includedOptions = {"Plot Cards"}
+data_includedOptions = {}
 -- Option data stored as [Option] = {Data}
 data_optionData = {}
 

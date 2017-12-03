@@ -67,7 +67,7 @@ function table.shuffle(array)
 end
 -- Checks if table contains a value
 function table.contains(table, value)
-  if #table == 0 then return false end
+  if #table == 0 or value == nil then return false end
   for _, val in pairs(table) do
     if val == value then
       return true
@@ -165,15 +165,72 @@ function table.random(tbl)
     i = i + 1
   end
 end
+-- Merge indexed tables without duplicates
+function table.merge(...)
+  local merging = {...}
+  local out = merging[1]
 
+  for i=2,#merging do
+    local curTable = merging[i]
+    for j=1,#curTable do
+      if not table.contains(out, curTable[j]) then table.insert(out, curTable[j]) end
+    end
+  end
+
+  return out
+end
+-- Check if tables are equal
+function table.equals(a, b)
+  if #a ~= #b then return false end
+  local t1,t2 = {}, {} -- temp tables
+  for k,v in pairs(a) do -- copy all values into keys for constant time lookups
+    t1[v] = (t1[v] or 0) + 1 -- make sure we track how many times we see each value.
+  end
+  for k,v in pairs(b) do
+    t2[v] = (t2[v] or 0) + 1
+  end
+  for k,v in pairs(t1) do -- go over every element
+    if v ~= t2[k] then return false end -- if the number of times that element was seen don't match...
+  end
+  return true
+end
 
 -- [[ Object Management Functions ]] --
 -- Gets objects at given position with the given tag(s)
 function getObjectsAtPosition(pos, ...)
     local tagList = {...}
     local objList = Physics.cast({
-      origin=pos, direction={0,1,0}, type=2, size={0.1,0.1,0.1},max_distance=0, debug=true
+      origin=pos, direction={0,1,0}, type=2, size={0.1,0.1,0.1},max_distance=0, debug=global_debug
     })
+    local foundItems = {}
+    for _, obj in ipairs(objList) do
+        if #tagList == 0 then
+          table.insert(foundItems, obj.hit_object)
+        else
+          for _, tag in ipairs(tagList) do
+            if obj.hit_object.tag == tag then
+              table.insert(foundItems, obj.hit_object)
+              break
+            end
+          end
+        end
+    end
+
+    if foundItems == {} then
+      return nil
+    else
+      return foundItems
+    end
+end
+-- Gets objects at given position within a box with the given tag(s)
+function getObjectsInBox(pos, size, ori, ...)
+    local tagList = {...}
+    local size = (size or {1,1,1})
+    local ori = (ori or {0,0,0})
+    local objList = Physics.cast({
+      origin=pos, direction={0,1,0}, type=3, size=size, orientation=ori, max_distance=0, debug=global_debug
+    })
+
     local foundItems = {}
     for _, obj in ipairs(objList) do
         if #tagList == 0 then
@@ -217,6 +274,31 @@ function findInRadiusBy(pos, radius, func, debug)
 
     return refinedList
 end
+--Finds objects in radius of a position, accepts optional filtering function
+--Only pos is required, the others are optional
+--Example func: function(o) return o.tag=="Deck" or o.tag=="Card" end
+function findInBoxBy(pos, size, ori, func, debug)
+    local size = (size or {1,1,1})
+    local ori = (ori or {0,0,0})
+    local objList = Physics.cast({
+        origin=pos, direction={0,1,0}, type=3, size=size,
+        orientation=ori, max_distance=0, debug=(debug or false)
+    })
+
+    local refinedList = {}
+    for _, obj in ipairs(objList) do
+        if func == nil then
+            table.insert(refinedList, obj.hit_object)
+        else
+            if func(obj.hit_object) then
+                table.insert(refinedList, obj.hit_object)
+            end
+        end
+    end
+
+    return refinedList
+end
+
 -- Removes objects that match exeception GUIDs from table
 function objectListException(list, ...)
   local foundItems = {}
@@ -228,7 +310,15 @@ function objectListException(list, ...)
   end
   return foundItems
 end
+function objectTableToGUID(list)
+  local out = {}
 
+  for k,obj in pairs(list) do
+    out[k] = obj.getGUID()
+  end
+
+  return out
+end
 
 
 function createScrolling(object, id, base, add_pos, sub_pos, values, labels, global_var)

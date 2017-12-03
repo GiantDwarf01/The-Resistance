@@ -58,8 +58,8 @@ function option_investigator()
         local tokenPo = token.clone({ position = teamPos })
         tokenPo.setRotation(board.getRotation())
         tokenPo.setLock(false)
-        tokenPo.setScale({1,1,1})
         tokenPo.setName("Check Player")
+        tokenPo.setScale({1.90, 1.00, 1.90})
 
         tokenPo.interactable = true
         clean_votes()
@@ -72,8 +72,8 @@ function option_investigator()
         local tokenPo = token.clone({ position = teamPos })
         tokenPo.setRotation(board.getRotation())
         tokenPo.setLock(false)
-        tokenPo.setScale({1,1,1})
         tokenPo.setName("Check Player")
+        tokenPo.setScale({1.90, 1.00, 1.90})
 
         tokenPo.interactable = true
         clean_votes()
@@ -467,6 +467,8 @@ function option_plotCards()
 
   local playersInGame = data_playersInGame
   for index, color in pairs(playersInGame) do
+    data[color.."Cards"] = {}
+
     local playerHand = Player[color].getPlayerHand()
     local card = getObjectFromGUID(ref_plotCardPlacardGUIDs[color])
 
@@ -479,7 +481,12 @@ function option_plotCards()
 
   data["Cards"] = {}
   data["Setup Team"] = function()
-    local plotData = ref_plotCardDeck[#data_playersInGame]
+    -- Reset Cards for the round
+    for index, color in pairs(playersInGame) do
+      data[color.."Cards"] = {}
+    end
+
+    local plotData = ref_plotCardDeck[#playersInGame]
     local deck = getObjectFromGUID(plotData.Deck)
     deck.shuffle()
 
@@ -487,7 +494,8 @@ function option_plotCards()
       local leaderBoard = getObjectFromGUID(ref_playerBoards[data_currentLeader])
       local card = deck.takeObject({ position = leaderBoard.positionToWorld(ref_plotCardDealPos[i]) })
       card.setRotation(leaderBoard.getRotation())
-      data["Cards"][card.getGUID()] = "null"
+
+      data["Cards"][card.getGUID()] = {["Done"] = false}
     end
 
     broadcastToColor("Hand out Plot Cards", data_currentLeader, {1,1,0})
@@ -499,24 +507,55 @@ function option_plotCards()
 end
 
 function check_dealtPlotCards()
-  
+  local optData = data_optionData["Plot Cards"]
+
+  local changed = false
+  local count = 0
+  for _,color in pairs(data_playersInGame) do
+    if color ~= data_currentLeader then
+      local placard = getObjectFromGUID(ref_plotCardPlacardGUIDs[color])
+      local cardObj = findInBoxBy(placard.positionToWorld({0,0,0}), {15,1,4.3}, placard.getRotation(), function(o) return o.getDescription() == "Plot Card" and not optData["Cards"][o.getGUID()].Done end)
+      local cards = objectTableToGUID(cardObj)
+      count = count + #cards
+      local equalityCheck = table.equals(cards, optData[color.."Cards"])
+      if #cards > 0 and not equalityCheck then
+        optData[color.."Cards"] = cards
+        changed = true
+
+        checkPlotCards(cardObj, color)
+      elseif #cards == 0 and not equalityCheck then
+        optData[color.."Cards"] = {}
+        changed = true
+      end
+    end
+  end
+
+  if changed then
+    data_optionData["Plot Cards"] = optData
+    print("Changed cards: " .. count)
+    if count == ref_plotCardDeck[#data_playersInGame].Cards then
+      print("Move along")
+
+      for guid,data in pairs(optData["Cards"]) do
+        data.Done = true
+      end
+
+      data_optionData["Plot Cards"] = optData
+      deal_teamTokens(true)
+    end
+  end
 end
 
-ref_plotCardResponse = {
-  ["Strong Leader"] = function(card, color)
-    local funcName = "click_strongLeader"..card.getGUID()
-    local func = function() return end
-    Global.setVar(funcName, func)
-    local data = {click_function = funcName, function_owner = self, label = "Become Leader",
-    position = {0, 0, 1.9}, scale = {0.25, 0.5, 0.5}, width = 2700, height = 400, font_size = 400}
-    card.createButton(data)
-  end,
-  ["In the Spotlight"] = function() return end,
-  ["In the Spotlight"] = function() return end,
-  ["In the Spotlight"] = function() return end,
-  ["In the Spotlight"] = function() return end,
-  ["In the Spotlight"] = function() return end,
-}
+function checkPlotCards(cards, color)
+  for i=1,#cards do
+    local name = cards[i].getName()
+    if name == "Overheard Conversation" then
+
+      break
+    end
+  end
+end
+
 
 ref_plotCardPlacardGUIDs = {
   ["White"]   = "18a267", ["Brown"]   = "e2083c",
@@ -599,6 +638,13 @@ function addRoles(curRole, roles)
       if not table.contains(roles, ro) then
         addRoles(ro, roles)
       end
+    end
+  end
+  if role_data[curRole]["Option"] ~= nil then
+    if not table.contains(data_includedOptions, role_data[curRole]["Option"]) then
+      local opt = role_data[curRole]["Option"]
+      table.insert(data_includedOptions, opt)
+      data_optionData[opt] = ref_options[opt]()
     end
   end
 end

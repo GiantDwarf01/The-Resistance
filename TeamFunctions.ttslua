@@ -42,6 +42,7 @@ end
 data_usedSetupTeams = {}
 -- Deal out round team tokens
 function deal_teamTokens(skipLeader)
+  data_gamePhase = "Setting Team Building"
   if not skipLeader then
     set_leaderToken()
   end
@@ -63,19 +64,13 @@ function deal_teamTokens(skipLeader)
 
   data_usedSetupTeams = {}
 
-  data_gamePhase = "Team Building"
-
-  print("Derp")
-
   local missionMembers = ref_missionCount[#data_playersInGame][data_currentMission]
-  print("Derp1")
 
   for _,option in pairs(data_includedOptions) do
     if data_optionData[option]["Deal Team"] ~= nil then
       missionMembers = data_optionData[option]["Deal Team"](missionMembers)
     end
   end
-  print("Derp2")
 
   for color,data in pairs(data_playerData) do
     if data["Deal Team"] ~= nil then
@@ -83,11 +78,8 @@ function deal_teamTokens(skipLeader)
     end
   end
 
-  print("Derp3")
-
   local tokenPosition = ref_tokenPosition[missionMembers]
   local cards = ref_cardGuids["Team Token"]
-  print("Derp4")
 
   for _, pos in pairs(tokenPosition) do
     local gottenCard = getObjectFromGUID(cards[math.random(#cards)])
@@ -99,9 +91,17 @@ function deal_teamTokens(skipLeader)
 
     table.insert(object_teamCards, card)
   end
-  print("Derp5")
 
   data_missionCount = missionMembers
+
+  startLuaCoroutine(Global, 'coroutine_delayGamePhase')
+end
+
+function coroutine_delayGamePhase()
+  for i=0,100 do
+    data_gamePhase = "Team Building"
+  end
+  return 1
 end
 
 -- Check placed team

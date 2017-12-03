@@ -102,7 +102,7 @@ ref_colorCodes = {
 
   ["Success"] = '[00a6ff]', ["Fail"] = '[BB0000]', ["Chief Fail"] = '[FF0000]',
   ["Extract"] = '[D3A300]', ["Sabotage"] = '[D3673D]', ["Rogue Success"] = '[00FF6B]',
-  ["Reverse"] = '[aaa820]', ["Hit"] = '[FF0000]',
+  ["Reverse"] = '[aaa820]', ["Hit"] = '[FF0000]', ["Cure"] = '[00FF00]',
 
   ["Resistance"] = '[00a6ff]', ["Spy"] = '[BB0000]', ["Extracted"] = '[D3A300]',
   ["Resistance Rogue"] = '[00FF6B]', ["Spy Rogue"] = '[77FF00]',

@@ -135,11 +135,11 @@ end
 
 -- Load role pool
 function load_roles()
-  for _,option in pairs(data_includedOptions) do
-    if data_optionData[option]["Load Roles"] ~= nil then
-      data_optionData[option]["Load Roles"]()
+    for opt,data in pairs(data_optionData) do
+      if data["Load Roles"] ~= nil then
+        data["Load Roles"]()
+      end
     end
-  end
 
   local playerCount = #data_playersInGame
 

@@ -12,6 +12,7 @@
 #include !\The-Resistance\MissionFunctions
 #include !\The-Resistance\VoteFunctions
 #include !\The-Resistance\RoleSelection
+#include !\The-Resistance\OptionSelection
 #include !\The-Resistance\RepeatingFunctions
 
 
@@ -401,6 +402,7 @@ function place_object(data)
   local object = data.object
   local name = object.getName()
   local color = object.getDescription()
+  local frame = (data.frame or false)
 
   if name == "Reject" or name == "Approve" then
     local board = getObjectFromGUID(ref_playerBoards[color])
@@ -418,6 +420,13 @@ function place_object(data)
     local rot = placard.getRotation()
     rot.z = 180
     object.setRotation(rot)
+  elseif frame and name == "Team Token" then
+    local board = getObjectFromGUID(ref_playerBoards[color])
+    local pos = board.positionToWorld(ref_boardPosition.Team)
+    local rot = board.getRotation()
+    rot.z = 180
+    object.setPosition(pos)
+    object.setRotationSmooth(rot)
   end
 end
 
@@ -430,25 +439,31 @@ function onLoad(save_state)
 
   setup_functionCall()
 
+
   local data = {click_function = "startGame", function_owner = self, label = "Start Game",
   position = {0, 0.1, 1}, scale = {0.1, 0.1, 0.1}, width = 3500, height = 700, font_size = 700}
 
   getObjectFromGUID('18eb21').createButton(data)
+
+
+  setup_hiddenZones(true)
 end
 
 function startGame(obj,player)
   if not Player[player].admin then return end
   data_playersInGame = {}
 
-  playersNotInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
-
+  --playersNotInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
+  --playersNotInGame = {"Teal","Blue","Purple","Pink"} = {}}
+  playersNotInGame = {}
   for _,color in pairs(getSeatedPlayers()) do
     table.insert(data_playersInGame, color)
     playersNotInGame = table.removeItems(playersNotInGame, color)
     Player[color].team = "None"
   end
-
-  data_playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
+  if #data_playersInGame <= 1 then
+    data_playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
+  end
 
   if #data_playersInGame < 5 then
     broadcastToAll("Must have at least 5 players", {1,0,0})
@@ -457,8 +472,8 @@ function startGame(obj,player)
 
   for _,color in pairs(playersNotInGame) do
     local obj = getObjectFromGUID(ref_playerBoards[color])
-    --obj.setPosition({0,-0.5,0})
-    --obj.setScale({0,0,0})
+    obj.setPosition({0,-0.5,0})
+    obj.setScale({0,0,0})
   end
 
   set_leaderToken()
@@ -818,6 +833,7 @@ function setup_functionCall()
   setup_roleCards()
   setup_lockObjects()
   create_selectButtons()
+  create_optionSelectButtons()
 end
 -- All functions that are repeating
 function repeating_functionCalls()
@@ -855,6 +871,8 @@ function repeating_playerBoardChecks()
     repeating_sergeantCheck()
   elseif data_gamePhase == "Choose Round" then
     repeating_roundCheck()
+  elseif data_gamePhase == "Check Plot Cards" then
+    check_dealtPlotCards()
   end
 end
 
@@ -1038,26 +1056,40 @@ function setup_lockObjects()
 
 end
 -- Sets hiddenzones over player hand areas
-function setup_hiddenZones()
+function setup_hiddenZones(allPlayers)
   local playerZones = ref_playerZones
   local scriptZones = ref_zoneColor
   local playersInGame = data_playersInGame
+  if allPlayers then playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"} end
   local playerBoards = ref_playerBoards
+
+  if allPlayers then
+    local snapScript = getObjectFromGUID("5da177").getLuaScript()
+  end
 
   for index, color in pairs(playersInGame) do
     local playerHand = Player[color].getPlayerHand()
     local zone = getObjectFromGUID(playerZones[color])
     local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 2.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 2.6}
     local rot = {playerHand['rot_x'] + 337.95, playerHand['rot_y'] + 180, 0}
-    zone.setPosition(pos)
-    zone.setRotation(rot)
-    zone.setScale({16, 4.7, 11.8})
+    --zone.setPosition(pos)
+    --zone.setRotation(rot)
+    if allPlayers then
+      zone.setScale({0,0,0})
+    else
+      zone.setScale({16, 4.7, 11.8})
+    end
 
-    pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 3.5, 1, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 3.5}
+    pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 3.5, 1.05, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 3.5}
     local script = getObjectFromGUID(scriptZones[color])
     script.setPosition(pos)
     script.setRotation(getObjectFromGUID(playerBoards[color]).getRotation())
     script.setScale({16,0.1,11})
+
+    if allPlayers then
+      local frame = getObjectFromGUID(ref_playerFrames[color])
+      frame.setLuaScript(snapScript)
+    end
   end
 end
 -- Hides rolecards under the table
@@ -1113,6 +1145,21 @@ function hide_roleCards()
   local back = getObjectFromGUID('9f109a')
   back.setPosition({0,-0.5,0})
   back.setScale({0,0,0})
+
+  back = getObjectFromGUID('f77f99')
+  back.setPosition({0,-0.5,0})
+  back.setScale({0,0,0})
+
+  back = getObjectFromGUID("f8f9bb")
+  back.setPosition({0,-0.5,0})
+  back.setScale({0,0,0})
+
+  for _,dat in pairs(option_data) do
+    local plac = getObjectFromGUID(dat.guid)
+    plac.clearButtons()
+    plac.setPosition({0,0,0})
+    plac.setScale({0,0,0})
+  end
 end
 -- Sets up gameboard
 function setup_playBoard()
