@@ -94,22 +94,6 @@ ref_zoneColor = {
   ["Orange"] = "b76012",
 }
 
-function onObjectEnterScriptingZone(zone, enter_object)
-  if enter_object.getName() == nil then return end
-  if ref_scriptingZonePlacements[data_gamePhase] ~= nil then
-    local loc = ref_scriptingZonePlacements[data_gamePhase][enter_object.getName()]
-    if loc ~= nil then
-      local player = ref_zoneColor[zone.getGUID()]
-      if player ~= nil then
-        local boardGUID = ref_playerBoards[player]
-        local board = getObjectFromGUID(ref_playerBoards[player])
-        local teamPos = board.positionToWorld(ref_boardPosition[loc])
-        enter_object.setPosition(teamPos)
-        enter_object.setRotation(board.getRotation())
-      end
-    end
-  end
-end
 
 
 function update_notes()
@@ -396,33 +380,96 @@ function update_notebook()
       body  = output,
     })
 end
+function onObjectDropped(player_color, dropped_object)
+  -- body...
+  local objName = dropped_object.getName()
+  if objName == "Team Token" then
+    local func = function(o)
+      for _,color in pairs(data_playersInGame) do
+        if string.match(o.getName(), color) then
+          return true
+        end
+      end
+      return false
+    end
 
+    local pos = dropped_object.getPosition()
+    pos.y = 1
+    local objList = findInRadiusBy(pos, 2, func, global_debug)
 
-function place_object(data)
-  local object = data.object
-  local name = object.getName()
-  local color = object.getDescription()
-  local frame = (data.frame or false)
+    if #objList > 0 then
+      for _,color in pairs(data_playersInGame) do
+        if string.match(objList[1].getName(), color) then
+          place_object(dropped_object, "Team", color)
+          break
+        end
+      end
+    end
+  elseif objName == "Approve" or objName == "Reject" then
+    local func = function(o)
+      return o.getName() == "Table"
+    end
 
-  if name == "Reject" or name == "Approve" then
-    local board = getObjectFromGUID(ref_playerBoards[color])
-    local pos = board.positionToWorld(ref_boardPosition.Vote)
-    local rot = board.getRotation()
-    rot.z = 180
-    object.setPosition(pos)
-    object.setRotationSmooth(rot)
-  elseif name == "Success" or name == "Fail" or name == "Chief Fail" or name == "Rogue Success" or
-         name == "Reverse" or name == "Hit" or name == "Sabotage" or name == "Extract" or
-         name == "Infect" or name == "Cure" then
+    local crossfunc = function(o)
+      if string.match(o.getName(), dropped_object.getDescription()) and string.match(o.getName(), "Hand") then
+        return true
+      end
+      return false
+    end
+
+    local pos = dropped_object.getPosition()
+    pos.y = 1
+
+    local objList = findInRadiusBy(pos, 3, func, global_debug)
+    local recjList = findInRadiusBy(pos, 3, crossfunc, global_debug)
+
+    if #objList > 0 and #recjList < 1 then
+      place_object(dropped_object, "Vote")
+    end
+  elseif objName == "Success" or objName == "Fail" or objName == "Chief Fail" or objName == "Rogue Success" or objName == "Reverse" or objName == "Hit" or objName == "Sabotage" or objName == "Extract" or objName == "Infect" or objName == "Cure" then
+     local func = function(o)
+       return o.getName() == "Table"
+     end
+
+     local crossfunc = function(o)
+       if string.match(o.getName(), dropped_object.getDescription()) and string.match(o.getName(), "Hand") then
+         return true
+       end
+       return false
+     end
+
+    local pos = dropped_object.getPosition()
+    pos.y = 1
+    local objList = findInRadiusBy(pos, 3, func, global_debug)
+    local recjList = findInRadiusBy(pos, 3, crossfunc, global_debug)
+
+    if #objList > 0 and #recjList < 1 then
+     place_object(dropped_object, "Mission")
+    end
+  end
+end
+
+function place_object(object, pos, color)
+  local color = color
+
+  object.interactable = true
+
+  if color == nil and object.getDescription() ~= nil then
+    color = object.getDescription()
+  elseif color == nil then
+    return
+  end
+
+  if pos == "Mission" then
     local placard = getObjectFromGUID(ref_tokens["Played Board"])
     object.setPosition(placard.positionToWorld({0,0.2,0}))
 
     local rot = placard.getRotation()
     rot.z = 180
     object.setRotation(rot)
-  elseif frame and name == "Team Token" then
+  else
     local board = getObjectFromGUID(ref_playerBoards[color])
-    local pos = board.positionToWorld(ref_boardPosition.Team)
+    local pos = board.positionToWorld(ref_boardPosition[pos])
     local rot = board.getRotation()
     rot.z = 180
     object.setPosition(pos)
@@ -439,12 +486,10 @@ function onLoad(save_state)
 
   setup_functionCall()
 
-
   local data = {click_function = "startGame", function_owner = self, label = "Start Game",
   position = {0, 0.1, 1}, scale = {0.1, 0.1, 0.1}, width = 3500, height = 700, font_size = 700}
 
   getObjectFromGUID('18eb21').createButton(data)
-
 
   setup_hiddenZones(true)
 end
@@ -453,15 +498,17 @@ function startGame(obj,player)
   if not Player[player].admin then return end
   data_playersInGame = {}
 
-  --playersNotInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
+  playersNotInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
   --playersNotInGame = {"Teal","Blue","Purple","Pink"} = {}}
-  playersNotInGame = {}
+  if global_debug and #data_playersInGame <= 1 then
+    playersNotInGame = {}
+  end
   for _,color in pairs(getSeatedPlayers()) do
     table.insert(data_playersInGame, color)
     playersNotInGame = table.removeItems(playersNotInGame, color)
     Player[color].team = "None"
   end
-  if #data_playersInGame <= 1 then
+  if global_debug and #data_playersInGame <= 1 then
     data_playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
   end
 
@@ -498,6 +545,13 @@ function startGame(obj,player)
   startLuaCoroutine(Global, 'coroutine_dealDelay')
 end
 
+data_joinedPlayers = {}
+function onPlayerChangedColor(player_color)
+  if player_color == "Grey" or data_joinedPlayers[Player[player_color].steam_name] then return end
+  broadcastToColor(ref_colorCodes[player_color] .. "Welcome to the Resistance!\nUse !help to see commands available during the game", player_color, {1,1,0})
+  data_joinedPlayers[Player[player_color].steam_name] = true
+end
+
 function coroutine_dealDelay()
   for i=0,50 do
     coroutine.yield()
@@ -507,12 +561,13 @@ function coroutine_dealDelay()
 end
 
 coroutine_savedData = {}
-function replace_card(color, card, new, callback, table)
+function replace_card(color, card, new, callback, table, output)
   coroutine_savedData["Color"] = color
   coroutine_savedData["Card"] = card
   coroutine_savedData["New"] = new
   coroutine_savedData["Callback"] = callback
   coroutine_savedData["Table"] = table
+  coroutine_savedData["Output"] = output
 
   startLuaCoroutine(Global, "coroutine_replaceCard")
 end
@@ -522,6 +577,7 @@ function coroutine_replaceCard()
   local color = coroutine_savedData["Color"]
   local callback = coroutine_savedData["Callback"]
   local table = coroutine_savedData["Table"]
+  local output = coroutine_savedData["Output"]
 
   local newName = ""
   if newCard.tag ~= nil then
@@ -551,6 +607,10 @@ function coroutine_replaceCard()
         saved[curColor] = missionCard
         Global.setTable(table, saved)
         curCard.destruct()
+
+        if output ~= nil then
+          broadcastToColor(output, curColor, {1,1,0})
+        end
       end
     end
   else
@@ -571,6 +631,10 @@ function coroutine_replaceCard()
       saved[color] = missionCard
       Global.setTable(table, saved)
       card.destruct()
+
+      if output ~= nil then
+        broadcastToColor(output, color, {1,1,0})
+      end
     end
   end
 
@@ -1060,12 +1124,10 @@ function setup_hiddenZones(allPlayers)
   local playerZones = ref_playerZones
   local scriptZones = ref_zoneColor
   local playersInGame = data_playersInGame
-  if allPlayers then playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"} end
-  local playerBoards = ref_playerBoards
-
   if allPlayers then
-    local snapScript = getObjectFromGUID("5da177").getLuaScript()
+    playersInGame = {"White","Brown","Red","Orange","Yellow", "Green", "Teal","Blue","Purple","Pink"}
   end
+  local playerBoards = ref_playerBoards
 
   for index, color in pairs(playersInGame) do
     local playerHand = Player[color].getPlayerHand()
@@ -1078,17 +1140,6 @@ function setup_hiddenZones(allPlayers)
       zone.setScale({0,0,0})
     else
       zone.setScale({16, 4.7, 11.8})
-    end
-
-    pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 3.5, 1.05, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 3.5}
-    local script = getObjectFromGUID(scriptZones[color])
-    script.setPosition(pos)
-    script.setRotation(getObjectFromGUID(playerBoards[color]).getRotation())
-    script.setScale({16,0.1,11})
-
-    if allPlayers then
-      local frame = getObjectFromGUID(ref_playerFrames[color])
-      frame.setLuaScript(snapScript)
     end
   end
 end
@@ -1111,7 +1162,7 @@ function setup_roleCards()
         if global_debug then
           obj.interactable = true
           obj.setScale({1,1,1})
-          obj.setPosition({xPos,1,zPos})
+          obj.setPosition({xPos,3,zPos})
         else
           obj.interactable = false
           obj.setScale({0,0,0})

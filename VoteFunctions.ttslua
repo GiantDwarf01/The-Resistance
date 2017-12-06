@@ -144,8 +144,14 @@ function calculate_votes()
     data_record[mission] = {}
   end
 
-  if calculations.approves > calculations.rejects then
 
+    for _,option in pairs(data_includedOptions) do
+      if data_optionData[option]["Votes Reveal"] ~= nil then
+        data_optionData[option]["Votes Reveal"](calculations.approves > calculations.rejects)
+      end
+    end
+
+  if calculations.approves > calculations.rejects then
     -- Check if mission has been attempted and try again if it has
     local i = 0
     while true do
@@ -167,7 +173,6 @@ function calculate_votes()
 
     deal_missionCards()
   else
-
     if data_record[mission]["Vote " .. data_downvotes] == nil then
       data_record[mission]["Vote " .. data_downvotes] = {}
     end

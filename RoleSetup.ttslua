@@ -291,6 +291,8 @@ function deal_roleCards()
       print(color .. ": " .. output)
     end
 
+    output = output .. "\nUse !role to check this info again"
+
     printToColor(output, color, {1,1,1})
   end
 

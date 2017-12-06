@@ -81,9 +81,12 @@ function repeating_checkMission()
     for _,card in pairs(deck.getObjects()) do
       data_playedCards[card.description] = true
 
-      local objects = Player[card.description].getHandObjects()
-      for _,card in pairs(objects) do
-        card.destruct()
+      local cardobjects = Player[card.description].getHandObjects()
+
+      for _,cardCheck in pairs(cardobjects) do
+        if cardCheck.getDescription() == card.description then
+          cardCheck.destruct()
+        end
       end
     end
 
@@ -97,7 +100,9 @@ function repeating_checkMission()
 
       local objects = Player[cardList[1].getDescription()].getHandObjects()
       for _,card in pairs(objects) do
-        card.destruct()
+        if card.getDescription() == cardList[1].getDescription() then
+          card.destruct()
+        end
       end
     end
   end

@@ -1,4 +1,5 @@
 option_data = {
+  ["Plot Cards"] = {option="Plot Cards", extra_options = {["Extra Cards"] = "Adds additional plot cards"}, explain="At the beginning of each round the Leader will hand out Plot Cards which have special abilities", guid = "345644"},
   ["Blind Mode"] = {option="Blind Mode", explain="Spies will not be told who their fellow spies are", guid = "a42ddb"},
   ["Sergeant Mode"] = {option="Sergeant", explain="The Leader on each mission must choose another mission member to be the Sergeant. The Sergeant will be allowed to force opponent cards to swap to their opposing card (Success to Fail and vice versa)", guid = "d29c45"},
   ["Targeted Mode"] = {option="Targeted", explain="The Leader will be allowed to choose which mission to attempt in any order.", guid = "bfa185"},
@@ -12,6 +13,7 @@ function create_optionSelectButtons()
   local roleCards = ref_roleCards
   local clickdata = {click_function = "click_option", function_owner = self, label = "", position = {0, 0.1, -0.3}, scale = {0.5, 0.5, 0.5}, width = 3600, height = 1300, font_size = 400, color = {0,0,0,0}}
   local descrdata = {click_function = "click_explainOption", function_owner = self, label = "", position = {0, 0.1, 0.7}, scale = {0.5, 0.5, 0.5}, width = 3600, height = 600, font_size = 400, color = {0,0,0,0}}
+  local extradata = {click_function = "click_showExtra", tooltip="Variant Options", function_owner = self, label = " ", position = {2.3, 0, 0}, scale = {0.7, 0.7, 0.7}, width = 500, height = 500, font_size = 400, color = {0, 0, 0, 0}}
 
   for option,data in pairs(option_data) do
     clickdata.tooltip = option
@@ -20,7 +22,92 @@ function create_optionSelectButtons()
     obj.setName(option)
     obj.createButton(clickdata)
     obj.createButton(descrdata)
+
+    if data.extra_options ~= nil then
+      obj.createButton(extradata)
+      Global.setTable("temp_variant"..obj.getGUID(), {
+        ['Variant'] = data.extra_options,
+        ["Clicked"] = false})
+    end
   end
+end
+
+function click_showExtra(obj, player)
+  if not Player[player].admin then return end
+
+  local data = {click_function = "INSERT_FUNCTION", function_owner = self,
+  label = "", position = {3.8, 0.1, 0}, scale = {0.3, 0.3, 0.3},
+  width = 3100, height = 400, font_size = 400, color = {1, 0, 0, 10}}
+  local expdata = {click_function = "INSERT_FUNCTION", function_owner = self,
+  label = "?", position = {4.9, 0.1, 0}, scale = {0.3, 0.3, 0.3},
+  width = 400, height = 400, font_size = 400, color = {1, 1, 1, 10}}
+
+  local savedData = Global.getTable("temp_variant"..obj.getGUID())
+  if savedData["Clicked"] then
+    savedData["Clicked"] = false
+
+    local but = #obj.getButtons() - 3
+    for i=1,but do
+      obj.removeButton(#obj.getButtons() - i)
+    end
+  else
+    savedData["Clicked"] = true
+
+    local i = 0
+    for opt,explain in pairs(savedData["Variant"]) do
+      local funcName = "click_option"..i..obj.getGUID()
+      local func = function(objec, player)
+        if not table.contains(data_includedOptions, opt) then
+          table.insert(data_includedOptions, opt)
+          for ind,objD in pairs(objec.getButtons()) do
+            if objD.label == opt then
+              objec.editButton({
+                index          = ind-1, -- int    (required),
+                color          = {0.192, 0.701, 0.168, 10}-- Color,
+              })
+            end
+          end
+        else
+          data_includedOptions = table.removeItems(data_includedOptions, opt)
+          for ind,objD in pairs(objec.getButtons()) do
+            if objD.label == opt then
+              objec.editButton({
+                index          = ind-1, -- int    (required),
+                color          = {1, 0, 0, 10}-- Color,
+              })
+            end
+          end
+        end
+        update_roleNotes()
+      end
+      Global.setVar(funcName, func)
+      data.click_function = funcName
+      data.label = opt
+
+      if table.contains(data_includedOptions, opt) then
+        data.color = {0.192, 0.701, 0.168, 10}
+      else
+        data.color = {1, 0, 0, 10}
+      end
+
+
+      local exfuncName = "click_optionEx"..i..obj.getGUID()
+      local exfunc =function(obj, color)
+        printToColor(explain, color, {1,1,0})
+      end
+      Global.setVar(exfuncName, exfunc)
+      expdata.click_function = exfuncName
+
+      obj.createButton(data)
+      obj.createButton(expdata)
+
+      data.position[3] = data.position[3] + 0.3
+      expdata.position[3] = expdata.position[3] + 0.3
+      i = i + 1
+    end
+  end
+
+  Global.setTable("temp_variant"..obj.getGUID(), savedData)
 end
 
 function click_option(obj, player)

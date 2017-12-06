@@ -22,6 +22,7 @@ ref_options = {
   ["Know Defectors"] = option_knowDefector,
   ["Know Deep Agent"] = option_knowDeep,
   ["Plot Cards"] = option_plotCards,
+  ["Extra Cards"] = option_bonusPlotCards,
 }
 -- Role constructors
 ref_roles = {
@@ -108,6 +109,7 @@ ref_colorCodes = {
   ["Resistance Rogue"] = '[00FF6B]', ["Spy Rogue"] = '[77FF00]',
   ["Mole"] = '[D3673D]', ["Neutral"]  = '[fff000]', ["Secondary"]  = '[fff000]',
   ["Resistance Hunter Failed"] = '[BB0000]', ["Spy Hunter Failed"] = '[00a6ff]',
+  ["Vote Nulled"] = '[000000]'
 }
 --Images for game board based on number of players
 ref_boardImages = {
@@ -128,7 +130,7 @@ ref_tokens = {
   ["Check Player"] = "30b307", ["Watching"] = "f91171",
   ["SCP"] = "5a2c0d", ["Inquisitor"] = "880453",
   ["Trap Player"] = "205787", ["Trap Token"] = "bf4e08",
-  ["Sergeant"] = "1e06ab",
+  ["Sergeant"] = "1e06ab", ["Show Loyalty"] = "b03ec1",
 
   ["Spy"] = "431ad8", ["Resistance"] = "3b5169",
   ["Spy Rogue"] = "f270a7", ["Resistance Rogue"] = "3f1de5",
@@ -231,14 +233,27 @@ ref_playerFrames = {
 ref_lockedObjectGUIDs = {
   "5da177","7f6197","2b2ec4","ca80e3",
   "b14953","0de4b7","87f7db","871c40",
-  "19fa07","ad320b","4a64a9",
+  "19fa07","ad320b","4a64a9","020eff",
+  "e3e4b9","a76547","4f536c","a86ff2",
+  '8d188a','2d8eea','27b52e','bb520c',
+  '2db62c','055543','db52f1','de0d25',
+  'cb1fe7','656b51','2e9480','0092da',
+  'c94cd7','897384','38eb85','2c7226',
+  '9a9848','c89a08','0934cc','3a6eba',
+  '0096c1','4a8b02','ef92c2','1ba7a5',
+  '605110','06afc1','33f9db','08c177',
+  '9e941f','18329d','08cb2f','157c65',
+  'ba14a9','52be70','044a4f','eaae00',
+  '2623c4','cdbb26','9fba9a','9d2842',
+  'efd22b','2d5898','56c0aa','544103',
+  '302faa',
 }
 
 ref_hiddenObjectGUIDs = {
   '3b5169', '431ad8', '67e5a7', 'c1d136', 'f270a7', '3f1de5',
   'b2d6fa', 'cf0d76', '65ba5e', '8eb95a', 'eb469b', 'bd701c',
   '4e729a', 'f91171', '8553d1', '0a0e3b', 'f84d31', '30b307',
-  '574254'
+  '574254', 'b03ec1', 'cf318b', 'c61a08', 'f367f4', '74255e'
 }
 
 
@@ -266,7 +281,7 @@ ref_winMessages = {
 
 -- [ Positions ] --
 -- Positions on player board based on slots
-ref_boardPosition = { ["Team"] = {-0.19,0.15,0}, ["Leader"] = {2.4,0.15,0}, ["Hand"] = {0,0.5,5.5}, ["Vote"] = {-2.42, 0.15, 0.00} }
+ref_boardPosition = { ["Team"] = {-0.19,0.15,0}, ["Leader"] = {2.4,0.15,0}, ["Hand"] = {0,2,5.5}, ["Vote"] = {-2.42, 0.15, 0.00} }
 -- Position for vote track token per downvotes
 ref_voteTrackPosition = { {-13.1,1.3,-8.75}, {-8.5,1.3,-8.75}, {-3.9,1.3,-8.75}, {0.75,1.3,-8.75}, {5.4,1.3,-8.75} }
 -- Position for round marker

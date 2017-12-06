@@ -4,27 +4,32 @@ role_data = {
     ["Random Siblings"] = {"Assassin"},
     ["Children"] = {"Assassin", "Body Guard", "Deep Cover"},
     ["Info"] = "The Commander is a Resistance member who is told who the spies are",
+    ["Details"] = "The Commander will be told which players are spies. They want to attempt to help steer the Resistance towards picking teams without spies. \nHowever, if you're playing with the Assassin, after the Resistance scores 3 points, the Assassin will have a final chance to guess who the Commander is and Assassinate them. If the Commander is Assasinated, the Spies automatically win.",
   },
   ["Body Guard"] = {
     ["Team"] = "Resistance",
     ["Parent"] = "Commander",
     ["Children"] = {"False Commander"},
     ["Info"] = "The Body Guard is a Resistance member who is told who the Commander is",
+    ["Details"] = "The Body Guard will be told which player is the Commander. Their goal is to help the Commander sway other players and keep him safe from the Assassin by drawing focus away from the Commander. \nIf you are playing with the False Commander, the Body Guard will be told two players are the Commander, but he will not know which one is the true Commander and which is the False Commander."
   },
   ["Assassin"] = {
     ["Team"] = "Spy",
     ["Parent"] = "Commander",
-    ["Info"] = "The Assassin is a Spy who will have a chance to guess who the Commander is and Assassinate them if the Resistance win 3 Missions"
+    ["Info"] = "The Assassin is a Spy who will have a chance to guess who the Commander is and Assassinate them if the Resistance win 3 Missions",
+    ["Details"] = "The Assassin's goal is to figure out which player is the Commander, usually by determining who seems like they know more than they should. If the Resistance succeed in 3 Missions, the Assassin will have a chance to guess who they think the Commander is by Assassinating them. If they are right, the Spies instantly win. Otherwise, the Resistance win."
   },
   ["Deep Cover"] = {
     ["Team"] = "Spy",
     ["Parent"] = "Commander",
-    ["Info"] = "The Deep Cover is a Spy who the Commander will not be told the identity of"
+    ["Info"] = "The Deep Cover is a Spy who the Commander will not be told the identity of",
+    ["Details"] = "The Deep Cover is one of the few spy roles that the Commander will not be given."
   },
   ["False Commander"] = {
     ["Team"] = "Spy",
     ["Parent"] = "Body Guard",
-    ["Info"] = "The False Commander is a spy who will appear to the Body Guard as a possible Commander alongside the real Commander"
+    ["Info"] = "The False Commander is a spy who will appear to the Body Guard as a possible Commander alongside the real Commander",
+    ["Details"] = "The False Commander is a spy who will appear to the Body Guard as a potential Commander. Their goal is to trick the Commander into trusting them and turing against the real Commander."
   },
 
 
@@ -34,46 +39,54 @@ role_data = {
     ["Children"] = {"Dummy Agent", "Coordinator"},
     ["Option"] = "Investigator",
     ["Info"] = "The Resistance Chief wants to remain hidden from the Spy Hunter. With 7+ players there will be 2 Resistance Chiefs and they will know each other.",
-    ["Double"] = 7
+    ["Double"] = 7,
+    ["Details"] = "The Resistance Chief's goal is to remain hidden from the spies, specifically the Spy Hunter. During the game, whoever gets the Investigate power will be allowed to check if another player is a Chief. With 7+ player games they will be told if they are a Spy Cheif, Resistance Chief, or not a chief. With fewer players it will only tell them if they're a Chief or not a Chief. With 7+ players there will be two Resistance Chiefs, and they will know who each other are."
   },
   ["Resistance Hunter"] = {
     ["Team"] = "Resistance",
     ["Siblings"] = {"Resistance Chief","Spy Chief","Spy Hunter"},
-    ["Info"] = "The Resistance Hunter must try and hunt the Spy Chief after the Resistance complete 3 Missions to win for the Resistance"
+    ["Info"] = "The Resistance Hunter must try and hunt the Spy Chief after the Resistance complete 3 Missions to win for the Resistance",
+    ["Details"] = "The Resistance Hunter's goal is to determine which player is a Spy Chief. After the Resistance succeed in 3 missions, the Resistance Hunter must correctly guess who the Spy Chief is. If they are right, the Resistance wins the game. If they are wrong, the last played mission becomes a Fail and the game continues as though the last mission failed. On the 5th mission it can alternate back and forth until a Hunter is successful."
   },
   ["Dummy Agent"] = {
     ["Team"] = "Resistance",
     ["Parent"] = "Resistance Chief",
-    ["Info"] = "The Dummy Agent will appear as a Resistance Chief when Investigated"
+    ["Info"] = "The Dummy Agent will appear as a Resistance Chief when Investigated",
+    ["Details"] = "The Dummy Agent is a player that will appear as a Resistance Chief when Investigated. Their goal is to throw off the Spy Hunter into wasting a shot on them rather than the real Resistance Chief"
   },
   ["Coordinator"] = {
     ["Team"] = "Resistance",
     ["Parent"] = "Resistance Chief",
-    ["Info"] = "The Coordinator will appear to the Resistance Chief"
+    ["Info"] = "The Coordinator will appear to the Resistance Chief",
+    ["Details"] = "The Coordinator player will be known by any Resistance Chiefs in the game. The Chiefs can use this to find trustworthy players and make succeeding missions quicker."
   },
   ["Spy Chief"] = {
     ["Team"] = "Spy",
     ["Siblings"] = {"Resistance Chief","Resistance Hunter","Spy Hunter"},
     ["Info"] = "The Spy Chief wants to remain hidden from the Resistance Hunter",
     ["Double"] = 10,
+    ["Details"] = "The Spy Chief's goal is to remain hidden from the spies, specifically the Resistance Hunter. During the game, whoever gets the Investigate power will be allowed to check if another player is a Chief. With 7+ player games they will be told if they are a Spy Chief, Resistance Chief, or not a chief. With fewer players it will only tell them if they're a Chief or not a Chief. With 10 players there will be two Spy Chiefs.\nIn a 7+ player game, the Spy Chief will recieve a special \"Chief Fail\" mission card in place of a normal Fail. It acts the same as a standard fail, but makes it easier to determine who the Spy Chief is.\nWhen a Spy Chief plays a Fail or Chief Fail, the Spy Hunter will be given the option to reveal early and guess who the Resistance Chief is."
   },
   ["Spy Hunter"] = {
     ["Team"] = "Spy",
     ["Siblings"] = {"Resistance Chief","Resistance Hunter","Spy Chief"},
-    ["Info"] = "The Spy Hunter must try and hunt the Spy Chief after the Spies complete 3 Missions to win for the Spies"
+    ["Info"] = "The Spy Hunter must try and hunt the Spy Chief after the Spies complete 3 Missions to win for the Spies",
+    ["Details"] = "The Spy Hunter's goal is to determine which player is a Resistance Chief. After the spies fail in missions, the Spy Hunter must correctly guess who the Resistance Chief is. If they are right, the Spies wins the game. If they are wrong, the last played mission becomes a Success and the game continues as though the last mission succeeded. On the 5th mission it can alternate back and forth until a Hunter is successful.\nIf the Spy Chief plays a Fail during a mission, the Spy Hunter will have the option to reveal themselves and guess who the Resistance Chief is. If they are correct, the spies instantly win the game. If they are wrong (and the mission was failed), the last played mission becomes a success and the game continues, but with everyone knowing who the Spy Hunter is"
   },
 
 
   ["Deep Agent"] = {
       ["Team"] = "Spy",
       ["Children"] = {"Pretender"},
-      ["Info"] = "The Deep Agent is a Spy who is told told who their fellow Spies are, but the other Spies will be told who the Deep Agent is"
+      ["Info"] = "The Deep Agent is a Spy who is not told who their fellow Spies are, but the other Spies will be told who the Deep Agent is",
+      ["Details"] = "The Deep Agent is a Spy who will not be told who the other spies are. If the Pretender is in the game the Deep Agent will have the option to reveal and try and guess who the Pretender is. If they are right, the Deep Agent will become the Pretender and the Pretender will become the Deep Agent. If they are wrong, the Deep Agent is revealed to everyone"
   },
   ["Pretender"] = {
       ["Team"] = "Resistance",
       ["Parent"] = "Deep Agent",
       ["Variants"] = {["Know Deep Agent"] = "The Pretender will be told who the Deep Agent is"},
-      ["Info"] = "The Pretender is a Resistance member who will appear as a Deep Agent to the Spies. The Deep Agent can reveal and try to Blame them to swtich roles"
+      ["Info"] = "The Pretender is a Resistance member who will appear as a Deep Agent to the Spies. The Deep Agent can reveal and try to Blame them to swtich roles",
+      ["Details"] = "The Pretender will appear as a potential Deep Agent to other Spies. Their goal is to take advantage of spies potentially trusting them. If the Pretender is found by the Deep Agent then they will swap roles and join the opposing teams publicly"
   },
 
 
@@ -81,18 +94,21 @@ role_data = {
     ["Team"] = "Resistance",
     ["Siblings"] = {"Spy Defector"},
     ["Children"] = {"Confidant"},
-    ["Info"] = "The Defectors are players who will have a chance to swap teams after Missions 2, 3, and 4"
+    ["Info"] = "The Defectors are players who will have a chance to swap teams after Missions 2, 3, and 4",
+    ["Details"] = "The Defectors are players who will randomly change teams during the game. A card will be drawn after mission 2, 3, and 4. If it is a \"Switch Allegiance\" card, the Resistance Defector will become the Spy Defector and the Spy Defector will become the Resistance Defector. If it is a \"No Change\" card then they will remain the same"
   },
   ["Spy Defector"] = {
     ["Team"] = "Spy",
     ["Siblings"] = {"Resistance Defector"},
     ["Variants"] = {["Hidden Defectors"] = "Defector swap cards are hidden", ["Know Defectors"] = "Defectors are told who the other is"},
-    ["Info"] = "The Defectors are players who will have a chance to swap teams after Missions 2, 3, and 4"
+    ["Info"] = "The Defectors are players who will have a chance to swap teams after Missions 2, 3, and 4",
+    ["Details"] = "The Defectors are players who will randomly change teams during the game. A card will be drawn after mission 2, 3, and 4. If it is a \"Switch Allegiance\" card, the Resistance Defector will become the Spy Defector and the Spy Defector will become the Resistance Defector. If it is a \"No Change\" card then they will remain the same"
   },
   ["Confidant"] = {
     ["Team"] = "Resistance",
     ["Parent"] = "Resistance Defector",
-    ["Info"] = "The Confidant will be told who one of the Defectors are"
+    ["Info"] = "The Confidant will be told who one of the Defectors are",
+    ["Details"] = "The Confidant will be told who the Resistance or the Spy Defector is"
   },
 
 
@@ -100,43 +116,50 @@ role_data = {
     ["Team"] = "Resistance",
     ["Random Siblings"] = {"Hitman"},
     ["Children"] = {"Politician", "Hitman"},
-    ["Info"] = "The Mayor is a Resistance member who can reveal themselves during the game"
+    ["Info"] = "The Mayor is a Resistance member who can reveal themselves during the game and gain double voting powers",
+    ["Details"] = "The Mayor will be allowed to publicly reveal themselves during the game. Once revealed, the Mayor's Approve and Reject votes will count as two votes"
   },
   ["Politician"] = {
     ["Team"] = "Spy",
     ["Random Parent"] = "",
     ["Parent"] = "Mayor",
-    ["Info"] = "The Politician is a Spy who can reveal themselves as a Mayor during the game"
+    ["Info"] = "The Politician is a Spy who can reveal themselves as a Mayor during the game",
+    ["Details"] = "The Politician will be allowed to reveal as though they are the Mayor. Once revealed, the Politician's Approve and Reject votes will count as two votes"
   },
   ["Hitman"] = {
     ["Team"] = "Spy",
     ["Parent"] = "Mayor",
     ["Random Siblings"] = {"Mayor"},
-    ["Info"] = "The Hitman is a Spy who can play a Hit card during a Mission with the Mayor to win for the Spies"
+    ["Info"] = "The Hitman is a Spy who can play a Hit card during a Mission with the Mayor to win for the Spies",
+    ["Details"] = "The Hitman's goal is to get on a mission with the Politician and play their special \"Hit\" mission card. In 7+ player games, the Hitman can play two Hits per game, but only one with 5-6 players. If the Politican is in the game, the Hitman will not be told who the Politican player is"
   },
 
 
   ["Hacker"] = {
     ["Team"] = "Resistance",
     ["Children"] = {"Corruptor"},
-    ["Info"] = "The Hacker is a Resistance member who can Hack other player votes to match theirs"
+    ["Info"] = "The Hacker is a Resistance member who can Hack other player votes to match theirs",
+    ["Details"] = "The Hacker can choose another player during the Voting Phase to Hack their vote. A hacked vote will become the same as the Hacker's vote"
   },
   ["Corruptor"] = {
     ["Team"] = "Spy",
     ["Parent"] = "Hacker",
-    ["Info"] = "The Corruptor is a Spy who can Corrupt another player during voting. If they Corrupt the same player the Hacker hacks, they'll take control of both the Hacker's and selected player's vote. If they hack the Hacker directly, they'll control the Hacker's vote"
+    ["Info"] = "The Corruptor is a Spy who can Corrupt another player during voting. If they Corrupt the same player the Hacker hacks, they'll take control of both the Hacker's and selected player's vote. If they hack the Hacker directly, they'll control the Hacker's vote",
+    ["Details"] = "The Corruptor's goal is to corrupt the Hacker's vote. If the Corruptor chooses the same player the Hacker does during the Voting Phase, the Hacker's and the corrupted player's vote will change to match the Corruptor's vote. If the Corruptor corrupts the Hacker directly, the Corruptor will also take control of the Hacker and the Hacker's target"
   },
 
 
   ["Bioterrorist"] = {
     ["Team"] = "Spy",
     ["Children"] = {"Pathologist"},
-    ["Info"] = "The Bioterrorist is a Spy who can Infect other players while on Missions. The Infection will spread to other player in future Missions. If an Infected player is on a Mission without the Bioterrorist, the Bioterrorist can Mutate the Infection and force the infected player into playing a Fail"
+    ["Info"] = "The Bioterrorist is a Spy who can Infect other players while on Missions. The Infection will spread to other player in future Missions. If an Infected player is on a Mission without the Bioterrorist, the Bioterrorist can Mutate the Infection and force the infected player into playing a Fail",
+    ["Details"] = "The Bioterrorist can infect other players and force them to play Fails. When on a mission, the Bioterrorist can choose another mission member to Infect. If Infected players go on missions, the Infection will randomly spread to another player. When the Bioterrorist is not on a mission, he can activate a Mutation and force any Infected player's missions cards to become Fails. Once a Mutation occurs, the Infected player will no longer be infected"
   },
   ["Pathologist"] = {
     ["Team"] = "Resistance",
     ["Parent"] = "Bioterrorist",
-    ["Info"] = "The Pathologist is a Resistance member who can play Cure cards during Missions to Cure Infections and prevent Mutations"
+    ["Info"] = "The Pathologist is a Resistance member who can play Cure cards during Missions to Cure Infections and prevent Mutations",
+    ["Details"] = "The Pathologist will get a special \"Cure\" mission card during a mission. When played, any players who are Infected will be cured and no longer Infected. Cures will also prevent the Bioterrorist's Mutation from working that mission. The Pathologist will get two Cures for 7+ player games and one for 5-6 player games"
   },
 
 
@@ -144,64 +167,77 @@ role_data = {
     ["Team"] = "Spy",
     ["Color"] = "Neutral",
     ["Siblings"] = {"SCP Agent"},
-    ["Info"] = "The ASI is a rogue AI. At the beginning of the game they will choose which team they wish to join. They will also be allowed to play any card currently in the game"
+    ["Info"] = "The ASI is a rogue AI. At the beginning of the game they will choose which team they wish to join. They will also be allowed to play any card currently in the game",
+    ["Details"] = "The ASI is a solo player who gets to choose their team at the start of the game before the first mission cards have been dealt. During missions, the ASI will recieve any special card currently in the game and will be allowed to use them. However, if the ASI's team wins, the SCP Agent will have a chance to capture the ASI and switch teams"
   },
   ["SCP Agent"] = {
     ["Team"] = "Resistance",
     ["Color"] = "Neutral",
     ["Siblings"] = {"ASI"},
-    ["Info"] = "The SCP Agent is on the opposite team of the one the ASI chooses. Their goal is to figure out who the ASI is and prevent them from winning, or capture them at the end of the game. They are allowed to play a copy of any card they see played in missions"
+    ["Info"] = "The SCP Agent is on the opposite team of the one the ASI chooses. Their goal is to figure out who the ASI is and prevent them from winning, or capture them at the end of the game. They are allowed to play a copy of any card they see played in missions",
+    ["Details"] = "The SCP Agent's goal is to determine who the ASI is and capture them or help his own team win. If the ASI's team wins, the SCP Agent has a chance to guess which player is the ASI and capture them. If they are right, they will switch teams and the SCP Agent will win. If he is wrong, the ASI will win. During the game, if a unique mission card is played, the SCP Agent will be allowed to play a copy of it in any missions they're on"
   },
 
   ["Clone"] = {
     ["Team"] = "Neutral",
     ["Add"] = {resistance = {"Clone"}, spy = {"Clone"}},
-    ["Info"] = "T"
+    ["Info"] = "The Clones are players who will become a copy of another player in the game after Mission 2",
+    ["Details"] = "There is one Clone on each team. After the 2nd Mission, one Clone will successfully copy another player's role and the other will become a Failed Clone. The succesful Clone will become either the same role as another person or the Clone's team's equivlent - IE A Reistance Clone can clone a False Commander and become a Commander. The Failed Clone will not know their role, but they will be told who one of their teammates are"
   },
 
 
   ["Blind Spy"] = {
     ["Team"] = "Spy",
-    ["Info"] = "The Blind Spy is not told who their fellow Spies are and the other Spies aren't told who they are"
+    ["Info"] = "The Blind Spy is not told who their fellow Spies are and the other Spies aren't told who they are",
+    ["Details"] = "The Blind Spy won't be told who the other spy players are and the other spy players won't be told who he is"
   },
   ["Resistance Reverser"] = {
     ["Team"] = "Resistance",
-    ["Info"] = "The Resistance Reverser can play Reverse cards during Missions to reverse the winner of the Mission"
+    ["Info"] = "The Resistance Reverser can play Reverse cards during Missions to reverse the winner of the Mission",
+    ["Details"] = "The Resistance Reverser will get a \"Reverse\" card during missions. If a Reverser plays a Reverse, the mission result will become the opposite of what it should be - IE if a Reverse is played on a mission with only successes, the mission will Fail. If it is on a mission with a fail, it will succeed instead"
   },
   ["Spy Reverser"] = {
     ["Team"] = "Spy",
-    ["Info"] = "The Spy Reverser can play Reverse cards during Missions to reverse the winner of the Mission"
+    ["Info"] = "The Spy Reverser can play Reverse cards during Missions to reverse the winner of the Mission",
+    ["Details"] = "The Spy Reverser will get a \"Reverse\" card during missions. If a Reverser plays a Reverse, the mission result will become the opposite of what it should be - IE if a Reverse is played on a mission with only successes, the mission will Fail. If it is on a mission with a fail, it will succeed instead"
   },
   ["Resistance Rogue"] = {
     ["Team"] = "Resistance",
     ["Option"] = "Watching",
-    ["Info"] = "The Resistance Rogue is a solo player who wins by playing Rogue Success on a Successful Mission and the winning Mission for the Resistance"
+    ["Info"] = "The Resistance Rogue is a solo player who wins by playing Rogue Success on a Successful Mission and the winning Mission for the Resistance",
+    ["Details"] = "The Resistance Rogue's goal is to play his unique \"Rouge Success\" mission card on a mission that succeeds and the winning mission for the Resistance. During the Team Building phase, the Leader must choose a player on the mission to Watch. If the Rogue is Watched, he will not be able to play their Rogue Success card for that mission. If the Rogue wins, the Resistance get a partial victory. If the Resistance win, the Rogue gets a partial victory"
   },
   ["Spy Rogue"] = {
     ["Team"] = "Spy",
-    ["Info"] = "The Spy Rogue is a solo player who wins by playing a Fail on a Failed Mission and the winning Mission for the Spies"
+    ["Info"] = "The Spy Rogue is a solo player who wins by playing a Fail on a Failed Mission and the winning Mission for the Spies",
+    ["Details"] = "The Spy Rogue's goal is to play a fail on a mission that fails and the winning mission for the Spies. If the Rogue wins, the Spies get a partial victory. If the spies win, the Rogue gets a partial victory"
   },
   ["Mole"] = {
     ["Team"] = "Spy",
-    ["Info"] = "The Mole is a solo player who wins by playing a Sabotage on the 5th Mission. They can only play Fail and Sabotage Cards on Missions. Sabotage negates any Fails played"
+    ["Info"] = "The Mole is a solo player who wins by playing a Sabotage on the 5th Mission. They can only play Fail and Sabotage Cards on Missions. Sabotage negates any Fails played",
+    ["Details"] = "The Mole's goal is to get the game to the very end and play his unique \"Sabotage\" mission card on the 5th Mission. A Sabotage card will cause any Fails played to not count for that mission. The Mole will only be allowed to play Fail or Sabotage cards on missions"
   },
   ["Witness"] = {
     ["Team"] = "Resistance",
-    ["Info"] = "The Witness is a Resistance member who, during Missions, can choose another Mission member to Witness. Their Success card will be replaced by a copy of the card the player they Witnessed played"
+    ["Info"] = "The Witness is a Resistance member who, during Missions, can choose another mission member as their Alibi. Their card will become a copy of their Alibi's",
+    ["Details"] = "The Witness can choose another player during missions as their Alibi. Once all Mission cards are played, the Witness's Success card will changed to match their Alibi's with all the same effects"
   },
   ["Pilot"] = {
     ["Team"] = "Resistance",
-    ["Info"] = "The Pilot is a Resistance member who can play Extract cards during Missions. An Extract will cause the current Mission to be canceled and the Mission Team to be repicked"
+    ["Info"] = "The Pilot is a Resistance member who can play Extract cards during Missions and retry the mission",
+    ["Details"] = "The Pilot will get an \"Extract\" mission card during missions. When played, the Extract will cause the mission to be canceled and repicked by the next leader. In 7+ player games the Pilot gets two Extracts, in 5-6 player games they gets one"
   },
 
   ["Amnesiac"] = {
     ["Team"] = "Secondary",
-    ["Info"] = "The Amnesiac is a secondary role that will overwrite another role. The Amnesiac will not know their team or role, but they will be told one player who is on their team. On Mission 5, their role will be revealed to them"
+    ["Info"] = "The Amnesiac is a secondary role that overwrites another role. They aren't told what team or primary role is, just one of their teammates. Their primary role will be revealed to them on Mission 5",
+    ["Details"] = "The Amnesiac is a secondary role that will overwrite another role. The Amnesiac will not know their team or role, but they will be told one player who is on their team. On Mission 5, their role will be revealed to them. During missions they will be given every unqiue card in the game. Any cards he play that his real role would not be allowed to play will become a Success (in most cases), with the exception of Fails which will remain as a Fail"
   },
 
   ["Psionic"] = {
     ["Team"] = "Secondary",
-    ["Info"] = "",
+    ["Info"] = "The Psionic is a secondary Spy who is told they are a Resistance member. Any Successes they play will become Fails when revealed",
+    ["Details"] = "The Psionic will overwrite a spy and appear as a standard Resistance member to themselves. However, any time they play a Success on a mission, it will become a fail when revealed"
   },
 }
 
@@ -234,7 +270,7 @@ function create_selectButtons()
 
           local funcName = "click_showVariants"..role
           local func = function(obj, player)
-            click_variantOptions(obj)
+            click_variantOptions(obj, player)
           end
           Global.setVar(funcName, func)
 
@@ -256,6 +292,7 @@ end
 
 data_roleOptionClicked = false
 function click_roleOption()
+
   local opt_obj = getObjectFromGUID('f8f9bb')
 
   if data_roleOptionClicked then
@@ -370,7 +407,6 @@ function show_ExtraOptions(obj, play)
     obj.removeButton(buttonIndex_extraRandom["Sub 2"])
     obj.removeButton(buttonIndex_extraRandom["Sub 3"])
     obj.removeButton(buttonIndex_extraRandom["Show Roles"])
-
   else
     random_optionSelected = true
     obj.editButton({ index = buttonIndex_extraRandom["Toggle"], label = "<" })
@@ -399,6 +435,8 @@ function show_ExtraOptions(obj, play)
 end
 
 function click_showRoles(obj,play)
+  if not Player[play].admin then return end
+
   if option_showRandomRoles then
     option_showRandomRoles = false
     obj.editButton({
@@ -425,7 +463,9 @@ end
 data_randomMin = 7
 data_randomMax = 10
 
-function click_variantOptions(obj)
+function click_variantOptions(obj, player)
+  if not Player[player].admin then return end
+
   local data = {click_function = "INSERT_FUNCTION", function_owner = self,
   label = "", position = {2, 0.1, -0.85}, scale = {0.3, 0.3, 0.3},
   width = 3100, height = 400, font_size = 400, color = {1, 0, 0, 10}}
@@ -448,6 +488,8 @@ function click_variantOptions(obj)
     for opt,explain in pairs(savedData["Variant"]) do
       local funcName = "click_option"..i..obj.getGUID()
       local func = function(objec, player)
+        if not Player[player].admin then return end
+
         if not table.contains(data_includedOptions, opt) then
           table.insert(data_includedOptions, opt)
           for ind,objD in pairs(objec.getButtons()) do
@@ -469,6 +511,7 @@ function click_variantOptions(obj)
             end
           end
         end
+        update_roleNotes()
       end
       Global.setVar(funcName, func)
       data.click_function = funcName
@@ -817,7 +860,7 @@ function update_roleNotes()
     optOutput = optOutput .. "\n◆" .. opt
   end
   if optOutput ~= "" then
-    optOutput = "\n\n[ffffff]╔════════════╗\n◆ Active Options ◆   \n╚════════════╝" .. optOutput
+    optOutput = "\n\n[ffffff]╔═══════════╗\n◆ Active Options ◆   \n╚═══════════╝" .. optOutput
   end
 
 

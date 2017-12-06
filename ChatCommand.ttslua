@@ -1,38 +1,53 @@
 --[[ Comand Functions ]]--
 -- Displays the help for all commands
 function command_displayHelp(player, args)
-  local output = "[9F1FEF]Resistance Console Help, do not type <>, ex. !role Batman"
-  if #args == 0 then
-    for command,description in pairs(ref_commandsDisplay) do
+  local output = "[9F1FEF]Resistance Console Help, do not type <>, ex. !role Batman. Optional arguments are in ()"
+  for command,description in pairs(ref_commandsDisplay) do
+    output = output .. "\n[30B22A]!" .. command .. " [FFFFFF][" .. description .. "]"
+  end
+
+  if player.admin then
+    output = output .. "\n[9F1FEF]Admin Commands"
+
+    for command,description in pairs(ref_adminCommands) do
       output = output .. "\n[30B22A]!" .. command .. " [FFFFFF][" .. description .. "]"
     end
-  else
-
   end
+
+  if #data_addedCommands[player.color] > 0 then
+    output = output .. "\n[9F1FEF]Special Commands"
+
+    for command,description in pairs(data_addedCommands[player.color]) do
+      output = output .. "\n[30B22A]!" .. description.display .. " [FFFFFF][" .. description.info .. "]"
+    end
+  end
+
   printToColor(output, player.color, {0,0,0})
   return false
 end
 -- Displays player's role
 function command_showRole(player, args)
-  if #args == 0 then
+  --if #args == 0 then
     local data = data_playerData[player.color]
     local output = data["Saved Output"]
     printToColor(output, player.color, {1,1,0})
-  end
+  --end
 
   return false
 end
 -- Force Votes
 function command_skipVote(player, args)
   if not player.admin then return false end
+
   if data_gamePhase == "Voting Phase" then
     if #args == 1 then
       local card = ""
-      if args[1] == "Approve" then
+      if string.lower(args[1]) == "approve" then
         card = "Approve"
-      elseif args[1] == "Reject" then
+      elseif string.lower(args[1]) == "reject" then
         card = "Reject"
       else
+        printToColor("Invalid arguement: Use Approve or Reject", string, {1,0,0})
         return false
       end
 
@@ -46,7 +61,7 @@ function command_skipVote(player, args)
         local rot = board.getRotation()
         data_playerVotes[color] = getObjectFromGUID(ref_cardGuids[card]).clone({position = pos})
         rot.z = 0
-        --data_playerVotes[color].interactable = false
+
         data_playerVotes[color].setScale({1.25, 1.00, 1.25})
         data_playerVotes[color].setPosition(pos)
         data_playerVotes[color].setRotationSmooth(rot)
@@ -67,104 +82,143 @@ function command_reset(player, args)
   elseif #args >= 1 then
     color = args[1]
   end
-  if color == "" or not table.contains(data_playersInGame, color) then return false end
 
-  if data_gamePhase == "Voting Phase" then
-    local role = data_playerRoles[color]
-    local data = data_playerData[color]
+  if color == "Team" then
+    data_gamePhase = "Forcing"
+    clean_teamTokens()
+    deal_teamTokens(true)
+  else
+    if color == "" or not table.contains(data_playersInGame, color) then return false end
 
-    local objects = Player[color].getHandObjects()
-    for _,card in pairs(objects) do
-      card.destruct()
-    end
+    if data_gamePhase == "Voting Phase" then
+      local role = data_playerRoles[color]
+      local data = data_playerData[color]
 
-    if data_playerVotes[color] ~= nil then
-      data_playerVotes[color].destruct()
-      data_playerVotes[color] = nil
-    end
-
-    if data["Deal Votes"] ~= nil then
-      data["Deal Votes"](color)
-    end
-
-    local boardGUID = ref_playerBoards[color]
-    local board = getObjectFromGUID(ref_playerBoards[color])
-    local teamPos = board.positionToWorld(ref_boardPosition.Hand)
-
-    local approveCard = getObjectFromGUID(ref_cardGuids["Approve"])
-    local rejectCard = getObjectFromGUID(ref_cardGuids["Reject"])
-
-    local card = approveCard.clone({position = teamPos})
-    card.setScale({1.25,1,1.25})
-    card.setRotation(board.getRotation())
-    card.setDescription(color)
-    card.setLock(false)
-    card.interactable = true
-    table.insert(object_voteCards, card)
-
-    card = rejectCard.clone({position = teamPos})
-    card.setScale({1.25,1,1.25})
-    card.setRotation(board.getRotation())
-    card.setDescription(color)
-    card.setLock(false)
-    card.interactable = true
-    table.insert(object_voteCards, card)
-  elseif data_gamePhase == "Mission" then
-    remove_missionCard(color)
-
-    local role = data_playerRoles[color]
-    local data = data_playerData[color]
-
-    if data["Deal Mission"] ~= nil then
-      data["Deal Mission"](color)
-    end
-
-    local boardGUID = ref_playerBoards[color]
-    local board = getObjectFromGUID(ref_playerBoards[color])
-    local teamPos = board.positionToWorld(ref_boardPosition.Hand)
-
-    for _,card in pairs(data["Mission Cards"]) do
-      local allow = true
-
-      if data["Card Limits"] ~= nil and data["Card Limits"][card] ~= nil then
-          local limit = data["Card Limits"][card]
-          if data["Card Count"][card] ~= nil then
-            local count = data["Card Count"][card]
-            if limit <= count then
-              allow = false
-            end
-          end
+      local objects = Player[color].getHandObjects()
+      for _,card in pairs(objects) do
+        card.destruct()
       end
 
-      if card == "Rogue Success" then
-          if data_optionData["Watching"] ~= nil then
-            if data_optionData["Watching"]["Watching Player"] == color then
-              allow = false
-            end
-          end
+      if data_playerVotes[color] ~= nil then
+        data_playerVotes[color].destruct()
+        data_playerVotes[color] = nil
       end
 
-      if allow then
-        local missionCard = getObjectFromGUID(ref_cardGuids[card]).clone({position = teamPos})
-        missionCard.setLock(false)
-        missionCard.setRotation(board.getRotation())
-        missionCard.setDescription(color)
-        missionCard.interactable = true
+      if data["Deal Votes"] ~= nil then
+        data["Deal Votes"](color)
+      end
+
+      local boardGUID = ref_playerBoards[color]
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Hand)
+
+      local approveCard = getObjectFromGUID(ref_cardGuids["Approve"])
+      local rejectCard = getObjectFromGUID(ref_cardGuids["Reject"])
+
+      local card = approveCard.clone({position = teamPos})
+      card.setScale({1.25,1,1.25})
+      card.setRotation(board.getRotation())
+      card.setDescription(color)
+      card.setLock(false)
+      card.interactable = true
+      table.insert(object_voteCards, card)
+
+      card = rejectCard.clone({position = teamPos})
+      card.setScale({1.25,1,1.25})
+      card.setRotation(board.getRotation())
+      card.setDescription(color)
+      card.setLock(false)
+      card.interactable = true
+      table.insert(object_voteCards, card)
+    elseif data_gamePhase == "Mission" then
+      remove_missionCard(color)
+
+      local role = data_playerRoles[color]
+      local data = data_playerData[color]
+
+      if data["Deal Mission"] ~= nil then
+        data["Deal Mission"](color)
+      end
+
+      local boardGUID = ref_playerBoards[color]
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Hand)
+
+      for _,card in pairs(data["Mission Cards"]) do
+        local allow = true
+
+        if data["Card Limits"] ~= nil and data["Card Limits"][card] ~= nil then
+            local limit = data["Card Limits"][card]
+            if data["Card Count"][card] ~= nil then
+              local count = data["Card Count"][card]
+              if limit <= count then
+                allow = false
+              end
+            end
+        end
+
+        if card == "Rogue Success" then
+            if data_optionData["Watching"] ~= nil then
+              if data_optionData["Watching"]["Watching Player"] == color then
+                allow = false
+              end
+            end
+        end
+
+        if allow then
+          local missionCard = getObjectFromGUID(ref_cardGuids[card]).clone({position = teamPos})
+          missionCard.setLock(false)
+          missionCard.setRotation(board.getRotation())
+          missionCard.setDescription(color)
+          missionCard.interactable = true
+        end
       end
     end
   end
 
   return false
 end
+-- Sets the given player as Leader
+function command_setLeader(player, args)
+  if not player.admin then return false end
 
-function coroutine_forceVotes()
-  for i=0,50 do
-    coroutine.yield()
+  local color = args[1]
+  if color == "" or not table.contains(data_playersInGame, color) then
+    printToColor("Invalid Player - Use !setleader <color>", player.color, {1,0,0})
+    return false
   end
 
-  place_votes()
-  return 1
+  set_leaderToken(color)
 end
+--
+function command_roleInfo(player, args)
+  local role = "nil"
+  if #args == 2 then
+    role = args[1] .. " " .. args[2]
+  elseif #args == 1 then
+    role = args[1]
+  elseif data_playerData[player.color] ~= nil then
+    role = data_playerData[player.color].Role
+  end
+
+  function titleCase(first,rest)
+    return first:upper()..rest:lower()
+  end
+  role = string.gsub(role, "(%a)([%w_']*)", titleCase)
+
+  if role_data[role] == nil then
+    printToColor("No role called \"" .. role .. "\" found", player.color, {1,0,0})
+  else
+    printToColor("------------------------", player.color, {1,1,1})
+    printToColor(role_data[role]["Details"], player.color, {1,1,1})
+    printToColor("------------------------", player.color, {1,1,1})
+  end
+  return false
+end
+
+
+
+
 
 -- [ Command Functions ] --
 -- Key to check beginning for
@@ -172,18 +226,27 @@ ref_commandKey = "!"
 -- Help display for commands
 ref_commandsDisplay = {
   ["role"] = "Displays your current role",
+  ["info (role name)"] = "Get an explaination of your current role or the given role's ability",
+  --["checkmission <1-5>"] = "Returns the notes of the given mission",
+  --["rolelist"] = "Returns the list of roles currently in the game",
   ["reset"] = "Redeals your vote or mission cards",
 }
 ref_adminCommands = {
-  ["force"] = "",
+  ["reset <color>"] = "Redeals the given player's vote or mission cards",
+  ["force <approve/reject>"] = "Skip the Vote phase and force the given vote",
+  ["setleader <color>"] = "Sets the given player as the Leader"
 }
+
+data_addedCommands = {}
 
 -- Command Constructors
 ref_commands = {
   ["help"] = command_displayHelp,
   ["role"] = command_showRole,
+  ["info"] = command_roleInfo,
   ["force"] = command_skipVote,
   ["reset"] = command_reset,
+  ["setleader"] = command_setLeader,
 }
 
 --[[ API Function ]]--
@@ -206,10 +269,14 @@ function onChat(message, player)
       index = index + 1
     end
 
+    if data_addedCommands[player.color] == nil then data_addedCommands[player.color] = {} end
+
     -- Checks if command exists and calls it or returns "No command found"
-    if ref_commands[command] == nil then
+    if ref_commands[command] == nil and data_addedCommands[player.color][command] == nil then
       broadcastToColor("No command \"" .. command .. "\" found.", player.color, {1,0,0})
       return false
+    elseif data_addedCommands[player.color][command] ~= nil then
+      return data_addedCommands[player.color][command].func(player, command_args)
     else
       return ref_commands[command](player, command_args)
     end

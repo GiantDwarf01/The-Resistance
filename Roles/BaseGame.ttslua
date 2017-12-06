@@ -62,7 +62,12 @@ function role_Base(color)
   data["Card Count"] = {}
   data["Output"] = function() end
   data["Place Card"] = function(color, instant)
-    local card = getObjectFromGUID(data.Card)
+    local card = nil
+    if type(data.Card) == "string" then
+      card = getObjectFromGUID(data.Card)
+    else
+      card = data.Card
+    end
 
     local playerHand = Player[color].getPlayerHand()
     local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 6.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 6.6}

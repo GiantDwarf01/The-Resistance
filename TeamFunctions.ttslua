@@ -4,7 +4,7 @@ objects_extraTeamCards = {}
 
 
 -- Place leader token on
-function set_leaderToken()
+function set_leaderToken(color)
   local playersInGame = data_playersInGame
   local colorOrder = {
     "White", "Brown", "Red", "Orange", "Yellow",
@@ -16,7 +16,7 @@ function set_leaderToken()
   if data_currentLeader == "" then
     data_currentLeader = playersInGame[math.random(#playersInGame)]
   else
-    data_currentLeader = nextPlayer(data_currentLeader, playersInGame)
+    data_currentLeader = color or nextPlayer(data_currentLeader, playersInGame)
   end
 
   local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])
@@ -26,6 +26,8 @@ function set_leaderToken()
   token.setRotation(board.getRotation())
   token.setLock(true)
   token.setScale({1.07,1,1.07})
+
+  broadcastToAll(output_name(data_currentLeader) .. " is the Leader", {1,1,1})
 end
 
 
@@ -42,6 +44,7 @@ end
 data_usedSetupTeams = {}
 -- Deal out round team tokens
 function deal_teamTokens(skipLeader)
+  print(data_gamePhase)
   data_gamePhase = "Setting Team Building"
   if not skipLeader then
     set_leaderToken()
@@ -93,14 +96,20 @@ function deal_teamTokens(skipLeader)
   end
 
   data_missionCount = missionMembers
+  setGamePhase("Team Building")
+end
 
+data_setGamePhase = ""
+function setGamePhase(phase)
+  data_setGamePhase = phase
   startLuaCoroutine(Global, 'coroutine_delayGamePhase')
 end
 
 function coroutine_delayGamePhase()
-  for i=0,100 do
-    data_gamePhase = "Team Building"
+  for i=0,50 do
+    coroutine.yield()
   end
+  data_gamePhase = data_setGamePhase
   return 1
 end
 
@@ -112,16 +121,6 @@ function repeating_teamChecks()
     local boardGUID = ref_playerBoards[color]
     local board = getObjectFromGUID(ref_playerBoards[color])
     local teamPos = board.positionToWorld(ref_boardPosition.Team)
-
-    local playerHand = Player[color].getHandObjects()
-    if #playerHand > 0 then
-      for _,card in pairs(playerHand) do
-        if card.getName() == "Team Token" then
-          card.setPosition(teamPos)
-          card.setRotation(board.getRotation())
-        end
-      end
-    end
 
     local teamList = getObjectsAtPosition(teamPos, "Card")
 
@@ -153,6 +152,7 @@ function repeating_teamChecks()
 
   if table.size(missionTeam) == data_missionCount and optionReq then
     data_missionColors = {}
+
     data_gamePhase = "Voting Phase"
 
     for color,card in pairs(missionTeam) do
@@ -194,6 +194,20 @@ function clean_teamTokens()
   for _, token in pairs(objects_teamToken) do
     if token ~= nil then
       token.destruct()
+    end
+  end
+
+  for index,color in pairs(data_playersInGame) do
+    local boardGUID = ref_playerBoards[color]
+    local board = getObjectFromGUID(ref_playerBoards[color])
+    local teamPos = board.positionToWorld(ref_boardPosition.Team)
+
+    local teamList = getObjectsAtPosition(teamPos, "Card")
+
+    for _,card in pairs(teamList) do
+      if card.getName() == "Team Token" then
+        card.destruct()
+      end
     end
   end
 

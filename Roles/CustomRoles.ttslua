@@ -114,7 +114,13 @@ function role_Hacker(color)
     local orginalCard = data_playerVotes[color]
     local hackedCard = data_playerVotes[selected]
 
-    replace_card(selected, hackedCard, orginalCard, "calculate_votes", "data_playerVotes")
+
+    if orginalCard.getName() ~= hackedCard.getName() then
+      broadcastToColor("Your Vote has been hacked!", selected, {1,1,0})
+    end
+
+    replace_card(selected, hackedCard, orginalCard, "calculate_votes", "data_playerVotes", "Your vote have been hacked!")
+
   end
   return data
 end
@@ -151,6 +157,11 @@ function role_Pathologist(color)
   local data = role_Resistance(color)
   data["Role"] = "Pathologist"
   data["Mission Cards"] = {"Success", "Cure"}
+  if #data_playersInGame >= 7 then
+    data["Card Limits"] = {["Cure"] = 2}
+  else
+    data["Card Limits"] = {["Cure"] = 1}
+  end
 
   return data
 end
@@ -254,7 +265,7 @@ function role_ResistanceClone(color)
   data["Mission Cards"] = {"Success", "Fail"}
   data["Can't Clone"] = {"ASI", "SCP Agent", "Resistance Defector", "Spy Defector", "Spy Chief", "Resistance Chief"}
   data["Mission Revealed"] = function(color)
-    if data_completedMission == 1 then
+    if data_completedMission == 2 then
       local clones = find_playersByRole({"Clone"})
 
       local altRoles = {
@@ -284,8 +295,8 @@ function role_ResistanceClone(color)
       }
 
       local updateRoles = {
-        ["Commander"] = {"Body Guard"},
-        ["False Commander"] = {"Body Guard"},
+        ["Commander"] = {role = "Body Guard", out = "Commander"},
+        ["False Commander"] = {role = "Body Guard", out = "Commander"},
       }
 
       if table.size(clones) == 2 then
@@ -321,10 +332,10 @@ function role_ResistanceClone(color)
         printToColor(data_playerData[clone1]["Saved Output"], clone1, {1,1,0})
 
         if updateRoles[clonedPlayerRole] ~= nil then
-          local update = find_playersByRole(updateRoles[clonedPlayerRole])
+          local update = find_playersByRole(updateRoles[clonedPlayerRole].role)
           for role,upcolor in pairs(update) do
-            printToColor(output_name(clone1) .. " has cloned a " .. clonedPlayerRole, upcolor, {1,1,0})
-            data_playerData[upcolor]["Saved Output"] = data_playerData[upcolor]["Saved Output"] .. "\n" .. output_name(clone1) .. " has cloned a " .. clonedPlayerRole
+            printToColor(output_name(clone1) .. " has cloned a " .. clonedPlayerRole.out, upcolor, {1,1,0})
+            data_playerData[upcolor]["Saved Output"] = data_playerData[upcolor]["Saved Output"] .. "\n" .. output_name(clone1) .. " has cloned a " .. clonedPlayerRole.out
           end
         end
 
@@ -488,8 +499,8 @@ function role_Corruptor(color)
       local orginalCard = data_playerVotes[color]
       local hackedCard = data_playerVotes[corrupted]
       local corruptCard = data_playerVotes[selected]
-      replace_card(selected, corruptCard, orginalCard, nil, "data_playerVotes")
-      replace_card(corrupted, hackedCard, orginalCard, "calculate_votes", "data_playerVotes")
+      replace_card(selected, corruptCard, orginalCard, nil, "data_playerVotes", "Your vote have been hacked!")
+      replace_card(corrupted, hackedCard, orginalCard, "calculate_votes", "data_playerVotes", "Your vote have been hacked!")
     else
       startLuaCoroutine(Global, "calculate_votes")
     end
@@ -499,6 +510,19 @@ end
 function role_Bioterrorist(color)
   local data = role_Spy(color)
   data["Role"] = "Bioterrorist"
+  data["Output"] = function()
+    local output = output_returnSpies(color, "Spy")
+    local spies = helper_returnKnownSpies(color)
+
+    if #spies == 1 then
+      output = "\nYour fellow spy is " .. output
+    else
+      output = "\nYour fellow spies are " .. output
+    end
+
+
+    return ref_colorCodes.Spy .. "You are the " .. data.Role .. "!" .. output .. "\n\nUse !infected to check who you have infected during the game"
+  end
   data["Activate Mutate"] = false
   data["Deal Mission"] = function(color)
     if data_missionTeam[color] ~= nil then
@@ -564,6 +588,7 @@ function role_Bioterrorist(color)
         end
       end
       if not playedCure then
+        local dontinfect = {}
         for _,misColor in pairs(data_missionColors) do
           -- Check if mission member has been infected
           if table.contains(data["Infected Players"], misColor) then
@@ -577,13 +602,15 @@ function role_Bioterrorist(color)
 
               table.insert(mutatedCards, infectedCard)
               table.insert(mutatedColors, misColor)
-            else
+            elseif not dontinfect[misColor] then
               -- Infect other player
               local colorOptions = table.removeItems(data_missionColors,misColor)
               local infectedPlayer = colorOptions[math.random(#colorOptions)]
 
+
               if not table.contains(data["Infected Players"], infectedPlayer) then
                 table.insert(infected, infectedPlayer)
+                dontinfect[infectedPlayer] = true
                 printToColor("The infection has spread to " .. output_name(infectedPlayer), color, {1,0,0})
               end
             end
@@ -603,6 +630,22 @@ function role_Bioterrorist(color)
     data["Mutate Players"] = outbreak
     data["Activate Mutate"] = false
   end
+
+  if data_addedCommands[color] == nil then
+    data_addedCommands[color] = {}
+  end
+
+  local command = function(player, arg)
+    local output = "[A23C09][u]Currently Infected[/u]"
+    for _,color in pairs(data["Infected Players"]) do
+      output = output .. "\n [A23C09]◆ "..output_name(color)
+    end
+    printToColor(output, player.color, {0,0,0})
+    return false
+  end
+
+  data_addedCommands[color]["infected"] = {display = "infected", info = "Show all currently Infected players", func = command}
+
   return data
 end
 function role_SpyASI(color)
@@ -939,6 +982,8 @@ function role_Psionic(color)
   local data = role_Resistance(color)
   data["Team"] = "Spy"
   data["Role"] = "Psionic"
+  data["Old Data"] = data_playerData[color]
+
   data["Output"] = function()
     return ref_colorCodes.Resistance .. "You are a member of the Resistance!"
   end
@@ -951,6 +996,32 @@ function role_Psionic(color)
     else
       startLuaCoroutine(Global, 'calculate_missionResults')
     end
+  end
+
+  data["Deal Mission"] = function()
+    if data_completedMission == 4 then
+      data["Remember"]()
+    end
+  end
+
+  data["Remember"] = function()
+    printToColor("Something seems off... Your mind begins to clear as you regain your thoughts", color, {1,1,0})
+
+    data["Card"].destruct()
+
+    data = data["Old Data"]
+
+    printToColor(data["Output"](color), color, {1,1,1})
+
+    local role = data["Role"]
+    local roles = ref_roleCards[role]
+
+    local randomIndex = math.random(#roles)
+    local card = getObjectFromGUID(roles[randomIndex]).clone()
+
+    data.Card = card
+
+    data["Place Card"](color, true)
   end
 
   return data
@@ -972,7 +1043,7 @@ function role_failedClone(color, team)
   data["Teammate"] = team[math.random(#team)]
   data["Output"] = function()
     local teammate = data["Teammate"]
-    return "[ffff00]You've attempted to clone " .. output_name(teammate) .. "[ffff00], but failed..."
+    return "[ffff00]You've attempted to clone " .. output_name(teammate) .. "[ffff00], but failed... but you are on their side now"
   end
 
   return data

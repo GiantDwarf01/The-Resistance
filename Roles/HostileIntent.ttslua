@@ -43,6 +43,7 @@ function role_ResistanceHunter(color)
         assassinToken.setScale({1.65, 1.00, 1.70})
         assassinToken.setLock(false)
         assassinToken.setRotation(board.getRotation())
+        revealColor(color)
       else
         check_victory(winner)
       end
@@ -111,6 +112,7 @@ function role_SpyHunter(color)
         assassinToken.setScale({1.65, 1.00, 1.70})
         assassinToken.setLock(false)
         assassinToken.setRotation(board.getRotation())
+        revealColor(color)
       elseif winner == "Early Hunt" then
         data_gamePhase = "Spy Hunting"
 
@@ -123,6 +125,7 @@ function role_SpyHunter(color)
         assassinToken.setScale({1.65, 1.00, 1.70})
         assassinToken.setLock(false)
         assassinToken.setRotation(board.getRotation())
+        revealColor(color)
       else
         check_victory(winner)
       end
@@ -164,7 +167,7 @@ function role_DeepAgent(color)
     end
 
     if not data["Blamed"] then
-      printToColor('Click the Place Blame button or type "!blame"', color, {1,0,0})
+      printToColor('Click the Place Blame button', color, {1,0,0})
       local buttondata = {click_function = "activate_blame", function_owner = self, label = "Place Blame",
       position = {0, 0, 1.2}, scale = {0.3, 0.3, 0.3}, width = 2500, height = 400, font_size = 400}
       local board = getObjectFromGUID(data.Card)
