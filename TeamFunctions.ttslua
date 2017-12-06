@@ -44,7 +44,6 @@ end
 data_usedSetupTeams = {}
 -- Deal out round team tokens
 function deal_teamTokens(skipLeader)
-  print(data_gamePhase)
   data_gamePhase = "Setting Team Building"
   if not skipLeader then
     set_leaderToken()

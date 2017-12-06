@@ -908,8 +908,6 @@ ref_plotCards = {
         local next = nextPlayer(data.Color, data_playersInGame)
         local prev = previousPlayer(data.Color, data_playersInGame)
 
-        --print(prev .. " < " .. data.Color .. " > " .. next)
-
         for index,checkColor in pairs(data_playersInGame) do
           if data.Color ~= checkColor then
 

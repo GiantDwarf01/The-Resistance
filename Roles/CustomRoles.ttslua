@@ -885,11 +885,11 @@ function role_NeutralASI(color)
   data["Setup"] = function(color)
     local resistData = {click_function = "click_ASIResistance", function_owner = self, label = " ",
                         position = {0.5, 0, -0.8}, scale = {0.3, 0.3, 0.3},
-                        width = 800, height = 800, font_size = 400, tooltip = "Join Resistance"}
+                        width = 800, height = 800, font_size = 400,  color = {0,0.65,1}}
 
     local spyData = {click_function = "click_ASISpy", function_owner = self, label = " ",
                         position = {-0.5, 0, -0.8}, scale = {0.3, 0.3, 0.3},
-                        width = 800, height = 800, font_size = 400, tooltip = "Join Spies"}
+                        width = 800, height = 800, font_size = 400, color = {1,0,0}}
 
     local card = getObjectFromGUID(data.Card)
     card.createButton(resistData)
