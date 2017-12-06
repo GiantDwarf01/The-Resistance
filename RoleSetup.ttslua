@@ -1,0 +1,322 @@
+
+#include !\The-Resistance\Roles\BaseGame
+#include !\The-Resistance\Roles\HiddenAgenda
+#include !\The-Resistance\Roles\HostileIntent
+#include !\The-Resistance\Roles\BonusRoles
+#include !\The-Resistance\Roles\CustomRoles
+
+-- Gets known spies
+function helper_returnKnownSpies(player)
+  local others = {}
+  local playerRole = data_playerRoles[player]
+  local spies = table.removeItems(data_teams.Spy, player)
+
+  return spies
+end
+
+spyOrder = {
+  ["ASI"] = 15,
+  ["Deep Agent"] = 15,
+  ["Spy Chief"] = 10,
+}
+
+-- Roles that won't be show during spy reveals
+ref_hiddenSpies = {
+  ["Commander"] = {
+    ["Deep Cover"] = function() return "[BB0000]a Deep Cover spy" end,
+    ["Spy Rogue"] = function() return "[BB0000]a Spy who has gone Rogue" end,
+    ["ASI"] = function()
+      local role = find_playersByRole({"ASI","SCP Agent"})
+      if table.size(role) == 2 then
+        local pretender, deep = role["ASI"], role["SCP Agent"]
+        if math.random(100) >= 50 then pretender, deep = deep, pretender end
+        return "[00aaff]incoming reinforcement, either " .. output_name(pretender) .. "[00aaff] or " .. output_name(deep)
+      end
+    end,
+  },
+  ["Hitman"] = {
+    ["Politician"] = function() return "[BB0000]the Politician who hired you" end,
+  },
+  ["Spy Team"] = {
+    ["Blind Spy"] = function() return "[BB0000]a Blinded Spy" end,
+    ["Spy Rogue"] = function() return "[BB0000]a Spy who has gone Rogue" end,
+    ["Deep Agent"] = function()
+      local role = find_playersByRole({"Pretender","Deep Agent"})
+      if table.size(role) == 2 then
+        local pretender = role["Pretender"]
+        local deep = role["Deep Agent"]
+        if math.random(100) >= 50 then pretender, deep = deep, pretender end
+        return "[BB0000]a Deep Agent, who is either " .. ref_colorCodes[pretender] .. pretender .. "[BB0000] or " .. ref_colorCodes[deep] .. deep
+      else
+        local deep = role["Deep Agent"]
+        return "[BB0000]a Deep Agent, ".. ref_colorCodes[deep] .. deep
+      end
+    end,
+    ["Spy Chief"] = function(color) return "[BB0000]your Chief, " .. output_name(color) end,
+    ["ASI"] = function()
+      local role = find_playersByRole({"ASI","SCP Agent"})
+      if table.size(role) == 2 then
+        local pretender, deep = role["ASI"], role["SCP Agent"]
+        if math.random(100) >= 50 then pretender, deep = deep, pretender end
+        return "[BB0000]future reinforcement, either " .. output_name(pretender) .. "[BB0000] or " .. output_name(deep)
+      end
+    end,
+  },
+}
+
+function output_returnSpies(player, team)
+  local output = ""
+  -- Table of spies filtered by roles current player is allowed to see
+  local spies = helper_returnKnownSpies(player)
+  local playerRoles = data_playerRoles[player]
+
+  table.sort(spies, function(e1, e2)
+    local r1 = data_playerRoles[e1]
+    local r2 = data_playerRoles[e2]
+    local a, b = 0, 0
+    if spyOrder[r1] ~= nil then a = spyOrder[r1] end
+    if spyOrder[r2] ~= nil then b = spyOrder[r2] end
+    return a < b
+  end)
+
+  for index, color in pairs(spies) do
+    if color ~= player then
+      local role = data_playerRoles[color]
+      local roleOutput = ""
+
+      if ref_hiddenSpies[playerRoles] ~= nil and ref_hiddenSpies[playerRoles][role] ~= nil then
+        roleOutput = ref_hiddenSpies[playerRoles][role](color)
+      elseif ref_hiddenSpies[team .. " Team"] ~= nil and ref_hiddenSpies[team .. " Team"][role] ~= nil then
+        roleOutput = ref_hiddenSpies[team .. " Team"][role](color)
+      else
+        roleOutput = output_name(color)
+      end
+
+      if index == #spies - 1 then
+        if #spies > 2 then
+          output = output .. roleOutput .. ref_colorCodes[team] .. ", and "
+        else
+          output = output .. roleOutput .. ref_colorCodes[team] .. " and "
+        end
+      elseif index == #spies then
+        output = output .. roleOutput .. ref_colorCodes[team]
+      elseif #spies > 2 then
+        output = output .. roleOutput .. ref_colorCodes[team] .. ", "
+      else
+        output = output .. roleOutput .. ref_colorCodes[team] .. " "
+      end
+    end
+  end
+
+  return output
+end
+
+function find_playersByRole(roles, exception)
+  local others = {}
+  for _, color in pairs(data_playersInGame) do
+    if color ~= exception then
+      local playerRole = data_playerRoles[color]
+      local count = 1
+      for _,role in pairs(roles) do
+        if playerRole == role then
+          if others[role] == nil then
+            others[role] = color
+          else
+            others[role .. count] = color
+            count = count + 1
+          end
+        end
+      end
+    end
+  end
+  return others
+end
+
+
+-- Load role pool
+function load_roles()
+    for opt,data in pairs(data_optionData) do
+      if data["Load Roles"] ~= nil then
+        data["Load Roles"]()
+      end
+    end
+
+  local playerCount = #data_playersInGame
+
+  local resistancePlayers = ref_resistanceCount[playerCount]
+  local spyPlayers = playerCount - resistancePlayers
+
+  local sepecialResistance = data_specialRoles.resistance
+  local sepecialSpies = data_specialRoles.spies
+
+  assert(#sepecialResistance <= resistancePlayers, "Too many Resistance roles selected")
+  assert(#sepecialSpies <= spyPlayers, "Too many Spy roles selected")
+
+  local inGameRoles = {}
+  for index, role in pairs(sepecialResistance) do
+    table.insert(inGameRoles, {["role"] = role,["team"] = "Resistance"})
+    resistancePlayers = resistancePlayers - 1
+  end
+  for index, role in pairs(sepecialSpies) do
+    table.insert(inGameRoles, {["role"] = role,["team"] = "Spy"})
+    spyPlayers = spyPlayers - 1
+  end
+
+  while resistancePlayers > 0 do
+    table.insert(inGameRoles, {["role"] = "Resistance",["team"] = "Resistance"})
+    resistancePlayers = resistancePlayers - 1
+  end
+  while spyPlayers > 0 do
+    table.insert(inGameRoles, {["role"] = "Spy",["team"] = "Spy"})
+    spyPlayers = spyPlayers - 1
+  end
+
+  data_inGameRoles = inGameRoles
+end
+-- Assign roles
+function assign_roles()
+  assert(#data_playersInGame == #data_inGameRoles, "Number of roles is not equal to number of players")
+
+  -- Local static global varibles
+  local playersInGame = data_playersInGame
+  local inGameRoles = data_inGameRoles
+
+  -- Local dynamic global varibles
+  local playerRoles = {}
+  local playerData = {}
+  local teams = {["Resistance"] = {}, ["Spy"] = {}}
+
+  -- Randomize roles
+  table.shuffle(inGameRoles)
+
+  local roles = ref_roles
+  -- Randomly assign role and teams
+  for index,color in pairs(playersInGame) do
+    local role = inGameRoles[1]["role"]
+    local team = inGameRoles[1]["team"]
+
+    playerRoles[color] = role
+
+    if roles[role] ~= nil then
+      playerData[color] = roles[role](color)
+    elseif roles[team .. " " .. role] ~= nil then
+      playerData[color] = roles[team .. " " .. role](color)
+    else
+      print("[ff0000]Error: No constructor found for \"" .. role .. "\" or \""  .. team .. " " .. role .. "\"")
+    end
+
+    table.insert(teams[team],color)
+    table.remove(inGameRoles, 1)
+  end
+
+  local secondaryRoles = data_specialRoles.secondary
+
+  -- Assign dynamic global varibles
+  data_playerRoles = playerRoles
+  data_playerData = playerData
+  data_teams = teams
+
+  for _,role in pairs(secondaryRoles) do
+    local randomIndex = math.random(#playersInGame)
+    local startIndex = randomIndex
+    local color = playersInGame[randomIndex]
+
+    local oldRole = playerRoles[color]
+    local oldTeam = oldRole
+    if role_data[oldRole] ~= nil then
+      oldTeam = role_data[oldRole]["Team"]
+    end
+
+    if ref_secondaryRestrictions[role] ~= nil then
+      local team = ref_secondaryRestrictions[role]["Team"] or "Null"
+
+      while table.contains(ref_secondaryRestrictions[role]["Roles"], oldRole) or team == oldTeam do
+        randomIndex = randomIndex + 1
+
+        if #playersInGame < randomIndex then randomIndex = 1 end
+
+        color = playersInGame[randomIndex]
+        oldRole = playerRoles[color]
+        oldTeam = oldRole
+        if role_data[oldRole] ~= nil then
+          oldTeam = role_data[oldRole]["Team"]
+        end
+
+        if randomIndex == startIndex then
+          error("No role compatable with " .. role)
+        end
+      end
+    end
+
+    playerData[color] = roles[role](color)
+    playerRoles[color] = role
+  end
+
+  -- Assign dynamic global varibles
+  data_playerRoles = playerRoles
+  data_playerData = playerData
+  data_teams = teams
+end
+-- Deal out role cards
+function deal_roleCards()
+  local roleCards = table.copy(ref_roleCards)
+  local playersInGame = data_playersInGame
+  local playerRoles = data_playerRoles
+  local playerData = data_playerData
+  local roles = ref_roles
+
+  for color,role in pairs(playerRoles) do
+    local playerHand = Player[color].getPlayerHand()
+    local randomIndex = math.random(#roleCards[role])
+    local card = getObjectFromGUID(roleCards[role][randomIndex]).clone()
+    table.remove(roleCards[role], randomIndex)
+
+    local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 6.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 6.6}
+    local rot = {0, playerHand['rot_y'] + 180, 0}
+
+    card.setPosition(pos)
+    card.setRotation(rot)
+    card.setScale({2.12, 1, 2.12})
+    card.setLock(true)
+    card.interactable = true
+
+    playerData[color].Card = card
+    playerData[color].CardIndex = randomIndex
+
+
+    local output = playerData[color].Output()
+    playerData[color]["Saved Output"] = output
+
+    if global_debug then
+      print(color .. ": " .. output)
+    end
+
+    output = output .. "\nUse !role to check this info again"
+
+    printToColor(output, color, {1,1,1})
+  end
+
+  startLuaCoroutine(Global, 'coroutine_setCardGUID')
+end
+-- Set card guids
+function coroutine_setCardGUID()
+  local playerData = data_playerData
+  local playerRoles = data_playerRoles
+
+  for i=1,50 do
+    coroutine.yield()
+  end
+
+  for color,role in pairs(playerRoles) do
+    while playerData[color].Card.isSmoothMoving() do
+      coroutine.yield()
+    end
+    playerData[color].Card = playerData[color].Card.getGUID()
+
+    if playerData[color].Setup ~= nil then
+      playerData[color].Setup(color)
+    end
+  end
+
+  return 1
+end

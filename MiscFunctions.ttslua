@@ -1,0 +1,432 @@
+-- [[ Player Function ]] --
+function nextPlayer(color, players)
+  local colorOrder = {
+    "White", "Brown", "Red", "Orange", "Yellow",
+    "Green", "Teal", "Blue", "Purple",  "Pink",
+    "White", "Brown", "Red", "Orange", "Yellow",
+    "Green", "Teal", "Blue", "Purple",  "Pink",
+  }
+
+  if players == nil then
+    players = getSeatedPlayers()
+  end
+
+  local start = false
+  for _, nextcolor in pairs(colorOrder) do
+    if not start then
+      if nextcolor == color then
+        start = true
+      end
+    else
+      if table.contains(players, nextcolor) then
+        return nextcolor
+      end
+    end
+  end
+end
+
+function previousPlayer(color, players)
+  local colorOrder = {
+    "Pink",   "Purple", "Blue",  "Teal", "Green",
+    "Yellow", "Orange",  "Red", "Brown", "White",
+    "Pink",   "Purple", "Blue",  "Teal", "Green",
+    "Yellow", "Orange",  "Red", "Brown", "White",
+  }
+
+  if players == nil then
+    players = getSeatedPlayers()
+  end
+
+  local start = false
+  for _, nextcolor in pairs(colorOrder) do
+    if not start then
+      if nextcolor == color then
+        start = true
+      end
+    else
+      if table.contains(players, nextcolor) then
+        return nextcolor
+      end
+    end
+  end
+end
+
+-- [[ Table Functions ]] --
+-- Swaps two indexes in array
+function table.swap(array, index1, index2)
+  array[index1], array[index2] = array[index2], array[index1]
+end
+-- Shuffles an array
+function table.shuffle(array)
+  local counter = #array
+  while counter > 1 do
+    local index = math.random(counter)
+    table.swap(array, index, counter)
+    counter = counter -1
+  end
+end
+-- Checks if table contains a value
+function table.contains(table, value)
+  if #table == 0 or value == nil then return false end
+  for _, val in pairs(table) do
+    if val == value then
+      return true
+    end
+  end
+
+  return false
+end
+--Gets size of non indexed table
+function table.size(table)
+  local count = 0
+  for _,_ in pairs(table) do
+    count = count + 1
+  end
+  return count
+end
+-- Remove exception item lists
+function table.removeItems(list, ...)
+  local exceptions = {...}
+  local foundItems = {}
+
+  for _,item in pairs(list) do
+    if #exceptions == 0 or not table.contains(exceptions, item) then
+      table.insert(foundItems, item)
+    end
+  end
+
+  return foundItems
+end
+-- Remove first instance from table
+function table.removeSingle(list, ...)
+  local exceptions = {...}
+  local foundItems = {}
+
+  for _,item in pairs(list) do
+    if #exceptions == 0 or not table.contains(exceptions, item) then
+      table.insert(foundItems, item)
+      table.removeItems(exceptions, item)
+    end
+  end
+
+  return foundItems
+end
+-- Remove by key
+function table.removeKey(list, key)
+  local data = {}
+  for k,v in pairs(list) do
+    if k ~= key then
+      data[k] = v
+    end
+  end
+  return data
+end
+-- Prints tables
+function table.print(inTable, indent)
+  if not indent then indent = 1 end
+
+  for k, v in pairs(inTable) do
+    formatting = string.rep("  ", indent) .. k .. ": "
+
+    if type(v) == "table" then
+      print(formatting)
+      table.print(v, indent+1)
+    elseif type(v) == "boolean" then
+      print(formatting .. tostring(v))
+    elseif type(v) == "userdata" then
+      print(formatting .. v.getName() .. ":" .. v.getGUID())
+    else
+      print(formatting .. v)
+    end
+  end
+end
+-- Deep Copy table
+function table.copy(original)
+    local copy = {}
+    for k, v in pairs(original) do
+        -- as before, but if we find a table, make sure we copy that too
+        if type(v) == 'table' then
+            v = table.copy(v)
+        end
+        copy[k] = v
+    end
+    return copy
+end
+-- Select random table element
+function table.random(tbl)
+  local size = table.size(tbl)
+  local random = math.random(size)
+
+  local i = 1
+  for k,v in pairs(tbl) do
+    if i == random then
+      return {key = k, value = v}
+    end
+    i = i + 1
+  end
+end
+-- Merge indexed tables without duplicates
+function table.merge(...)
+  local merging = {...}
+  local out = merging[1]
+
+  for i=2,#merging do
+    local curTable = merging[i]
+    for j=1,#curTable do
+      if not table.contains(out, curTable[j]) then table.insert(out, curTable[j]) end
+    end
+  end
+
+  return out
+end
+-- Check if tables are equal
+function table.equals(a, b)
+  if #a ~= #b then return false end
+  local t1,t2 = {}, {} -- temp tables
+  for k,v in pairs(a) do -- copy all values into keys for constant time lookups
+    t1[v] = (t1[v] or 0) + 1 -- make sure we track how many times we see each value.
+  end
+  for k,v in pairs(b) do
+    t2[v] = (t2[v] or 0) + 1
+  end
+  for k,v in pairs(t1) do -- go over every element
+    if v ~= t2[k] then return false end -- if the number of times that element was seen don't match...
+  end
+  return true
+end
+
+-- [[ Object Management Functions ]] --
+-- Gets objects at given position with the given tag(s)
+function getObjectsAtPosition(pos, ...)
+    local tagList = {...}
+    local objList = Physics.cast({
+      origin=pos, direction={0,1,0}, type=2, size={0.1,0.1,0.1},max_distance=0, debug=global_debug
+    })
+    local foundItems = {}
+    for _, obj in ipairs(objList) do
+        if #tagList == 0 then
+          table.insert(foundItems, obj.hit_object)
+        else
+          for _, tag in ipairs(tagList) do
+            if obj.hit_object.tag == tag then
+              table.insert(foundItems, obj.hit_object)
+              break
+            end
+          end
+        end
+    end
+
+    if foundItems == {} then
+      return nil
+    else
+      return foundItems
+    end
+end
+-- Gets objects at given position within a box with the given tag(s)
+function getObjectsInBox(pos, size, ori, ...)
+    local tagList = {...}
+    local size = (size or {1,1,1})
+    local ori = (ori or {0,0,0})
+    local objList = Physics.cast({
+      origin=pos, direction={0,1,0}, type=3, size=size, orientation=ori, max_distance=0, debug=global_debug
+    })
+
+    local foundItems = {}
+    for _, obj in ipairs(objList) do
+        if #tagList == 0 then
+          table.insert(foundItems, obj.hit_object)
+        else
+          for _, tag in ipairs(tagList) do
+            if obj.hit_object.tag == tag then
+              table.insert(foundItems, obj.hit_object)
+              break
+            end
+          end
+        end
+    end
+
+    if foundItems == {} then
+      return nil
+    else
+      return foundItems
+    end
+end
+--Finds objects in radius of a position, accepts optional filtering function
+--Only pos is required, the others are optional
+--Example func: function(o) return o.tag=="Deck" or o.tag=="Card" end
+function findInRadiusBy(pos, radius, func, debug)
+    local radius = (radius or 1)
+    local objList = Physics.cast({
+        origin=pos, direction={0,1,0}, type=2, size={radius,radius,radius},
+        max_distance=0, debug=(debug or false)
+    })
+
+    local refinedList = {}
+    for _, obj in ipairs(objList) do
+        if func == nil then
+            table.insert(refinedList, obj.hit_object)
+        else
+            if func(obj.hit_object) then
+                table.insert(refinedList, obj.hit_object)
+            end
+        end
+    end
+
+    return refinedList
+end
+--Finds objects in radius of a position, accepts optional filtering function
+--Only pos is required, the others are optional
+--Example func: function(o) return o.tag=="Deck" or o.tag=="Card" end
+function findInBoxBy(pos, size, ori, func, debug)
+    local size = (size or {1,1,1})
+    local ori = (ori or {0,0,0})
+    local objList = Physics.cast({
+        origin=pos, direction={0,1,0}, type=3, size=size,
+        orientation=ori, max_distance=0, debug=(debug or false)
+    })
+
+    local refinedList = {}
+    for _, obj in ipairs(objList) do
+        if func == nil then
+            table.insert(refinedList, obj.hit_object)
+        else
+            if func(obj.hit_object) then
+                table.insert(refinedList, obj.hit_object)
+            end
+        end
+    end
+
+    return refinedList
+end
+
+-- Removes objects that match exeception GUIDs from table
+function objectListException(list, ...)
+  local foundItems = {}
+  local exceptions = {...}
+  for _, obj in ipairs(list) do
+    if #exceptions == 0 or not table.contains(exceptions, obj.getGUID()) then
+      table.insert(foundItems, item)
+    end
+  end
+  return foundItems
+end
+function objectTableToGUID(list)
+  local out = {}
+
+  for k,obj in pairs(list) do
+    out[k] = obj.getGUID()
+  end
+
+  return out
+end
+
+
+function createScrolling(object, id, base, add_pos, sub_pos, values, labels, global_var)
+  local id = (id or object.getGUID())
+  local pos = (base.position or {0,0,0})
+  local width = (base.width or 2000)
+  local height = (base.height or base.font_size or 400)
+  local font_size = (base.font_size or base.height or 400)
+  local scale = (base.scale or {0.5,0.5,0.5})
+  local color = (base.color or {1,1,1})
+  local labels = (labels or values)
+  local startIndex = (startIndex or 1)
+
+  local add_pos = (add_pos or {pos[1]+1,pos[2],pos[3]})
+
+  local sub_pos = (sub_pos or {pos[1]-1,pos[2],pos[3]})
+  local data = {}
+  local curVal = Global.getVar(global_var)
+
+  local startIndex = 1
+  for ind,val in pairs(values) do
+    if val == curVal then startIndex = ind end
+  end
+
+  local savedTable = {
+    selectIndex = startIndex,
+    currentValue = curVal,
+    val = values,
+    lbl = labels,
+    buttonIndex = #object.getButtons(),
+  }
+  Global.setTable("scroll_track"..id, savedTable)
+
+  object.createButton({
+    click_function = "nil_func",
+    function_owner = Global,
+    label          = labels[savedTable.currentValue],
+    position       = pos,
+    scale          = scale,
+    width          = width,
+    height         = height,
+    font_size      = font_size,
+    color          = color,
+  })
+
+  object.createButton({
+    click_function = "add_value"..id,
+    function_owner = Global,
+    label          = ">",
+    position       = add_pos,
+    scale          = scale,
+    width          = height,
+    height         = height,
+    font_size      = height,
+    color          = color,
+  })
+  object.createButton({
+    click_function = "sub_value"..id,
+    function_owner = Global,
+    label          = "<",
+    position       = sub_pos,
+    scale          = scale,
+    width          = height,
+    height         = height,
+    font_size      = height,
+    color          = color,
+  })
+
+  local addFunctName = "add_value"..id
+  local addFunct = function(obj, player)
+    local tbl = Global.getTable("scroll_track"..id)
+    tbl.selectIndex = tbl.selectIndex + 1
+    if tbl.selectIndex > #tbl.val then
+      tbl.selectIndex = 1
+    end
+
+    tbl.currentValue = tbl.val[tbl.selectIndex]
+    Global.setVar(global_var, tbl.currentValue)
+
+    obj.editButton({
+      index = tbl.buttonIndex,
+      label = tbl.lbl[tbl.currentValue],
+    })
+
+    Global.setTable("scroll_track"..id, tbl)
+  end
+  Global.setVar(addFunctName, addFunct)
+
+
+  local subFunctName = "sub_value"..id
+  local subFunct = function(obj, player)
+    local tbl = Global.getTable("scroll_track"..id)
+    tbl.selectIndex = tbl.selectIndex - 1
+    if tbl.selectIndex < 1 then
+      tbl.selectIndex = #tbl.val
+    end
+
+    tbl.currentValue = tbl.val[tbl.selectIndex]
+    Global.setVar(global_var, tbl.currentValue)
+
+    obj.editButton({
+      index = tbl.buttonIndex,
+      label = tbl.lbl[tbl.currentValue],
+    })
+
+    Global.setTable("scroll_track"..id, tbl)
+  end
+  Global.setVar(subFunctName, subFunct)
+
+  Global.setVar(global_var, savedTable.currentValue)
+end

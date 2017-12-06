@@ -1,0 +1,317 @@
+
+function repeating_blamingCheck()
+  for index,color in pairs(data_playersInGame) do
+    if data_playerData[color].Role ~= "Deep Agent" then
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+      local list = getObjectsAtPosition(teamPos, "Tile")
+
+      if #list > 0 then
+        local deepAgent = list[1].getDescription()
+        list[1].destruct()
+
+        if data_playerData[color].Role == "Pretender" then
+          broadcastToAll(output_name(deepAgent) .. ref_colorCodes.Resistance .. " has found the Pretender, " .. output_name(color) .. ref_colorCodes.Resistance .. "!", {1,1,1})
+          data_playerData[deepAgent]["Swap Pretender"](deepAgent,color)
+        else
+          broadcastToAll(output_name(color) .. "[ff0000] is not the Pretender!", {1,1,1})
+        end
+
+        data_gamePhase = "Team Building"
+      end
+    end
+  end
+end
+
+function repeating_investigateCheck(winner)
+  local player = nil
+  if winner == "Resistance" then
+    player = data_currentLeader
+  else
+    player = data_optionData["Investigator"]["Investigator Player"]
+  end
+
+  for index,color in pairs(data_playersInGame) do
+    if color ~= player then
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+      local list = getObjectsAtPosition(teamPos, "Tile")
+
+      if #list > 0 then
+        list[1].destruct()
+
+        if #data_playersInGame < 7 then
+          if string.match(data_playerData[color].Role, "Chief") or data_playerData[color].Role == "Dummy Agent" then
+            broadcastToColor(output_name(color) .. "[ff0000] is a Chief!", player, {1,1,0})
+          else
+            broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
+          end
+        else
+          if data_playerData[color].Role == "Resistance Chief" or data_playerData[color].Role == "Dummy Agent" then
+            broadcastToColor(output_name(color) .. ref_colorCodes.Resistance .. " is a Resistance Chief!", player, {1,1,0})
+          elseif data_playerData[color].Role == "Spy Chief" then
+            broadcastToColor(output_name(color) .. ref_colorCodes.Spy .. " is a Spy Chief!", player, {1,1,1})
+          else
+            broadcastToColor(output_name(color) .. "[ffffff] is not a Chief!", player, {1,1,1})
+          end
+        end
+
+        check_nextRound(data_missionWinner)
+      end
+    end
+  end
+end
+
+function repeating_hunterCheck(team)
+  local playerRole = data_playerRoles
+  local playerData = data_playerData
+
+  -- Check Team Token area
+  for index,color in pairs(data_playersInGame) do
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Team)
+      local list = getObjectsAtPosition(teamPos, "Tile")
+
+      if #list > 0 then
+        if playerRole[color] ~= team.." Hunter" then
+          local opposing = "Resistance"
+          if team == "Resistance" then opposing = "Spy" end
+
+          if playerRole[color] == opposing .. " Chief" then
+            if team == "Resistance" then
+              broadcastToAll("The Resistance has successfully killed the Spy Chief!", {0,0.65,1})
+              check_victory("Resistance")
+            else
+              broadcastToAll("The Spies has successfully killed the Resistance Chief!", {1,0,0})
+              check_victory("Spy")
+            end
+          else
+            local token = object_victoryTokens[data_currentMission - 1]
+
+            local altTeam = ""
+
+            if team == "Resistance" then
+              token.setRotationSmooth({0,180,180})
+              data_victories.Spy = data_victories.Spy + 1
+              data_victories.Resistance = data_victories.Resistance - 1
+              roundWinner = "Spy"
+              altTeam = "Resistance Hunter Failed"
+            else
+              token.setRotationSmooth({0,180,0})
+              data_victories.Spy = data_victories.Spy - 1
+              data_victories.Resistance = data_victories.Resistance + 1
+              roundWinner = "Resistance"
+              altTeam = "Spy Hunter Failed"
+            end
+
+            local mission = "Mission " .. data_currentMission - 1
+            local i = 0
+            while true do
+              i = i + 1
+              if data_record[mission]["Team " .. i] ~= nil and data_record[mission]["Team " .. i]["Victory"] ~= nil then
+                data_record[mission]["Team " .. i]["Victory"] = altTeam
+                break
+              end
+            end
+
+            local endWinner = ""
+            if data_victories.Resistance == 3 then
+              endWinner = "Resistance"
+            elseif data_victories.Spy == 3 then
+              endWinner = "Spy"
+            end
+
+            if not check_victory(endWinner) then
+              check_nextRound(roundWinner)
+            end
+          end
+
+          list[1].destruct()
+        end
+      end
+  end
+end
+
+function repeating_inquistiorCheck()
+  local player = data_optionData["Inquisitor"]["Inquisitor"]
+
+  for index,color in pairs(data_playersInGame) do
+    if color ~= player then
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+      local list = getObjectsAtPosition(teamPos, "Tile")
+
+      if #list > 0 then
+        list[1].destruct()
+
+        if data_playerData[color].Team == "Spy" then
+          broadcastToColor(output_name(color) .. " [FF0000]is a Spy!", player, {1,0,0})
+        elseif data_playerData[color].Team == "Resistance" then
+          broadcastToColor(output_name(color) .. " [00AAFF]is a member of the Resistance!", player, {1,0,0})
+        else
+          print_error(26)
+          broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", player, {1,1,0})
+        end
+
+        data_optionData["Inquisitor"]["Inquisitor"] = color
+        data_optionData["Inquisitor"]["Place Inquisitor"](color, true)
+        check_nextRound(data_missionWinner)
+      end
+    end
+  end
+end
+
+function repeating_trapCheck()
+  for index,color in pairs(data_playersInGame) do
+    if color ~= data_currentLeader and table.contains(data_missionColors, color) then
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+      local list = getObjectsAtPosition(teamPos, "Tile")
+
+      if #list > 0 then
+        list[1].destruct()
+        local removedCard = remove_missionCard(color)
+        broadcastToColor(output_name(color) .. ref_colorCodes[removedCard] .. " played a " .. removedCard, data_currentLeader, {1,1,0})
+        startLuaCoroutine(Global, 'calculate_missionResults')
+        return
+      end
+    end
+  end
+end
+
+function repeating_sergeantCheck()
+  local player = data_optionData["Sergeant"]["Sergeant Player"]
+  for index,color in pairs(data_playersInGame) do
+    if color ~= player and table.contains(data_missionColors, color) then
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+      local list = getObjectsAtPosition(teamPos, "Tile")
+
+      local altCards = {
+        ["Success"] = "Fail",
+        ["Sabotage"] = "Fail",
+        ["Fail"] = "Success",
+        ["Rogue Success"] = "Fail",
+        ["Cure"] = "Infect",
+      }
+
+      if #list > 0 then
+        list[1].destruct()
+
+        local card = object_revealedMission[color]
+        local cardName = card.getName()
+        if altCards[cardName] ~= nil then
+          replace_card(color, card, altCards[cardName], "calculate_missionResults", "object_revealedMission")
+        end
+      end
+    end
+  end
+end
+
+function click_passSergeant(obj, player)
+  if data_optionData["Sergeant"]["Sergeant Player"] ~= player then return end
+  obj.destruct()
+  startLuaCoroutine(Global, 'calculate_missionResults')
+end
+
+function repeating_assassinCheck()
+  local playerRole = data_playerRoles
+  local playerData = data_playerData
+  local team = data_teams["Spy"]
+
+  -- Check Team Token area
+  for index,color in pairs(data_playersInGame) do
+    if playerData[color].Team ~= "Spy" then
+      local boardGUID = ref_playerBoards[color]
+      local board = getObjectFromGUID(ref_playerBoards[color])
+
+      local teamPos = board.positionToWorld(ref_boardPosition.Team)
+      local list = getObjectsAtPosition(teamPos, "Tile")
+
+      if #list > 0 then
+        if playerRole[color] == "Commander" then
+          broadcastToAll("The Spies have successfully assassinated the Commander!", {1,0,0})
+          list[1].destruct()
+          check_victory("Spy")
+        else
+          broadcastToAll("The Spies failed to assassinate the Commander!", {0,0.65,1})
+          list[1].destruct()
+          check_victory("Resistance")
+        end
+      end
+    end
+  end
+end
+
+function repeating_containmentCheck()
+  local playerRole = data_playerRoles
+  local playerData = data_playerData
+  local team = data_teams["Spy"]
+  local colors = find_playersByRole({"SCP Agent"})
+  local SCPAgent = colors["SCP Agent"]
+
+  -- Check Team Token area
+  for index,color in pairs(data_playersInGame) do
+    if playerRole[color] ~= "SCP Agent" then
+      local boardGUID = ref_playerBoards[color]
+      local board = getObjectFromGUID(ref_playerBoards[color])
+      local teamPos = board.positionToWorld(ref_boardPosition.Team)
+      local list = getObjectsAtPosition(teamPos, "Tile")
+      if #list > 0 then
+        if playerRole[color] == "ASI" then
+          broadcastToAll("The SCP has captured the escaped AI!", {1,0,0})
+          list[1].destruct()
+          if data_playerData[color].Team == "Spy" then
+            data_playerData[color].Team = "Resistance"
+            data_playerData[SCPAgent].Team = "Spy"
+          else
+            data_playerData[color].Team = "Spy"
+            data_playerData[SCPAgent].Team = "Resistance"
+          end
+
+          check_victory(data_playerData[SCPAgent].Team)
+        else
+          broadcastToAll("The ASI has escaped into the world!", {0,0.65,1})
+          list[1].destruct()
+          if data_playerData[SCPAgent].Team == "Spy" then
+            check_victory("Resistance")
+          else
+            check_victory("Spy")
+          end
+        end
+      end
+    end
+  end
+end
+
+function repeating_roundCheck()
+  for index,pos in pairs(ref_roundMarkerPosition) do
+
+    local check = false
+    if object_victoryTokens[index] == nil then
+      if index ~= 5 then
+        check = true
+      elseif data_victories.Resistance + data_victories.Spy >= 2 then
+        check = true
+      end
+    end
+
+    if check then
+      local list = getObjectsAtPosition(pos, "Tile")
+      if #list > 0 then
+        local lstNames = {}
+        for num,obj in pairs(list) do
+          if obj.getName() ~= nil then
+            table.insert(lstNames, obj.getName())
+          end
+        end
+
+        if table.contains(lstNames, "Round Marker") then
+          data_currentMission = index
+          deal_teamTokens(true)
+          return
+        end
+      end
+    end
+  end
+end

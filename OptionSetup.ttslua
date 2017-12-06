@@ -1,0 +1,1306 @@
+
+function option_investigator()
+  local data = {}
+  data["Deal Team"] = function(missionCount)
+    local invest = getObjectFromGUID(ref_tokens["Investigator"]).clone({
+      position     = {0,1,15},
+    })
+    invest.setScale({1.64,1,1.66})
+    invest.setName("Investigator")
+    invest.setLock(false)
+    invest.interactable = true
+
+    table.insert(objects_teamToken, invest)
+
+    data_optionData["Investigator"]["Investigator Player"] = ""
+    return missionCount
+  end
+  data["Investigator Player"] = ""
+  data["Team Requirement"] = function()
+    -- Check Team Token area
+    for index,color in pairs(data_playersInGame) do
+      if color ~= data_currentLeader then
+        local board = getObjectFromGUID(ref_playerBoards[color])
+        local teamPos = board.positionToWorld(ref_boardPosition.Team)
+        local list = getObjectsAtPosition(teamPos, "Tile")
+        if #list > 0 then
+          if data_optionData["Investigator"]["Investigator Player"] ~= color then
+            data_optionData["Investigator"]["Investigator Player"] = color
+            objects_extraTeamCards[color] = {object = list[1], spot = "Team"}
+            data_extraTeam["Investigator"] = color
+            update_notes()
+            return true
+          end
+        else
+          if data_optionData["Investigator"]["Investigator Player"] == color then
+            data_optionData["Investigator"]["Investigator Player"] = nil
+            objects_extraTeamCards[color] = nil
+            data_extraTeam["Investigator"] = nil
+            update_notes()
+          end
+        end
+      end
+    end
+
+    if data_optionData["Investigator"]["Investigator Player"] == nil or data_optionData["Investigator"]["Investigator Player"] == "" then
+      return false
+    else
+      return true
+    end
+  end
+  data["End Mission"] = {
+    priority = 10,
+    runFunction = function(winner)
+      local token = getObjectFromGUID(ref_tokens["Check Player"])
+      if winner == "Resistance" then
+        local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])
+        local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+        local tokenPo = token.clone({ position = teamPos })
+        tokenPo.setRotation(board.getRotation())
+        tokenPo.setLock(false)
+        tokenPo.setName("Check Player")
+        tokenPo.setScale({1.90, 1.00, 1.90})
+
+        tokenPo.interactable = true
+        clean_votes()
+
+        data_gamePhase = "Investigating Resistance"
+      elseif winner == "Spy" then
+        local invest = data_optionData["Investigator"]["Investigator Player"]
+        local board = getObjectFromGUID(ref_playerBoards[invest])
+        local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+        local tokenPo = token.clone({ position = teamPos })
+        tokenPo.setRotation(board.getRotation())
+        tokenPo.setLock(false)
+        tokenPo.setName("Check Player")
+        tokenPo.setScale({1.90, 1.00, 1.90})
+
+        tokenPo.interactable = true
+        clean_votes()
+
+        data_gamePhase = "Investigating Spy"
+        return false
+      end
+    end}
+  return data
+end
+function option_watching()
+  local data = {}
+  data["Deal Team"] = function(missionCount)
+    local invest = getObjectFromGUID(ref_tokens["Watching"]).clone({
+      position     = {0,1,15},
+    })
+    invest.setScale({1.07,1,1.07})
+    invest.setName("Watching")
+    invest.setLock(false)
+    invest.interactable = true
+
+    table.insert(objects_teamToken, invest)
+
+    data_optionData["Watching"]["Watching Player"] = ""
+    return missionCount
+  end
+  data["Watching Player"] = ""
+  data["Team Requirement"] = function()
+    -- Check Team Token area
+    for index,color in pairs(data_playersInGame) do
+      if color ~= data_currentLeader and data_missionTeam[color] ~= nil then
+        local board = getObjectFromGUID(ref_playerBoards[color])
+        local teamPos = board.positionToWorld(ref_boardPosition.Leader)
+        local list = getObjectsAtPosition(teamPos, "Tile")
+        if #list > 0 and list[1].getName() == "Watching" then
+          if data_optionData["Watching"]["Watching Player"] ~= color then
+            data_optionData["Watching"]["Watching Player"] = color
+            objects_extraTeamCards[color] = {object = list[1], spot = "Leader"}
+            data_extraTeam["Watching"] = color
+            update_notes()
+            return true
+          end
+        else
+          if data_optionData["Watching"]["Watching Player"] == color then
+            data_optionData["Watching"]["Watching Player"] = nil
+            objects_extraTeamCards[color] = nil
+            data_extraTeam["Watching"] = nil
+            update_notes()
+          end
+        end
+      end
+    end
+
+    if data_optionData["Watching"]["Watching Player"] == nil or data_optionData["Watching"]["Watching Player"] == "" then
+      return false
+    else
+      return true
+    end
+  end
+  return data
+end
+function option_inquistor()
+  local data = {}
+  data["Inquisitor"] = previousPlayer(data_currentLeader, data_playersInGame)
+  data["Place Inquisitor"] = function(color, smooth)
+    local inquisitorToken = getObjectFromGUID(ref_tokens["Inquisitor"])
+    local board = getObjectFromGUID(ref_playerBoards[color])
+    if not smooth then
+      inquisitorToken.setPosition(board.positionToWorld({0,0.05,-2.4}))
+      inquisitorToken.setRotation(board.getRotation())
+    else
+      inquisitorToken.setPositionSmooth(board.positionToWorld({0,0.05,-2.4}))
+      inquisitorToken.setRotationSmooth(board.getRotation())
+    end
+  end
+
+  data["Place Inquisitor"](data["Inquisitor"])
+
+  data["End Mission"] = {
+    priority = 5,
+    runFunction = function(winner)
+      if data_currentMission ~= 2 then
+        local token = getObjectFromGUID(ref_tokens["Check Player"])
+        local board = getObjectFromGUID(ref_playerBoards[data["Inquisitor"]])
+        local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+        local tokenPo = token.clone({ position = teamPos })
+        tokenPo.setRotation(board.getRotation())
+        tokenPo.setLock(false)
+        tokenPo.setScale({1.9,1,1.9})
+        tokenPo.setName("Check Player")
+        tokenPo.interactable = true
+        clean_votes()
+        data_gamePhase = "Inquisitor Check"
+      else
+        check_nextRound(winner)
+      end
+    end}
+  return data
+end
+function option_trapper()
+  local data = {}
+  data["Deal Team"] = function(missionCount)
+    return missionCount + 1
+  end
+  data["Mission Results"] = function()
+    local token = getObjectFromGUID(ref_tokens["Trap Player"])
+    local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])
+    local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+    local tokenPo = token.clone({ position = teamPos })
+    tokenPo.setRotation(board.getRotation())
+    tokenPo.setLock(false)
+    tokenPo.setScale({1.9,1,1.9})
+    tokenPo.setName("Trap Player")
+    tokenPo.interactable = true
+    clean_votes()
+    data_gamePhase = "Trap Player"
+  end
+  return data
+end
+function option_sergeant()
+  local data = {}
+  data["Deal Team"] = function(missionCount)
+    local invest = getObjectFromGUID(ref_tokens["Sergeant"]).clone({
+      position     = {0,1,15},
+    })
+    invest.setScale({1.07,1,1.07})
+    invest.setName("Sergeant")
+    invest.setLock(false)
+    invest.interactable = true
+
+    table.insert(objects_teamToken, invest)
+
+    data_optionData["Sergeant"]["Sergeant Player"] = ""
+    return missionCount
+  end
+  data["Sergeant Player"] = ""
+  data["Team Requirement"] = function()
+    -- Check Team Token area
+    for index,color in pairs(data_playersInGame) do
+      if color ~= data_currentLeader and data_missionTeam[color] ~= nil then
+        local board = getObjectFromGUID(ref_playerBoards[color])
+        local teamPos = board.positionToWorld(ref_boardPosition.Leader)
+        local list = getObjectsAtPosition(teamPos, "Tile")
+        if #list > 0 and list[1].getName() == "Sergeant" then
+          if data_optionData["Sergeant"]["Sergeant Player"] ~= color then
+            data_optionData["Sergeant"]["Sergeant Player"] = color
+            objects_extraTeamCards[color] = {object = list[1], spot = "Leader"}
+            data_extraTeam["Sergeant"] = color
+            update_notes()
+            return true
+          end
+        else
+          if data_optionData["Sergeant"]["Sergeant Player"] == color then
+            data_optionData["Sergeant"]["Sergeant Player"] = nil
+            objects_extraTeamCards[color] = nil
+            data_extraTeam["Sergeant"] = nil
+            update_notes()
+          end
+        end
+      end
+    end
+
+    if data_optionData["Sergeant"]["Sergeant Player"] == nil or data_optionData["Sergeant"]["Sergeant Player"] == "" then
+      return false
+    else
+      return true
+    end
+  end
+
+  data["Mission Results"] = function()
+    data_gamePhase = "Sergeant Check"
+    local token = getObjectFromGUID(ref_tokens["Check Player"])
+    local board = getObjectFromGUID(ref_playerBoards[data["Sergeant Player"]])
+    local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+    local tokenPo = token.clone({ position = teamPos })
+    tokenPo.setRotation(board.getRotation())
+    tokenPo.setLock(false)
+    tokenPo.setScale({1.9,1,1.9})
+    tokenPo.setName("Sergeant")
+    tokenPo.interactable = true
+
+    local data = {click_function = "click_passSergeant", function_owner = self, label = "PASS",
+    position = {0, 0, 1.2}, scale = {0.5, 0.5, 0.5}, width = 1000, height = 400, font_size = 400}
+    tokenPo.createButton(data)
+    clean_votes()
+  end
+  return data
+end
+function option_targeted()
+  local data = {}
+  data["Setup Team"] = function()
+    local token = getObjectFromGUID(ref_tokens["Round Marker"])
+    token.setScale({0.79, 1.00, 0.79})
+    token.setLock(false)
+    local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])
+    local teamPos = board.positionToWorld(ref_boardPosition.Leader)
+    teamPos.y = teamPos.y + 0.1
+    token.setPosition(teamPos)
+
+    data_gamePhase = "Choose Round"
+  end
+  return data
+end
+function option_commSilence()
+  local data = {}
+  data["Allowed Info"] = 3
+  data["Mission Results"] = function()
+    data_gamePhase = "Commns Check"
+    local placard = getObjectFromGUID(ref_tokens["Played Board"])
+    placard.clearButtons()
+
+    if data["Allowed Info"] > 0 then
+      local send = {click_function = "click_sendInfo", function_owner = self, label = "Break Radio Silence",
+      position = {0, 0, 2}, scale = {0.5, 0.5, 0.5}, width = 3500, height = 400, font_size = 400}
+      local none = {click_function = "click_noInfo", function_owner = self, label = "Stay Dark",
+      position = {0, 0, 2.5}, scale = {0.5, 0.5, 0.5}, width = 2000, height = 400, font_size = 400}
+      placard.createButton(send)
+      placard.createButton(none)
+    else
+      click_noInfo(nil, data_currentLeader)
+    end
+
+    local data = {click_function = "nil_func", function_owner = self, label = "Transmissions Left: " .. data["Allowed Info"],
+    position = {0, 0, -2}, scale = {0.5, 0.5, 0.5}, width = 0, height = 0,
+    font_size = 400, color = {0.7573, 0.7573, 0.7573, 1}, font_color = {1, 1, 1, 1}}
+    placard.createButton(data)
+  end
+  return data
+end
+function option_blindSpy()
+  option_blindMode = true
+  return {}
+end
+function option_randomRoles()
+  local data = {}
+  data["Load Roles"] = function()
+    local totalPlayers = #data_playersInGame
+
+    local allowedRoles = role_data
+
+    local maxResistance = ref_resistanceCount[totalPlayers]
+    local maxSpies = totalPlayers - maxResistance
+
+    local maxRoles = math.random(data_randomMin, data_randomMax)
+
+    allowedRoles = table.removeKey(allowedRoles, "Amnesiac")
+    allowedRoles = checkAllowedRoles(allowedRoles,maxResistance,maxSpies,maxRoles)
+
+    local selectedRoles = {}
+    while true do
+      local role = table.random(allowedRoles)
+      addRoles(role.key, selectedRoles)
+
+      local count = countRoles(role.key)
+
+      maxResistance = maxResistance - count["Resistance"]
+      maxSpies = maxSpies - count["Spies"]
+
+      maxRoles = maxRoles - (count["Spies"] + count["Resistance"])
+
+      if global_debug then
+        print("New Max: " .. count["Spies"] .. " + " .. count["Resistance"] .. " -= " .. maxRoles)
+      end
+
+      allowedRoles = checkAllowedRoles(allowedRoles, maxResistance, maxSpies, maxRoles, selectedRoles)
+
+      if table.size(allowedRoles) == 0 then
+        break
+      end
+    end
+
+    if not table.contains(data_specialRoles.secondary, "Amnesiac") and math.random(100) >= 85 then table.insert(selectedRoles, "Amnesiac") end
+    if not table.contains(data_specialRoles.secondary, "Psionic") and math.random(100) >= 90 then table.insert(selectedRoles, "Psionic") end
+
+    local outTeams = {resistance = {}, spies = {}, neutral = {}, secondary = {}}
+    data_specialRoles = { resistance = {}, spies = {}, neutral = {}, secondary = {} }
+    for _,role in pairs(selectedRoles) do
+      if role_data[role]["Team"] == "Resistance" then
+        if not table.contains(data_specialRoles.resistance, role) then
+          table.insert(data_specialRoles.resistance, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+            table.insert(data_specialRoles.resistance, role)
+            table.insert(outTeams.resistance, role)
+          end
+          table.insert(outTeams.resistance, role)
+        end
+      elseif role_data[role]["Team"] == "Spy" then
+        if not table.contains(data_specialRoles.spies, role) then
+          table.insert(data_specialRoles.spies, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+            table.insert(data_specialRoles.spies, role)
+            table.insert(outTeams.spies, role)
+          end
+          table.insert(outTeams.spies, role)
+        end
+      elseif role_data[role]["Team"] == "Neutral" then
+        if role_data[role]["Add"] ~= nil then
+          for _,_ in pairs(role_data[role]["Add"].resistance) do
+            if not table.contains(data_specialRoles.resistance, role) then
+              table.insert(data_specialRoles.resistance, role)
+              if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+                table.insert(data_specialRoles.resistance, role)
+              end
+            end
+          end
+
+          for _,_ in pairs(role_data[role]["Add"].spy) do
+            if not table.contains(data_specialRoles.spies, role) then
+              table.insert(data_specialRoles.spies, role)
+              if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+                table.insert(data_specialRoles.spies, role)
+              end
+            end
+          end
+          table.insert(outTeams.neutral, role)
+        else
+          if not table.contains(data_specialRoles.neutral, role) then
+            table.insert(data_specialRoles.neutral, role)
+            if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+              table.insert(data_specialRoles.neutral, role)
+            end
+            table.insert(outTeams.neutral, role)
+          end
+        end
+      else
+        if not table.contains(data_specialRoles.secondary, role) then
+          table.insert(data_specialRoles.secondary, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= totalPlayers then
+            table.insert(data_specialRoles.secondary, role)
+          end
+          table.insert(outTeams.secondary, role)
+
+        end
+      end
+    end
+
+    local resout = "[u][00aaFF]Resistance Roles[/u]"
+    for _,rol in pairs(outTeams.resistance) do
+      resout = resout .. "\n ◆ "..rol
+    end
+
+    local spyout = "[u][BB0000]Spy Roles[/u]"
+    for _,rol in pairs(outTeams.spies) do
+      spyout = spyout .. "\n [bb0000]◆ "..rol
+    end
+
+    local neuout = "[u][FFFF00]Neutral Roles[/u]"
+    for _,rol in pairs(outTeams.neutral) do
+      neuout = neuout .. "\n [ffff00]◆ "..rol
+    end
+
+    local secout = "[u][FFFF00]Secondary Roles[/u]"
+    for _,rol in pairs(outTeams.secondary) do
+      secout = secout .. "\n [ffff00]◆ "..rol
+    end
+
+    local out = ""
+    if resout ~= "[u][00aaFF]Resistance Roles[/u]" then
+      out = resout
+    end
+    if spyout ~= "[u][BB0000]Spy Roles[/u]" then
+      out = out .. "\n" .. spyout
+    end
+    if neuout ~= "[u][FFFF00]Neutral Roles[/u]" then
+      out = out .. "\n" .. neuout
+    end
+    if secout ~= "[u][FFFF00]Secondary Roles[/u]" then
+      out = out .. "\n" .. secout
+    end
+
+    if out ~= "" and option_showRandomRoles then
+      printToAll(out, {1,1,1})
+    end
+  end
+  return data
+end
+function option_hiddenDefector()
+  option_hiddenDefectors = true
+  return {}
+end
+function option_knowDefector()
+  option_knowDefectors = true
+  return {}
+end
+function option_knowDeep()
+  option_knowDeepAgent = true
+  return {}
+end
+function option_plotCards()
+  local data = {}
+
+  local playersInGame = data_playersInGame
+  for index, color in pairs(playersInGame) do
+    data[color.."Cards"] = {}
+
+    local playerHand = Player[color].getPlayerHand()
+    local card = getObjectFromGUID(ref_plotCardPlacardGUIDs[color])
+
+    local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 16, 1.1, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 16}
+    local rot = {playerHand['rot_x'], playerHand['rot_y'] + 180, 0}
+    card.setPosition(pos)
+    card.setRotation(rot)
+    card.setScale({2.30, 1.00, 2.30})
+    card.setName(color.." Plot Cards")
+  end
+
+  data["Cards"] = {}
+  data["Clean Up"] = {}
+  data["Completed"] = {}
+  data["Round Cards"] = {}
+  data["Setup Team"] = function()
+    for index, color in pairs(data_playersInGame) do
+      local cards = data[color.."Cards"]
+
+      for _,guid in pairs(cards) do
+        local card = getObjectFromGUID(guid)
+        if data["Cards"][guid].Mission ~= data_currentMission and ref_plotCards["Plot Handed"][card.getName()] ~= nil then
+          ref_plotCards["Plot Handed"][card.getName()](card, color)
+        end
+      end
+    end
+
+    if data["Completed"][data_currentMission] then
+      startLuaCoroutine(Global, 'calculate_missionResults')
+      return
+    end
+
+    data["Completed"][data_currentMission] = true
+
+    local plotData = ref_plotCardDeck[#playersInGame]
+    local deckGUID = plotData.Deck
+    if option_additionalPlotCards then
+      deckGUID = plotData["Bonus Deck"]
+    end
+    local deck = getObjectFromGUID(deckGUID)
+    deck.shuffle()
+
+    for index, color in pairs(data_playersInGame) do
+      local cards = data[color.."Cards"]
+
+      for _,guid in pairs(cards) do
+        local card = getObjectFromGUID(guid)
+        if data["Cards"][guid].Mission ~= data_currentMission and ref_plotCards["Team Deal"][card.getName()] ~= nil then
+          ref_plotCards["Team Deal"][card.getName()](card, color)
+        end
+      end
+    end
+
+    for i=1,plotData.Cards do
+      local leaderBoard = getObjectFromGUID(ref_playerBoards[data_currentLeader])
+      local card = deck.takeObject({ position = leaderBoard.positionToWorld(ref_plotCardDealPos[i]) })
+      card.setRotation(leaderBoard.getRotation())
+      card.setScale({1,1,1})
+      table.insert(data["Round Cards"], card.getGUID())
+      data["Cards"][card.getGUID()] = {["Done"] = false, ["Mission"] = data_currentMission}
+
+      if ref_plotCards["Instant"][card.getName()] ~= nil then
+        ref_plotCards["Instant"][card.getName()](card)
+      end
+    end
+
+    broadcastToColor("Hand out Plot Cards", data_currentLeader, {1,1,0})
+
+    data_gamePhase = "Check Plot Cards"
+  end
+
+  data["Votes Reveal"] = function(approved)
+    for index, color in pairs(data_playersInGame) do
+      local cards = data[color.."Cards"]
+
+      for _,guid in pairs(cards) do
+        local card = getObjectFromGUID(guid)
+        if data["Cards"][guid].Mission ~= data_currentMission and ref_plotCards["After Vote"][card.getName()] ~= nil then
+          ref_plotCards["After Vote"][card.getName()](card, color, approved)
+        end
+      end
+    end
+  end
+
+  data["Waiting Cards"] = {}
+  data["Mission Results"] = function()
+    data["Waiting Cards"] = {}
+    for index, color in pairs(data_playersInGame) do
+      local cards = data[color.."Cards"]
+
+      for _,guid in pairs(cards) do
+        local card = getObjectFromGUID(guid)
+        if data["Cards"][guid].Mission ~= data_currentMission then
+         if ref_plotCards["Mission Reveal"][card.getName()] ~= nil then
+          if ref_plotCards["Mission Reveal"][card.getName()](card, color) then
+            table.insert(data["Waiting Cards"], card.getGUID())
+          end
+         end
+        end
+      end
+    end
+    if #data["Waiting Cards"] <= 0 then
+      startLuaCoroutine(Global, 'calculate_missionResults')
+    end
+  end
+
+
+  return data
+end
+function option_bonusPlotCards()
+  option_additionalPlotCards = true
+  return {}
+end
+
+function check_dealtPlotCards()
+  local optData = data_optionData["Plot Cards"]
+  local changed = false
+  local count = 0
+
+  for _,color in pairs(data_playersInGame) do
+    if color ~= data_currentLeader then
+
+      local placard = getObjectFromGUID(ref_plotCardPlacardGUIDs[color])
+      local cardObj = findInBoxBy(placard.positionToWorld({0,0.1,0}), {14,0.1,4}, placard.getRotation(), function(o) return o.getDescription() == "Plot Card" end, global_debug)
+      local cards = objectTableToGUID(cardObj)
+      local equalityCheck = table.equals(cards, optData[color.."Cards"])
+
+      if #cards > 0 and not equalityCheck then
+        optData[color.."Cards"] = cards
+
+        changed = true
+
+        for _,card in pairs(cardObj) do
+          -- Check if card has a auto activation
+          if not optData["Cards"][card.getGUID()].Done
+          and not optData["Cards"][card.getGUID()].AutoDone
+          and ref_plotCards["Auto"][card.getName()] ~= nil then
+            -- Auto Activate
+            optData["Cards"][card.getGUID()].AutoDone = true
+            ref_plotCards["Auto"][card.getName()](card, color)
+          elseif not optData["Cards"][card.getGUID()].Done and ref_plotCards["Auto"][card.getName()] == nil then
+            optData["Cards"][card.getGUID()].Done = true
+          end
+        end
+      elseif #cards == 0 and not equalityCheck then
+        optData[color.."Cards"] = {}
+        changed = true
+      end
+    end
+  end
+
+  if changed then
+    local count = 0
+    for _,data in pairs(optData["Cards"]) do
+      if data.Done and data.Mission == data_currentMission then count = count + 1 end
+    end
+    if count == ref_plotCardDeck[#data_playersInGame].Cards then
+      for _,card in pairs(optData["Clean Up"]) do
+        getObjectFromGUID(card).destruct()
+
+        for _,color in pairs(data_playersInGame) do
+          local cards = optData[color.."Cards"]
+          for index,guid in pairs(cards) do
+            if card == guid then
+              optData[color.."Cards"][index] = nil
+            end
+          end
+        end
+      end
+
+      optData["Clean Up"] = {}
+      deal_teamTokens(true)
+    end
+
+    data_optionData["Plot Cards"] = optData
+  end
+end
+
+data_instantTokens = {}
+
+ref_plotCards = {
+  ["Instant"] = {
+    ["Establish Confidence"] = function(card)
+      local token = getObjectFromGUID(ref_tokens["Show Loyalty"]).clone()
+      token.setName("Show Loyality")
+      token.setLock(false)
+      token.setScale({1.65, 1.00, 1.65})
+
+      data_instantTokens["Establish Confidence Token"] = token.getGUID()
+
+      place_object(token, "Team", data_currentLeader)
+      card.setLock(true)
+
+      card.highlightOn({0,1,0})
+      token.highlightOn({0,1,0})
+
+      function repeating_checkEstablish(data)
+        for index,color in pairs(data_playersInGame) do
+          if data_currentLeader ~= color then
+            local boardGUID = ref_playerBoards[color]
+            local board = getObjectFromGUID(ref_playerBoards[color])
+            local teamPos = board.positionToWorld(ref_boardPosition.Team)
+            local teamList = findInRadiusBy(teamPos, 0.1, function(o) return o.getName() == "Show Loyality" end)
+
+            if #teamList > 0 then
+              teamList[1].destruct()
+
+              local leaderData = data_playerData[data_currentLeader]
+              local team = leaderData.Team
+
+              if option_plotCardCharacters then
+                if team == "Resistance" then
+                  broadcastToColor(output_name(data_currentLeader) .. "[00aaff] is a " .. leaderData.Role, color, {1,1,1})
+                elseif team == "Spy" then
+                  broadcastToColor(output_name(data_currentLeader) .. "[BB0000] is a " .. leaderData.Role, color, {1,1,1})
+                else
+                  print_error(26)
+                  broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", color, {1,1,0})
+                end
+              else
+                if team == "Resistance" then
+                  broadcastToColor(output_name(data_currentLeader) .. "[00aaff] is a member of the Resistance", color, {1,1,1})
+                elseif team == "Spy" then
+                  broadcastToColor(output_name(data_currentLeader) .. "[BB0000] is a Spy", color, {1,1,1})
+                else
+                  print_error(26)
+                  broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", color, {1,1,0})
+                end
+              end
+
+              data_optionData["Plot Cards"]["Cards"][data.Card.getGUID()]["Done"] = true
+              data.Card.highlightOff()
+              table.insert(data_optionData["Plot Cards"]["Clean Up"], data.Card.getGUID())
+              Timer.destroy("Checking Establish")
+            end
+          end
+        end
+      end
+
+      Timer.create({
+        identifier     = "Checking Establish",
+        function_name  = "repeating_checkEstablish",
+        function_owner = Global,
+        parameters     = {["Card"] = card, ["Token"] = token},
+        delay          = 1,
+        repetitions    = 0,
+      })
+    end,
+  },
+  ["Instant Redo"] = {
+    ["Establish Confidence"] = function(card)
+
+      getObjectFromGUID(data_instantTokens["Establish Confidence Token"]).destruct()
+
+      Timer.destroy("Checking Establish")
+
+      local token = getObjectFromGUID(ref_tokens["Show Loyalty"]).clone()
+      token.setName("Show Loyality")
+      token.setLock(false)
+      token.setScale({1.65, 1.00, 1.65})
+
+      data_instantTokens["Establish Confidence Token"] = token.getGUID()
+
+      place_object(token, "Team", data_currentLeader)
+      card.setLock(true)
+
+      card.highlightOn({0,1,0})
+      token.highlightOn({0,1,0})
+
+      function repeating_checkEstablish(data)
+        for index,color in pairs(data_playersInGame) do
+          if data_currentLeader ~= color then
+            local boardGUID = ref_playerBoards[color]
+            local board = getObjectFromGUID(ref_playerBoards[color])
+            local teamPos = board.positionToWorld(ref_boardPosition.Team)
+            local teamList = findInRadiusBy(teamPos, 0.1, function(o) return o.getName() == "Show Loyality" end)
+
+            if #teamList > 0 then
+              teamList[1].destruct()
+
+              local leaderData = data_playerData[data_currentLeader]
+              local team = leaderData.Team
+
+              if option_plotCardCharacters then
+                if team == "Resistance" then
+                  broadcastToColor(output_name(data_currentLeader) .. "[00aaff] is a " .. leaderData.Role, color, {1,1,1})
+                elseif team == "Spy" then
+                  broadcastToColor(output_name(data_currentLeader) .. "[BB0000] is a " .. leaderData.Role, color, {1,1,1})
+                else
+                  print_error(26)
+                  broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", color, {1,1,0})
+                end
+              else
+                if team == "Resistance" then
+                  broadcastToColor(output_name(data_currentLeader) .. "[00aaff] is a member of the Resistance", color, {1,1,1})
+                elseif team == "Spy" then
+                  broadcastToColor(output_name(data_currentLeader) .. "[BB0000] is a Spy", color, {1,1,1})
+                else
+                  print_error(26)
+                  broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", color, {1,1,0})
+                end
+              end
+
+              data_optionData["Plot Cards"]["Cards"][data.Card.getGUID()]["Done"] = true
+              data.Card.highlightOff()
+              table.insert(data_optionData["Plot Cards"]["Clean Up"], data.Card.getGUID())
+              Timer.destroy("Checking Establish")
+            end
+          end
+        end
+      end
+
+      Timer.create({
+        identifier     = "Checking Establish",
+        function_name  = "repeating_checkEstablish",
+        function_owner = Global,
+        parameters     = {["Card"] = card, ["Token"] = token},
+        delay          = 1,
+        repetitions    = 0,
+      })
+    end,
+  },
+  ["Team Deal"] = {
+    ["Strong Leader"] = function(card, color)
+      local data = {click_function = "click_becomeLeader"..card.getGUID(), function_owner = self, label = "Take the Lead",
+      position = {0, 0, 1.9}, scale = {0.3, 0.5, 0.6}, width = 2000, height = 400, font_size = 400}
+      card.createButton(data)
+
+      local func = function(obj,player)
+        if player ~= color then return end
+        set_leaderToken(player)
+        table.insert(data_optionData["Plot Cards"]["Clean Up"], obj.getGUID())
+
+        local cards = data_optionData["Plot Cards"]["Round Cards"]
+
+        for index,guid in pairs(cards) do
+          local obj = getObjectFromGUID(guid)
+
+          local leaderBoard = getObjectFromGUID(ref_playerBoards[data_currentLeader])
+          local card = getObjectFromGUID(guid)
+          card.setPosition(leaderBoard.positionToWorld(ref_plotCardDealPos[index]))
+          card.setRotation(leaderBoard.getRotation())
+          data["Cards"][card.getGUID()] = {["Done"] = false, ["Mission"] = data_currentMission}
+
+          if ref_plotCards["Instant Redo"][card.getName()] ~= nil then
+            ref_plotCards["Instant Redo"][card.getName()](card)
+          end
+        end
+
+        obj.clearButtons()
+      end
+      Global.setVar("click_becomeLeader"..card.getGUID(), func)
+    end
+  },
+  ["Plot Handed"] = {
+    ["Strong Leader"] = function(card, color)
+      card.clearButtons()
+    end
+  },
+  ["Auto"] = {
+    ["Open Up"] = function(card, color)
+      local token = getObjectFromGUID(ref_tokens["Show Loyalty"]).clone()
+      token.setName("Show Loyality")
+      token.setLock(false)
+      token.setScale({1.65, 1.00, 1.65})
+      place_object(token, "Team", color)
+      card.setLock(true)
+
+      card.highlightOn({0,1,0})
+      token.highlightOn({0,1,0})
+
+      function repeating_checkOpenUp(data)
+        for index,checkColor in pairs(data_playersInGame) do
+          if data.Color ~= checkColor then
+            local boardGUID = ref_playerBoards[checkColor]
+            local board = getObjectFromGUID(ref_playerBoards[checkColor])
+            local teamPos = board.positionToWorld(ref_boardPosition.Team)
+            local teamList = findInRadiusBy(teamPos, 0.1, function(o) return o.getName() == "Show Loyality" end)
+
+            if #teamList > 0 then
+              teamList[1].destruct()
+
+              local leaderData = data_playerData[color]
+              local team = leaderData.Team
+
+              if option_plotCardCharacters then
+                if team == "Resistance" then
+                  broadcastToColor(output_name(data.Color) .. "[00aaff] is a " .. leaderData.Role, checkColor, {1,1,1})
+                elseif team == "Spy" then
+                  broadcastToColor(output_name(data.Color) .. "[BB0000] is a " .. leaderData.Role, checkColor, {1,1,1})
+                else
+                  print_error(26)
+                  broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", color, {1,1,0})
+                end
+              else
+                if team == "Resistance" then
+                  broadcastToColor(output_name(data.Color) .. "[00aaff] is a member of the Resistance", checkColor, {1,1,1})
+                elseif team == "Spy" then
+                  broadcastToColor(output_name(data.Color) .. "[BB0000] is a Spy", checkColor, {1,1,1})
+                else
+                  print_error(26)
+                  broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", color, {1,1,0})
+                end
+              end
+
+              data_optionData["Plot Cards"]["Cards"][data.Card.getGUID()]["Done"] = true
+              data.Card.highlightOff()
+              table.insert(data_optionData["Plot Cards"]["Clean Up"], data.Card.getGUID())
+              Timer.destroy("Checking Open Up")
+            end
+          end
+        end
+      end
+
+      Timer.create({
+        identifier     = "Checking Open Up",
+        function_name  = "repeating_checkOpenUp",
+        function_owner = Global,
+        parameters     = {["Card"] = card, ["Token"] = token, ["Color"] = color},
+        delay          = 1,
+        repetitions    = 0,
+      })
+    end,
+    ["Overheard Conversation"] = function(card, color)
+      clean_votes()
+      local token = getObjectFromGUID(ref_tokens["Check Player"]).clone()
+      token.setName("Check Loyality")
+      token.setScale({1.64,1,1.66})
+      token.setLock(false)
+      place_object(token, "Vote", color)
+      card.setLock(true)
+
+      card.highlightOn({0,1,0})
+      token.highlightOn({0,1,0})
+
+      function repeating_checkOverheard(data)
+        local next = nextPlayer(data.Color, data_playersInGame)
+        local prev = previousPlayer(data.Color, data_playersInGame)
+
+        for index,checkColor in pairs(data_playersInGame) do
+          if data.Color ~= checkColor then
+
+            if checkColor == next or checkColor == prev then
+              local boardGUID = ref_playerBoards[checkColor]
+              local board = getObjectFromGUID(ref_playerBoards[checkColor])
+              local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+              local teamList = findInRadiusBy(teamPos, 0.1, function(o) return o.getName() == "Check Loyality" end, global_debug)
+
+              if #teamList > 0 then
+                teamList[1].destruct()
+
+                local leaderData = data_playerData[checkColor]
+                local team = leaderData.Team
+
+                if option_plotCardCharacters then
+                  if team == "Resistance" then
+                    broadcastToColor(output_name(checkColor) .. "[00aaff] is a " .. leaderData.Role, data.Color, {1,1,1})
+                  elseif team == "Spy" then
+                    broadcastToColor(output_name(checkColor) .. "[BB0000] is a " .. leaderData.Role, data.Color, {1,1,1})
+                  else
+                    print_error(26)
+                    broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", color, {1,1,0})
+                  end
+                else
+                  if team == "Resistance" then
+                    broadcastToColor(output_name(checkColor) .. "[00aaff] is a member of the Resistance", data.Color, {1,1,1})
+                  elseif team == "Spy" then
+                    broadcastToColor(output_name(checkColor) .. "[BB0000] is a Spy", data.Color, {1,1,1})
+                  else
+                    print_error(26)
+                    broadcastToColor("Yeah... if you're seeing this... the person you're checking has no team... which is impossible... so... let GiantDwarf know (Yay bugs)", color, {1,1,0})
+                  end
+                end
+
+                data_optionData["Plot Cards"]["Cards"][data.Card.getGUID()]["Done"] = true
+                data.Card.highlightOff()
+                table.insert(data_optionData["Plot Cards"]["Clean Up"], data.Card.getGUID())
+                Timer.destroy("Checking Overheard Conversation")
+              end
+            end
+          end
+        end
+      end
+
+      Timer.create({
+        identifier     = "Checking Overheard Conversation",
+        function_name  = "repeating_checkOverheard",
+        function_owner = Global,
+        parameters     = {["Card"] = card, ["Token"] = token, ["Color"] = color},
+        delay          = 1,
+        repetitions    = 0,
+      })
+    end,
+  },
+  ["After Vote"] = {
+    ["No Confidence"] = function(card, color, approved)
+      if approved then
+        local data = {click_function = "click_nullVote"..card.getGUID(), function_owner = self, label = "Null Vote",
+        position = {0, 0, 1.9}, scale = {0.3, 0.5, 0.6}, width = 2000, height = 400, font_size = 400}
+        card.createButton(data)
+
+        local func = function(obj, player)
+          if player ~= color then return end
+          obj.clearButtons()
+          data_optionData["Plot Cards"]["Cards"][obj.getGUID()]["Done"] = true
+          table.insert(data_optionData["Plot Cards"]["Clean Up"], data.Card.getGUID())
+          obj.setPosition({0,0,0})
+
+          local mission = "Mission " .. data_currentMission
+          local i = 0
+          while true do
+            i = i + 1
+            if data_record[mission]["Team " .. i]["Mission Cards"] == nil then
+              data_record[mission]["Team " .. i]["Mission Cards"] = {}
+              data_record[mission]["Team " .. i]["Victory"] = "Vote Nulled"
+              break
+            end
+          end
+
+          data_missionColors = {}
+          data_endMissionCompleted = {}
+
+          update_notebook()
+          deal_teamTokens()
+        end
+        Global.setVar("click_nullVote"..card.getGUID(), func)
+      end
+    end,
+  },
+  ["Mission Reveal"] = {
+    ["Keeping A Close Eye On You"] = function(card, color)
+      local passData = {click_function = "click_closeEyePass"..card.getGUID(), function_owner = self, label = "Pass",
+      position = {-0.5, 0, 1.9}, scale = {0.3, 0.5, 0.7}, width = 1500, height = 400, font_size = 400}
+      local useData = {click_function = "click_closeEyeUse"..card.getGUID(), function_owner = self, label = "Use",
+      position = {0.5, 0, 1.9}, scale = {0.3, 0.5, 0.7}, width = 1500, height = 400, font_size = 400}
+
+      local use = function(obj, player)
+        if player ~= color then return end
+        clean_votes()
+        obj.clearButtons()
+
+        local token = getObjectFromGUID(ref_tokens["Check Player"]).clone()
+        token.setName("Check Card")
+        token.setScale({1.64,1,1.66})
+        token.setLock(false)
+        place_object(token, "Vote", player)
+        obj.setLock(true)
+
+        card.highlightOn({0,1,0})
+        token.highlightOn({0,1,0})
+
+        function repeating_checkClose(data)
+          for _,checkColor in pairs(data_missionColors) do
+            if data.Color ~= checkColor then
+              local boardGUID = ref_playerBoards[checkColor]
+              local board = getObjectFromGUID(ref_playerBoards[checkColor])
+              local teamPos = board.positionToWorld(ref_boardPosition.Vote)
+              local teamList = findInRadiusBy(teamPos, 0.1, function(o) return o.getName() == "Check Card" end)
+
+              if #teamList > 0 then
+                teamList[1].destruct()
+                local missionCard = object_revealedMission[checkColor]
+                local name = missionCard.getName()
+
+                broadcastToColor(output_name(checkColor) .. ref_colorCodes[name] .. " played a " .. name, data.Color, {1,1,1})
+
+                Timer.destroy("Checking Close Eyes")
+
+                for _,color in pairs(data_playersInGame) do
+                  local cards = data_optionData["Plot Cards"][color.."Cards"]
+                  for index,guid in pairs(cards) do
+                    if data.Card.getGUID() == guid then
+                      data_optionData["Plot Cards"][color.."Cards"][index] = nil
+                    end
+                  end
+                end
+
+                data.Card.destruct()
+                data.Token.destruct()
+
+                local waiting = table.removeItems(data_optionData["Plot Cards"]["Waiting Cards"], obj.getGUID())
+                if #waiting <= 0 then
+                  startLuaCoroutine(Global, 'calculate_missionResults')
+                end
+                data_optionData["Plot Cards"]["Waiting Cards"] = waiting
+              end
+            end
+          end
+        end
+
+        Timer.create({
+          identifier     = "Checking Close Eyes",
+          function_name  = "repeating_checkClose",
+          function_owner = Global,
+          parameters     = {["Card"] = card, ["Token"] = token, ["Color"] = color},
+          delay          = 1,
+          repetitions    = 0,
+        })
+      end
+      local pass = function(obj, player)
+        if player ~= color then return end
+        obj.clearButtons()
+        local waiting = table.removeItems(data_optionData["Plot Cards"]["Waiting Cards"], obj.getGUID())
+        if #waiting <= 0 then
+          startLuaCoroutine(Global, 'calculate_missionResults')
+        end
+        data_optionData["Plot Cards"]["Waiting Cards"] = waiting
+      end
+
+      Global.setVar("click_closeEyePass"..card.getGUID(), pass)
+      Global.setVar("click_closeEyeUse"..card.getGUID(), use)
+
+      card.createButton(passData)
+      card.createButton(useData)
+
+      return true
+    end,
+    ["No Confidence"] = function(card, color)
+      card.clearButtons()
+
+      return false
+    end,
+  }
+}
+
+
+ref_plotCardPlacardGUIDs = {
+  ["White"]   = "18a267", ["Brown"]   = "e2083c",
+  ["Red"]     = "f2ea78", ["Orange"]  = "3bc006",
+  ["Yellow"]  = "6e9f40", ["Green"]   = "87dd60",
+  ["Teal"]    = "87dd25", ["Blue"]    = "059e1d",
+  ["Purple"]  = "aa7e2e", ["Pink"]    = "8845c2",
+}
+ref_plotCardDealPos = { {0,0,-3.7}, {2,0,-3.7}, {-2,0,-3.7} }
+ref_plotCardPlacard = { {0,0,0},{-2.09,0,0},{2.09,0,0},{-1.04,0,0},{1.04,0,0} }
+
+
+ref_plotCardDeck = {
+  [5] = {["Deck"] = "f367f4", ["Bonus Deck"] = "c61a08", ["Cards"] = 1},
+  [6] = {["Deck"] = "f367f4", ["Bonus Deck"] = "c61a08", ["Cards"] = 1},
+  [7] = {["Deck"] = "74255e", ["Bonus Deck"] = "cf318b", ["Cards"] = 2},
+  [8] = {["Deck"] = "74255e", ["Bonus Deck"] = "cf318b", ["Cards"] = 2},
+  [9] = {["Deck"] = "74255e", ["Bonus Deck"] = "cf318b", ["Cards"] = 3},
+  [10] = {["Deck"] = "74255e", ["Bonus Deck"] = "cf318b", ["Cards"] = 3}
+}
+
+option_hiddenDefectors = false
+option_knowDefectors = false
+option_knowDeepAgent = false
+
+function checkAllowedRoles(roles, resistance, spies, maxRoles, selectedRoles)
+  local maxRoles = (maxRoles or 10)
+  local selectedRoles = (selectedRoles or {})
+
+  local outRole = {}
+  local specialRoles = {}
+  for _,data in pairs(data_specialRoles) do
+    for _,role in pairs(data) do
+      table.insert(specialRoles, role)
+    end
+  end
+
+  for key,val in pairs(roles) do
+    local counts = countRoles(key)
+    if not table.contains(specialRoles, key) and counts["Spies"] + counts["Resistance"] <= maxRoles
+    and not table.contains(selectedRoles, key) and counts["Resistance"] <= resistance
+    and counts["Spies"] <= spies then
+      outRole[key] = val
+    elseif global_debug then
+      local output = "Removed " .. key .. " for "
+      if table.contains(specialRoles, key) then
+        output = output .. "being in Selected Special Roles"
+      elseif counts["Spies"] + counts["Resistance"] > maxRoles then
+        output = output .. "exceeding max Roles: " .. counts["Spies"] .. " + " .. counts["Resistance"] .. " > " .. maxRoles
+      elseif table.contains(selectedRoles, key) then
+        output = output .. "role already choosen"
+      elseif counts["Resistance"] > resistance then
+        output = output .. "too many resistance roles: " .. counts["Resistance"] .. " > " .. resistance
+      elseif counts["Spies"] > spies then
+        output = output .. "too many spy roles: " .. counts["Spies"] .. " > " .. spies
+      end
+    end
+  end
+
+  return outRole
+end
+
+function addRoles(curRole, roles)
+  table.insert(roles, curRole)
+
+  if role_data[curRole]["Parent"] ~= nil then
+    if not table.contains(roles, role_data[curRole]["Parent"]) then
+      addRoles(role_data[curRole]["Parent"], roles)
+    end
+  end
+  if role_data[curRole]["Siblings"] ~= nil and role_data[curRole]["Random Siblings"] == nil then
+    for _,ro in pairs(role_data[curRole]["Siblings"]) do
+      if not table.contains(roles, ro) then
+        addRoles(ro, roles)
+      end
+    end
+  end
+  if role_data[curRole]["Random Siblings"] ~= nil then
+    for _,ro in pairs(role_data[curRole]["Random Siblings"]) do
+      if not table.contains(roles, ro) then
+        addRoles(ro, roles)
+      end
+    end
+  end
+  if role_data[curRole]["Option"] ~= nil then
+    if not table.contains(data_includedOptions, role_data[curRole]["Option"]) then
+      local opt = role_data[curRole]["Option"]
+      table.insert(data_includedOptions, opt)
+      data_optionData[opt] = ref_options[opt]()
+    end
+  end
+end
+
+function countRoles(curRole, checkedRoles, prevRole)
+  local checkedRoles = (checkedRoles or {curRole})
+
+  local data = {["Resistance"] = 0, ["Spies"] = 0}
+  if curRole == "" then return data end
+  local role = role_data[curRole]
+
+  local prevRole = (prevRole or "base")
+
+  if global_debug then
+    print("     Added "..curRole.. " from " .. prevRole)
+    table.print(checkedRoles)
+  end
+
+  if role["Team"] == "Resistance" then
+    data["Resistance"] = data["Resistance"] + 1
+  elseif role["Team"] == "Spy" then
+    data["Spies"] = data["Spies"] + 1
+  elseif role["Team"] == "Neutral" then
+    data["Resistance"] = data["Resistance"] + 1
+    data["Spies"] = data["Spies"] + 1
+  end
+
+  if role["Double"] ~= nil and role["Double"] <= #data_playersInGame then
+    if role["Team"] == "Resistance" then
+      data["Resistance"] = data["Resistance"] + 1
+    elseif role["Team"] == "Spy" then
+      data["Spies"] = data["Spies"] + 1
+    elseif role["Team"] == "Neutral" then
+      data["Resistance"] = data["Resistance"] + 1
+      data["Spies"] = data["Spies"] + 1
+    end
+  end
+
+  if role["Parent"] ~= nil and role["Random Parent"] == nil then
+    if not table.contains(checkedRoles, role["Parent"]) then
+      table.insert(checkedRoles, role["Parent"])
+      local dat = countRoles(role["Parent"], checkedRoles, curRole)
+      data["Resistance"] = data["Resistance"] + dat["Resistance"]
+      data["Spies"] = data["Spies"] + dat["Spies"]
+    end
+  end
+  if role["Random Parent"] ~= nil then
+    if not table.contains(checkedRoles, role["Random Parent"]) then
+      table.insert(checkedRoles, role["Random Parent"])
+      local dat = countRoles(role["Random Parent"], checkedRoles, curRole)
+      data["Resistance"] = data["Resistance"] + dat["Resistance"]
+      data["Spies"] = data["Spies"] + dat["Spies"]
+    end
+  end
+  if role["Siblings"] ~= nil and role["Random Siblings"] == nil then
+    for _,ro in pairs(role["Siblings"]) do
+      if not table.contains(checkedRoles, ro) then
+        table.insert(checkedRoles, ro)
+        local dat = countRoles(ro, checkedRoles, curRole)
+        data["Resistance"] = data["Resistance"] + dat["Resistance"]
+        data["Spies"] = data["Spies"] + dat["Spies"]
+      end
+    end
+  end
+  if role["Random Siblings"] ~= nil then
+    for _,ro in pairs(role["Random Siblings"]) do
+      if not table.contains(checkedRoles, ro) then
+        table.insert(checkedRoles, ro)
+        local dat = countRoles(ro, checkedRoles, curRole)
+        data["Resistance"] = data["Resistance"] + dat["Resistance"]
+        data["Spies"] = data["Spies"] + dat["Spies"]
+      end
+    end
+  end
+
+  return data
+end
+
+option_blindMode = false
+
+function click_sendInfo(obj, player)
+  if player ~= data_currentLeader then return end
+
+  local count = data_optionData["Communication Silence"]["Allowed Info"]
+  local placard = getObjectFromGUID(ref_tokens["Played Board"])
+  count = count - 1
+  data_optionData["Communication Silence"]["Allowed Info"] = count
+
+  local data = {click_function = "nil_func", function_owner = self, label = "Transmissions Left: " .. count,
+  position = {0, 0, -2}, scale = {0.5, 0.5, 0.5}, width = 0, height = 0,
+  font_size = 400, color = {0.7573, 0.7573, 0.7573, 1}, font_color = {1, 1, 1, 1}}
+  placard.clearButtons()
+  placard.createButton(data)
+
+  data_showCards = true
+
+  startLuaCoroutine(Global, "calculate_missionResults")
+end
+
+function click_noInfo(obj, player)
+  if player ~= data_currentLeader then return end
+
+  local count = data_optionData["Communication Silence"]["Allowed Info"]
+  local placard = getObjectFromGUID(ref_tokens["Played Board"])
+  local data = {click_function = "nil_func", function_owner = self, label = "Transmissions Left: " .. count,
+  position = {0, 0, -2}, scale = {0.5, 0.5, 0.5}, width = 0, height = 0,
+  font_size = 400, color = {0.7573, 0.7573, 0.7573, 1}, font_color = {1, 1, 1, 1}}
+  placard.clearButtons()
+  placard.createButton(data)
+
+  data_showCards = false
+
+  for _,card in pairs(object_revealedMission) do
+    card.setScale({0,0,0})
+    card.translate({0,-0.5,0})
+  end
+
+  startLuaCoroutine(Global, "calculate_missionResults")
+end
+
+function nil_func() end

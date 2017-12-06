@@ -1,0 +1,311 @@
+-- Contains refrence tables that won't change after load
+
+
+ref_errors = {
+  [26] = "Role has no team assigned", -- No team found during Inquistor
+  [84] = "Base role has no output", -- Outputting base
+}
+
+-- [ Constructors ] --
+-- Option constructors
+ref_options = {
+  ["Investigator"] = option_investigator,
+  ["Watching"] = option_watching,
+  ["Inquisitor"] = option_inquistor,
+  ["Trapper"] = option_trapper,
+  ["Sergeant"] = option_sergeant,
+  ["Targeted"] = option_targeted,
+  ["Communication Silence"] = option_commSilence,
+  ["Blind Mode"] = option_blindSpy,
+  ["Random Roles"] = option_randomRoles,
+  ["Hidden Defectors"] = option_hiddenDefector,
+  ["Know Defectors"] = option_knowDefector,
+  ["Know Deep Agent"] = option_knowDeep,
+  ["Plot Cards"] = option_plotCards,
+  ["Extra Cards"] = option_bonusPlotCards,
+}
+-- Role constructors
+ref_roles = {
+  -- Resistance
+  ["Resistance"] = role_Resistance,
+  ["Commander"] = role_Commander,
+  ["Body Guard"] = role_BodyGuard,
+  ["Resistance Chief"] = role_ResistanceChief,
+  ["Resistance Hunter"] = role_ResistanceHunter,
+  ["Dummy Agent"] = role_DummyAgent,
+  ["Coordinator"] = role_Coordinator,
+  ["Pretender"] = role_Pretender,
+  ["Resistance Defector"] = role_ResistanceDefector,
+  ["Resistance Reverser"] = role_ResistanceReverser,
+  ["Resistance Rogue"] = role_ResistanceRogue,
+  ["Mayor"] = role_Mayor,
+  ["Witness"] = role_Witness,
+  ["Hacker"] = role_Hacker,
+  ["Pilot"] = role_Pilot,
+  ["Confidant"] = role_Confidant,
+  ["Pathologist"] = role_Pathologist,
+  ["Resistance Clone"] = role_ResistanceClone,
+
+  -- Spy
+  ["Spy"] = role_Spy,
+  ["Assassin"] = role_Assassin,
+  ["False Commander"] = role_FalseCommander,
+  ["Deep Cover"] = role_DeepCover,
+  ["Blind Spy"] = role_BlindSpy,
+  ["Spy Chief"] = role_SpyChief,
+  ["Spy Hunter"] = role_SpyHunter,
+  ["Deep Agent"] = role_DeepAgent,
+  ["Spy Defector"] = role_SpyDefector,
+  ["Spy Reverser"] = role_SpyReverser,
+  ["Spy Rogue"] = role_SpyRogue,
+  ["Politician"] = role_Politician,
+  ["Hitman"] = role_Hitman,
+  ["Mole"] = role_Mole,
+  ["Corruptor"] = role_Corruptor,
+  ["Bioterrorist"] = role_Bioterrorist,
+  ["Spy Clone"] = role_SpyClone,
+
+  -- Neutral Roles
+  ["Amnesiac"] = role_Amnesiac,
+  ["ASI"] = role_NeutralASI,
+  ["SCP Agent"] = role_NeutralSCPAgent,
+  ["Psionic"] = role_Psionic,
+}
+
+
+
+
+-- [ Display ] --
+-- Player color in RGB
+ref_playerRGB = {
+  ["White"]   = {1,1,1},               ["Brown"]   = {0.443, 0.231, 0.09},
+  ["Red"]     = {0.856, 0.1, 0.094},   ["Orange"]  = {0.956, 0.392, 0.113},
+  ["Yellow"]  = {0.905, 0.898, 0.172}, ["Green"]   = {0.192, 0.701, 0.168},
+  ["Teal"]    = {0.129, 0.694, 0.607}, ["Blue"]    = {0.118, 0.53, 1},
+  ["Purple"]  = {0.627, 0.125, 0.941}, ["Pink"]    = {0.96, 0.439, 0.807},
+}
+-- Victory message colors by winner --
+ref_winColor = {
+  ["Resistance"] = {0,0.65,1},
+  ["Spy"] = {1,0,0},
+  ["Resistance Rogue"] = {0,1,0.3},
+  ["Spy Rogue"] = {0,0.5,0.15},
+  ["Mole"] = {0.78,0.6,0},
+}
+-- Color codes for string output
+ref_colorCodes = {
+  ["White"] = '[ffffff]', ["Brown"] = '[713B17]', ["Red"] = '[DA1A18]',
+  ["Orange"] = '[F4641D]', ["Yellow"] = '[E6E52C]', ["Green"] = '[31B32B]',
+  ["Teal"] = '[21B19B]', ["Blue"] = '[1F62FF]',["Purple"] = '[A020F0]',
+  ["Pink"] = '[F570CE]', ["Black"] = '[000000]',
+
+  ["White Easy"] = '[aaaaaa]', ["Yellow Easy"] = '[aaa820]',
+
+  ["Success"] = '[00a6ff]', ["Fail"] = '[BB0000]', ["Chief Fail"] = '[FF0000]',
+  ["Extract"] = '[D3A300]', ["Sabotage"] = '[D3673D]', ["Rogue Success"] = '[00FF6B]',
+  ["Reverse"] = '[aaa820]', ["Hit"] = '[FF0000]', ["Cure"] = '[00FF00]',
+
+  ["Resistance"] = '[00a6ff]', ["Spy"] = '[BB0000]', ["Extracted"] = '[D3A300]',
+  ["Resistance Rogue"] = '[00FF6B]', ["Spy Rogue"] = '[77FF00]',
+  ["Mole"] = '[D3673D]', ["Neutral"]  = '[fff000]', ["Secondary"]  = '[fff000]',
+  ["Resistance Hunter Failed"] = '[BB0000]', ["Spy Hunter Failed"] = '[00a6ff]',
+  ["Vote Nulled"] = '[000000]'
+}
+--Images for game board based on number of players
+ref_boardImages = {
+  "http://cloud-3.steamusercontent.com/ugc/877501262317497712/8B9E25DC24FAE7FECCA3379B721D16A1522F28E3/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317503230/F5515CEA6923DAF1AE87CCF63AE6AABCFDAC52F2/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317505110/E33AF2D4680447691DBD3C197EE1A3183E3A0A80/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317505512/6063C51383D20B16C6BEC7B33558D8DB6CA93600/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317506162/E08E0FF6C93B52EC64AC40689CBE5D6B834648E9/",
+  "http://cloud-3.steamusercontent.com/ugc/877501262317506716/DA4FE3225D89998855EBC74801D3A71ECDF9607D/"
+}
+
+
+-- [ GUIDs ] --
+-- GUIDs for Token objects
+ref_tokens = {
+  ["Leader"] = "d8bd7c", ["Assassin"] = "0a0e3b",
+  ["Hunter"] = "8553d1", ["Investigator"] = "f84d31",
+  ["Check Player"] = "30b307", ["Watching"] = "f91171",
+  ["SCP"] = "5a2c0d", ["Inquisitor"] = "880453",
+  ["Trap Player"] = "205787", ["Trap Token"] = "bf4e08",
+  ["Sergeant"] = "1e06ab", ["Show Loyalty"] = "b03ec1",
+
+  ["Spy"] = "431ad8", ["Resistance"] = "3b5169",
+  ["Spy Rogue"] = "f270a7", ["Resistance Rogue"] = "3f1de5",
+  ["Mole"] = "c1d136", ["Victory Token"] = "67e5a7",
+  ["Round Marker"] = "6cd7d7", ["Vote Marker"] = "c61547",
+
+  ["Played Board"] = "2189bb", ["Main Board"] = "18eb21",
+}
+-- GUID for mission cards
+ref_cardGuids = {
+  ['Success'] = '233a1b', ['Fail'] = '54fda6', ['Chief Fail'] = '4fb7f7',
+  ['Rogue Success'] = '767e75', ['Reverse'] = '96046c', ['Hit'] = '1538d2',
+  ['Sabotage'] = '2924ea', ['Extract'] = '4b2838', ['Infect'] = '78207d',
+  ['Cure'] = '67de1d', tbd4 = '1e98d3', tbd5 = 'a05176', tbd6 = '2d282b',
+  tbd7 = '158ffd', tbd8 = '9fb4cc',
+
+  ["Reject"] = 'bd701c', ["Approve"] = '4e729a',
+  ["Team Token"] = {"8eb95a","b2d6fa","eb469b","cf0d76","65ba5e"}
+}
+--Role card GUIDs
+ref_roleCards = {
+  -- Resistance Members
+  ["Resistance"]            = {"d2c55f","d16a29","31b164","95a640","cb95a1","816875","ac9fcc","54ecf0","a786a7","7100e5","86e6a3","3e9346","3e8230"},
+  ["Commander"]             = {"6946f9","e347d8"},
+  ["Body Guard"]            = {"85d364","64eeec"},
+  ["Resistance Chief"]      = {"fa8e2d","03db91"},
+  ["Resistance Hunter"]     = {"c0c2d5"},
+  ["Dummy Agent"]           = {"8ff247"},
+  ["Coordinator"]           = {"f93679"},
+  ["Pretender"]             = {"47bd6e"},
+  ["Resistance Defector"]   = {"7352ea","822d40"},
+  ["Resistance Reverser"]   = {"8efa7f"},
+  ["Mayor"]                 = {"a0b0c1"},
+  ["Witness"]               = {"642869"},
+  ["Hacker"]                = {"3fd5b6"},
+  ["Confidant"]             = {"84fcf9"},
+  ["Pathologist"]           = {"c76720"},
+  ["Pilot"]                 = {"dc1380"},
+  ["Resistance ASI"]        = {"805fea"},
+  ["Resistance SCP Agent"]  = {"bd486b"},
+
+  -- Spy Members
+  ["Spy"]                   = {"e731d8","e93fa6","785c46","7b6772","763935","1491c5","4d8bcb","d8d321"},
+  ["Assassin"]              = {"c72617","3ab5dd"},
+  ["False Commander"]       = {"3c656b","530849"},
+  ["Deep Cover"]            = {"f0fc5b","3316da"},
+  ["Spy Chief"]             = {"870159","72bfbf"},
+  ["Spy Hunter"]            = {"fe128b"},
+  ["Blind Spy"]             = {"f00004","88530c"},
+  ["Deep Agent"]            = {"fbe7af"},
+  ["Spy Defector"]          = {"341aef","fa640f"},
+  ["Spy Reverser"]          = {"be8e11"},
+  ["Politician"]            = {"b0aafb"},
+  ["Hitman"]                = {"a1891c"},
+  ["Corruptor"]             = {"779005"},
+  ["Bioterrorist"]          = {"817d8a"},
+  ["Spy ASI"]               = {"b9c87c"},
+  ["Spy SCP Agent"]         = {"533527"},
+  ["Psionic"]            = {"d2c55f","d16a29","31b164","95a640","cb95a1","816875","ac9fcc","54ecf0","a786a7","7100e5","86e6a3","3e9346","3e8230"},
+
+
+  -- Solo Members
+  ["Resistance Rogue"]      = {"b52c6c"},
+  ["Spy Rogue"]             = {"8e0577"},
+  ["Mole"]                  = {"f3a74a"},
+  ["Clone"]                 = {"cfa5e7","cfa5e7"},
+  ["Failed Clone"]          = {"c5dfb9"},
+  ["Amnesiac"]              = {"449b78"},
+  ["ASI"]                   = {"a37d32"},
+  ["SCP Agent"]             = {"3b24ec"},
+}
+-- Defector Deck GUID
+ref_extraDecks = { ["Defector Deck"] = "574254" }
+-- Player hidden zone GUIDs
+ref_playerZones = {
+  ["White"]   = "106833", ["Brown"]   = "13016a",
+  ["Red"]     = "0522ca", ["Orange"]  = "3ffefa",
+  ["Yellow"]  = "6825e0", ["Green"]   = "f3446e",
+  ["Teal"]    = "92c21b", ["Blue"]    = "4609d0",
+  ["Purple"]  = "6ae52d", ["Pink"]    = "fd855c",
+  ["Grey"]    = "8e8d88", ["Black"]    = "8e8d88",
+}
+-- Player board guids
+ref_playerBoards = {
+  ["White"]   = "bc9755", ["Brown"]   = "15f513",
+  ["Red"]     = "246ecf", ["Orange"]  = "f1f3b7",
+  ["Yellow"]  = "f8e8b6", ["Green"]   = "a329c8",
+  ["Teal"]    = "a3f6b3", ["Blue"]    = "75225a",
+  ["Purple"]  = "8c98ce", ["Pink"]    = "73b663",
+}
+-- Player frames
+ref_playerFrames = {
+  ["White"]   = "7f6197", ["Brown"]   = "2b2ec4",
+  ["Red"]     = "ca80e3", ["Orange"]  = "b14953",
+  ["Yellow"]  = "0de4b7", ["Green"]   = "87f7db",
+  ["Teal"]    = "871c40", ["Blue"]    = "19fa07",
+  ["Purple"]  = "ad320b", ["Pink"]    = "4a64a9",
+}
+-- Objects to be locked
+ref_lockedObjectGUIDs = {
+  "5da177","7f6197","2b2ec4","ca80e3",
+  "b14953","0de4b7","87f7db","871c40",
+  "19fa07","ad320b","4a64a9","020eff",
+  "e3e4b9","a76547","4f536c","a86ff2",
+  '8d188a','2d8eea','27b52e','bb520c',
+  '2db62c','055543','db52f1','de0d25',
+  'cb1fe7','656b51','2e9480','0092da',
+  'c94cd7','897384','38eb85','2c7226',
+  '9a9848','c89a08','0934cc','3a6eba',
+  '0096c1','4a8b02','ef92c2','1ba7a5',
+  '605110','06afc1','33f9db','08c177',
+  '9e941f','18329d','08cb2f','157c65',
+  'ba14a9','52be70','044a4f','eaae00',
+  '2623c4','cdbb26','9fba9a','9d2842',
+  'efd22b','2d5898','56c0aa','544103',
+  '302faa',
+}
+
+ref_hiddenObjectGUIDs = {
+  '3b5169', '431ad8', '67e5a7', 'c1d136', 'f270a7', '3f1de5',
+  'b2d6fa', 'cf0d76', '65ba5e', '8eb95a', 'eb469b', 'bd701c',
+  '4e729a', 'f91171', '8553d1', '0a0e3b', 'f84d31', '30b307',
+  '574254', 'b03ec1', 'cf318b', 'c61a08', 'f367f4', '74255e'
+}
+
+
+
+-- [ Number Values ] --
+-- Number of resistance per players [# of players] = num of resistance
+ref_resistanceCount = { [5] = 3, [6] = 4, [7] = 4, [8] = 5, [9] = 6, [10] = 6 }
+-- Number of team members stored as [Num of players][Mission Count] = Count
+ref_missionCount = { [5] = {2,3,2,3,3}, [6] = {2,3,4,3,4}, [7] = {2,3,3,4,4}, [8] = {3,4,4,5,5}, [9] = {3,4,4,5,5}, [10] = {3,4,4,5,5} }
+
+
+
+-- [ String Outputs ] --
+-- Message to output with game victory
+ref_winMessages = {
+  ["Resistance"] = {"The Resistance has overthrown the government!", "The Resistacne has successfully outed the Spies!"},
+  ["Spy"] = {"The Spies have served the Empire well!", "The Spies have quelled the Resistance!", "The Spies have destroyed the Resistance!"},
+  ["Resistance Rogue"] = {"The Resistance Rogue has completed their mission!"},
+  ["Spy Rogue"] = {"The Spy Rogue has completed their mission!"},
+  ["Mole"] = {"The Mole has completed their mission!"},
+}
+
+
+
+
+-- [ Positions ] --
+-- Positions on player board based on slots
+ref_boardPosition = { ["Team"] = {-0.19,0.15,0}, ["Leader"] = {2.4,0.15,0}, ["Hand"] = {0,2,5.5}, ["Vote"] = {-2.42, 0.15, 0.00} }
+-- Position for vote track token per downvotes
+ref_voteTrackPosition = { {-13.1,1.3,-8.75}, {-8.5,1.3,-8.75}, {-3.9,1.3,-8.75}, {0.75,1.3,-8.75}, {5.4,1.3,-8.75} }
+-- Position for round marker
+ref_roundMarkerPosition = { {-10.50, 1.30, -3.00}, {-4.20, 1.30, -3.00}, {2.10, 1.30, -3.00}, {8.40, 1.30, -3.00}, {14.60, 1.30, -3.00} }
+-- Team token positions based on mission count
+ref_tokenPosition = {
+  [2] = {{-5, 1.32, 8}, {5, 1.32, 8}},
+  [3] = {{0, 1.32, 8}, {-9, 1.32, 8}, {9, 1.32, 8}},
+  [4] = {{-4, 1.32, 8}, {4, 1.32, 8}, {-12, 1.32, 8}, {12, 1.32, 8}},
+  [5] = {{-4, 1.32, 10}, {4, 1.32, 10}, {0, 1.32, 6}, {8, 1.32, 6}, {-8, 1.32, 6}},
+  [6] = {{0, 1.32, 6}, {8, 1.32, 6}, {-8, 1.32, 6}, {0, 1.32, 10}, {8, 1.32, 10}, {-8, 1.32, 10}},
+}
+-- Card positions for revealing cards
+ref_missionRevealPosition = {
+  [2] = {{28, 1.03, 3}, {28, 1.03, -3}},
+  [3] = {{28, 1.03, 6}, {28, 1.03, 0}, {28, 1.03, -6}},
+  [4] = {{28, 1.03, 9}, {28, 1.03, 3}, {28, 1.03, -3}, {28, 1.03, -9}},
+  [5] = {{28, 1.03, 6}, {28, 1.03, 0}, {28, 1.03, -6}, {32.5, 1.03, 3}, {32.5, 1.03, -3}},
+  [6] = {{28, 1.03, 6}, {28, 1.03, 0}, {28, 1.03, -6}, {32.5, 1.03, 6}, {32.5, 1.03, 0}, {32.5, 1.03, -6}, },
+}
+-- Token positions for extra team building tokens
+ref_extraTokensPosition = {
+  [1] = {{0,1,15}},
+  [2] = {{-4.75, 1, 15},{4.75, 1, 15}}
+}
+-- Mission victory token position
+ref_victoryPosition = { {-13, 1.3, -0.76}, {-6.6, 1.3, -0.6}, {-0.3, 1.3, -0.6}, {6, 1.3, -0.6}, {12.2, 1.3, -0.6} }

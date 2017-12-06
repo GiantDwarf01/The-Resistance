@@ -1,0 +1,868 @@
+role_data = {
+  ["Commander"] = {
+    ["Team"] = "Resistance",
+    ["Random Siblings"] = {"Assassin"},
+    ["Children"] = {"Assassin", "Body Guard", "Deep Cover"},
+    ["Info"] = "The Commander is a Resistance member who is told who the spies are",
+    ["Details"] = "The Commander will be told which players are spies. They want to attempt to help steer the Resistance towards picking teams without spies. \nHowever, if you're playing with the Assassin, after the Resistance scores 3 points, the Assassin will have a final chance to guess who the Commander is and Assassinate them. If the Commander is Assasinated, the Spies automatically win.",
+  },
+  ["Body Guard"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Commander",
+    ["Children"] = {"False Commander"},
+    ["Info"] = "The Body Guard is a Resistance member who is told who the Commander is",
+    ["Details"] = "The Body Guard will be told which player is the Commander. Their goal is to help the Commander sway other players and keep him safe from the Assassin by drawing focus away from the Commander. \nIf you are playing with the False Commander, the Body Guard will be told two players are the Commander, but he will not know which one is the true Commander and which is the False Commander."
+  },
+  ["Assassin"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Commander",
+    ["Info"] = "The Assassin is a Spy who will have a chance to guess who the Commander is and Assassinate them if the Resistance win 3 Missions",
+    ["Details"] = "The Assassin's goal is to figure out which player is the Commander, usually by determining who seems like they know more than they should. If the Resistance succeed in 3 Missions, the Assassin will have a chance to guess who they think the Commander is by Assassinating them. If they are right, the Spies instantly win. Otherwise, the Resistance win."
+  },
+  ["Deep Cover"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Commander",
+    ["Info"] = "The Deep Cover is a Spy who the Commander will not be told the identity of",
+    ["Details"] = "The Deep Cover is one of the few spy roles that the Commander will not be given."
+  },
+  ["False Commander"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Body Guard",
+    ["Info"] = "The False Commander is a spy who will appear to the Body Guard as a possible Commander alongside the real Commander",
+    ["Details"] = "The False Commander is a spy who will appear to the Body Guard as a potential Commander. Their goal is to trick the Commander into trusting them and turing against the real Commander."
+  },
+
+
+  ["Resistance Chief"] = {
+    ["Team"] = "Resistance",
+    ["Siblings"] = {"Resistance Hunter","Spy Chief","Spy Hunter"},
+    ["Children"] = {"Dummy Agent", "Coordinator"},
+    ["Option"] = "Investigator",
+    ["Info"] = "The Resistance Chief wants to remain hidden from the Spy Hunter. With 7+ players there will be 2 Resistance Chiefs and they will know each other.",
+    ["Double"] = 7,
+    ["Details"] = "The Resistance Chief's goal is to remain hidden from the spies, specifically the Spy Hunter. During the game, whoever gets the Investigate power will be allowed to check if another player is a Chief. With 7+ player games they will be told if they are a Spy Cheif, Resistance Chief, or not a chief. With fewer players it will only tell them if they're a Chief or not a Chief. With 7+ players there will be two Resistance Chiefs, and they will know who each other are."
+  },
+  ["Resistance Hunter"] = {
+    ["Team"] = "Resistance",
+    ["Siblings"] = {"Resistance Chief","Spy Chief","Spy Hunter"},
+    ["Info"] = "The Resistance Hunter must try and hunt the Spy Chief after the Resistance complete 3 Missions to win for the Resistance",
+    ["Details"] = "The Resistance Hunter's goal is to determine which player is a Spy Chief. After the Resistance succeed in 3 missions, the Resistance Hunter must correctly guess who the Spy Chief is. If they are right, the Resistance wins the game. If they are wrong, the last played mission becomes a Fail and the game continues as though the last mission failed. On the 5th mission it can alternate back and forth until a Hunter is successful."
+  },
+  ["Dummy Agent"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Resistance Chief",
+    ["Info"] = "The Dummy Agent will appear as a Resistance Chief when Investigated",
+    ["Details"] = "The Dummy Agent is a player that will appear as a Resistance Chief when Investigated. Their goal is to throw off the Spy Hunter into wasting a shot on them rather than the real Resistance Chief"
+  },
+  ["Coordinator"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Resistance Chief",
+    ["Info"] = "The Coordinator will appear to the Resistance Chief",
+    ["Details"] = "The Coordinator player will be known by any Resistance Chiefs in the game. The Chiefs can use this to find trustworthy players and make succeeding missions quicker."
+  },
+  ["Spy Chief"] = {
+    ["Team"] = "Spy",
+    ["Siblings"] = {"Resistance Chief","Resistance Hunter","Spy Hunter"},
+    ["Info"] = "The Spy Chief wants to remain hidden from the Resistance Hunter",
+    ["Double"] = 10,
+    ["Details"] = "The Spy Chief's goal is to remain hidden from the spies, specifically the Resistance Hunter. During the game, whoever gets the Investigate power will be allowed to check if another player is a Chief. With 7+ player games they will be told if they are a Spy Chief, Resistance Chief, or not a chief. With fewer players it will only tell them if they're a Chief or not a Chief. With 10 players there will be two Spy Chiefs.\nIn a 7+ player game, the Spy Chief will recieve a special \"Chief Fail\" mission card in place of a normal Fail. It acts the same as a standard fail, but makes it easier to determine who the Spy Chief is.\nWhen a Spy Chief plays a Fail or Chief Fail, the Spy Hunter will be given the option to reveal early and guess who the Resistance Chief is."
+  },
+  ["Spy Hunter"] = {
+    ["Team"] = "Spy",
+    ["Siblings"] = {"Resistance Chief","Resistance Hunter","Spy Chief"},
+    ["Info"] = "The Spy Hunter must try and hunt the Spy Chief after the Spies complete 3 Missions to win for the Spies",
+    ["Details"] = "The Spy Hunter's goal is to determine which player is a Resistance Chief. After the spies fail in missions, the Spy Hunter must correctly guess who the Resistance Chief is. If they are right, the Spies wins the game. If they are wrong, the last played mission becomes a Success and the game continues as though the last mission succeeded. On the 5th mission it can alternate back and forth until a Hunter is successful.\nIf the Spy Chief plays a Fail during a mission, the Spy Hunter will have the option to reveal themselves and guess who the Resistance Chief is. If they are correct, the spies instantly win the game. If they are wrong (and the mission was failed), the last played mission becomes a success and the game continues, but with everyone knowing who the Spy Hunter is"
+  },
+
+
+  ["Deep Agent"] = {
+      ["Team"] = "Spy",
+      ["Children"] = {"Pretender"},
+      ["Info"] = "The Deep Agent is a Spy who is not told who their fellow Spies are, but the other Spies will be told who the Deep Agent is",
+      ["Details"] = "The Deep Agent is a Spy who will not be told who the other spies are. If the Pretender is in the game the Deep Agent will have the option to reveal and try and guess who the Pretender is. If they are right, the Deep Agent will become the Pretender and the Pretender will become the Deep Agent. If they are wrong, the Deep Agent is revealed to everyone"
+  },
+  ["Pretender"] = {
+      ["Team"] = "Resistance",
+      ["Parent"] = "Deep Agent",
+      ["Variants"] = {["Know Deep Agent"] = "The Pretender will be told who the Deep Agent is"},
+      ["Info"] = "The Pretender is a Resistance member who will appear as a Deep Agent to the Spies. The Deep Agent can reveal and try to Blame them to swtich roles",
+      ["Details"] = "The Pretender will appear as a potential Deep Agent to other Spies. Their goal is to take advantage of spies potentially trusting them. If the Pretender is found by the Deep Agent then they will swap roles and join the opposing teams publicly"
+  },
+
+
+  ["Resistance Defector"] = {
+    ["Team"] = "Resistance",
+    ["Siblings"] = {"Spy Defector"},
+    ["Children"] = {"Confidant"},
+    ["Info"] = "The Defectors are players who will have a chance to swap teams after Missions 2, 3, and 4",
+    ["Details"] = "The Defectors are players who will randomly change teams during the game. A card will be drawn after mission 2, 3, and 4. If it is a \"Switch Allegiance\" card, the Resistance Defector will become the Spy Defector and the Spy Defector will become the Resistance Defector. If it is a \"No Change\" card then they will remain the same"
+  },
+  ["Spy Defector"] = {
+    ["Team"] = "Spy",
+    ["Siblings"] = {"Resistance Defector"},
+    ["Variants"] = {["Hidden Defectors"] = "Defector swap cards are hidden", ["Know Defectors"] = "Defectors are told who the other is"},
+    ["Info"] = "The Defectors are players who will have a chance to swap teams after Missions 2, 3, and 4",
+    ["Details"] = "The Defectors are players who will randomly change teams during the game. A card will be drawn after mission 2, 3, and 4. If it is a \"Switch Allegiance\" card, the Resistance Defector will become the Spy Defector and the Spy Defector will become the Resistance Defector. If it is a \"No Change\" card then they will remain the same"
+  },
+  ["Confidant"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Resistance Defector",
+    ["Info"] = "The Confidant will be told who one of the Defectors are",
+    ["Details"] = "The Confidant will be told who the Resistance or the Spy Defector is"
+  },
+
+
+  ["Mayor"] = {
+    ["Team"] = "Resistance",
+    ["Random Siblings"] = {"Hitman"},
+    ["Children"] = {"Politician", "Hitman"},
+    ["Info"] = "The Mayor is a Resistance member who can reveal themselves during the game and gain double voting powers",
+    ["Details"] = "The Mayor will be allowed to publicly reveal themselves during the game. Once revealed, the Mayor's Approve and Reject votes will count as two votes"
+  },
+  ["Politician"] = {
+    ["Team"] = "Spy",
+    ["Random Parent"] = "",
+    ["Parent"] = "Mayor",
+    ["Info"] = "The Politician is a Spy who can reveal themselves as a Mayor during the game",
+    ["Details"] = "The Politician will be allowed to reveal as though they are the Mayor. Once revealed, the Politician's Approve and Reject votes will count as two votes"
+  },
+  ["Hitman"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Mayor",
+    ["Random Siblings"] = {"Mayor"},
+    ["Info"] = "The Hitman is a Spy who can play a Hit card during a Mission with the Mayor to win for the Spies",
+    ["Details"] = "The Hitman's goal is to get on a mission with the Politician and play their special \"Hit\" mission card. In 7+ player games, the Hitman can play two Hits per game, but only one with 5-6 players. If the Politican is in the game, the Hitman will not be told who the Politican player is"
+  },
+
+
+  ["Hacker"] = {
+    ["Team"] = "Resistance",
+    ["Children"] = {"Corruptor"},
+    ["Info"] = "The Hacker is a Resistance member who can Hack other player votes to match theirs",
+    ["Details"] = "The Hacker can choose another player during the Voting Phase to Hack their vote. A hacked vote will become the same as the Hacker's vote"
+  },
+  ["Corruptor"] = {
+    ["Team"] = "Spy",
+    ["Parent"] = "Hacker",
+    ["Info"] = "The Corruptor is a Spy who can Corrupt another player during voting. If they Corrupt the same player the Hacker hacks, they'll take control of both the Hacker's and selected player's vote. If they hack the Hacker directly, they'll control the Hacker's vote",
+    ["Details"] = "The Corruptor's goal is to corrupt the Hacker's vote. If the Corruptor chooses the same player the Hacker does during the Voting Phase, the Hacker's and the corrupted player's vote will change to match the Corruptor's vote. If the Corruptor corrupts the Hacker directly, the Corruptor will also take control of the Hacker and the Hacker's target"
+  },
+
+
+  ["Bioterrorist"] = {
+    ["Team"] = "Spy",
+    ["Children"] = {"Pathologist"},
+    ["Info"] = "The Bioterrorist is a Spy who can Infect other players while on Missions. The Infection will spread to other player in future Missions. If an Infected player is on a Mission without the Bioterrorist, the Bioterrorist can Mutate the Infection and force the infected player into playing a Fail",
+    ["Details"] = "The Bioterrorist can infect other players and force them to play Fails. When on a mission, the Bioterrorist can choose another mission member to Infect. If Infected players go on missions, the Infection will randomly spread to another player. When the Bioterrorist is not on a mission, he can activate a Mutation and force any Infected player's missions cards to become Fails. Once a Mutation occurs, the Infected player will no longer be infected"
+  },
+  ["Pathologist"] = {
+    ["Team"] = "Resistance",
+    ["Parent"] = "Bioterrorist",
+    ["Info"] = "The Pathologist is a Resistance member who can play Cure cards during Missions to Cure Infections and prevent Mutations",
+    ["Details"] = "The Pathologist will get a special \"Cure\" mission card during a mission. When played, any players who are Infected will be cured and no longer Infected. Cures will also prevent the Bioterrorist's Mutation from working that mission. The Pathologist will get two Cures for 7+ player games and one for 5-6 player games"
+  },
+
+
+  ["ASI"] = {
+    ["Team"] = "Spy",
+    ["Color"] = "Neutral",
+    ["Siblings"] = {"SCP Agent"},
+    ["Info"] = "The ASI is a rogue AI. At the beginning of the game they will choose which team they wish to join. They will also be allowed to play any card currently in the game",
+    ["Details"] = "The ASI is a solo player who gets to choose their team at the start of the game before the first mission cards have been dealt. During missions, the ASI will recieve any special card currently in the game and will be allowed to use them. However, if the ASI's team wins, the SCP Agent will have a chance to capture the ASI and switch teams"
+  },
+  ["SCP Agent"] = {
+    ["Team"] = "Resistance",
+    ["Color"] = "Neutral",
+    ["Siblings"] = {"ASI"},
+    ["Info"] = "The SCP Agent is on the opposite team of the one the ASI chooses. Their goal is to figure out who the ASI is and prevent them from winning, or capture them at the end of the game. They are allowed to play a copy of any card they see played in missions",
+    ["Details"] = "The SCP Agent's goal is to determine who the ASI is and capture them or help his own team win. If the ASI's team wins, the SCP Agent has a chance to guess which player is the ASI and capture them. If they are right, they will switch teams and the SCP Agent will win. If he is wrong, the ASI will win. During the game, if a unique mission card is played, the SCP Agent will be allowed to play a copy of it in any missions they're on"
+  },
+
+  ["Clone"] = {
+    ["Team"] = "Neutral",
+    ["Add"] = {resistance = {"Clone"}, spy = {"Clone"}},
+    ["Info"] = "The Clones are players who will become a copy of another player in the game after Mission 2",
+    ["Details"] = "There is one Clone on each team. After the 2nd Mission, one Clone will successfully copy another player's role and the other will become a Failed Clone. The succesful Clone will become either the same role as another person or the Clone's team's equivlent - IE A Reistance Clone can clone a False Commander and become a Commander. The Failed Clone will not know their role, but they will be told who one of their teammates are"
+  },
+
+
+  ["Blind Spy"] = {
+    ["Team"] = "Spy",
+    ["Info"] = "The Blind Spy is not told who their fellow Spies are and the other Spies aren't told who they are",
+    ["Details"] = "The Blind Spy won't be told who the other spy players are and the other spy players won't be told who he is"
+  },
+  ["Resistance Reverser"] = {
+    ["Team"] = "Resistance",
+    ["Info"] = "The Resistance Reverser can play Reverse cards during Missions to reverse the winner of the Mission",
+    ["Details"] = "The Resistance Reverser will get a \"Reverse\" card during missions. If a Reverser plays a Reverse, the mission result will become the opposite of what it should be - IE if a Reverse is played on a mission with only successes, the mission will Fail. If it is on a mission with a fail, it will succeed instead"
+  },
+  ["Spy Reverser"] = {
+    ["Team"] = "Spy",
+    ["Info"] = "The Spy Reverser can play Reverse cards during Missions to reverse the winner of the Mission",
+    ["Details"] = "The Spy Reverser will get a \"Reverse\" card during missions. If a Reverser plays a Reverse, the mission result will become the opposite of what it should be - IE if a Reverse is played on a mission with only successes, the mission will Fail. If it is on a mission with a fail, it will succeed instead"
+  },
+  ["Resistance Rogue"] = {
+    ["Team"] = "Resistance",
+    ["Option"] = "Watching",
+    ["Info"] = "The Resistance Rogue is a solo player who wins by playing Rogue Success on a Successful Mission and the winning Mission for the Resistance",
+    ["Details"] = "The Resistance Rogue's goal is to play his unique \"Rouge Success\" mission card on a mission that succeeds and the winning mission for the Resistance. During the Team Building phase, the Leader must choose a player on the mission to Watch. If the Rogue is Watched, he will not be able to play their Rogue Success card for that mission. If the Rogue wins, the Resistance get a partial victory. If the Resistance win, the Rogue gets a partial victory"
+  },
+  ["Spy Rogue"] = {
+    ["Team"] = "Spy",
+    ["Info"] = "The Spy Rogue is a solo player who wins by playing a Fail on a Failed Mission and the winning Mission for the Spies",
+    ["Details"] = "The Spy Rogue's goal is to play a fail on a mission that fails and the winning mission for the Spies. If the Rogue wins, the Spies get a partial victory. If the spies win, the Rogue gets a partial victory"
+  },
+  ["Mole"] = {
+    ["Team"] = "Spy",
+    ["Info"] = "The Mole is a solo player who wins by playing a Sabotage on the 5th Mission. They can only play Fail and Sabotage Cards on Missions. Sabotage negates any Fails played",
+    ["Details"] = "The Mole's goal is to get the game to the very end and play his unique \"Sabotage\" mission card on the 5th Mission. A Sabotage card will cause any Fails played to not count for that mission. The Mole will only be allowed to play Fail or Sabotage cards on missions"
+  },
+  ["Witness"] = {
+    ["Team"] = "Resistance",
+    ["Info"] = "The Witness is a Resistance member who, during Missions, can choose another mission member as their Alibi. Their card will become a copy of their Alibi's",
+    ["Details"] = "The Witness can choose another player during missions as their Alibi. Once all Mission cards are played, the Witness's Success card will changed to match their Alibi's with all the same effects"
+  },
+  ["Pilot"] = {
+    ["Team"] = "Resistance",
+    ["Info"] = "The Pilot is a Resistance member who can play Extract cards during Missions and retry the mission",
+    ["Details"] = "The Pilot will get an \"Extract\" mission card during missions. When played, the Extract will cause the mission to be canceled and repicked by the next leader. In 7+ player games the Pilot gets two Extracts, in 5-6 player games they gets one"
+  },
+
+  ["Amnesiac"] = {
+    ["Team"] = "Secondary",
+    ["Info"] = "The Amnesiac is a secondary role that overwrites another role. They aren't told what team or primary role is, just one of their teammates. Their primary role will be revealed to them on Mission 5",
+    ["Details"] = "The Amnesiac is a secondary role that will overwrite another role. The Amnesiac will not know their team or role, but they will be told one player who is on their team. On Mission 5, their role will be revealed to them. During missions they will be given every unqiue card in the game. Any cards he play that his real role would not be allowed to play will become a Success (in most cases), with the exception of Fails which will remain as a Fail"
+  },
+
+  ["Psionic"] = {
+    ["Team"] = "Secondary",
+    ["Info"] = "The Psionic is a secondary Spy who is told they are a Resistance member. Any Successes they play will become Fails when revealed",
+    ["Details"] = "The Psionic will overwrite a spy and appear as a standard Resistance member to themselves. However, any time they play a Success on a mission, it will become a fail when revealed"
+  },
+}
+
+role_options = {
+  ["Psionic Corruption"] = {["Option"] = "Psionic", ["Type"]="Role", ["Info"] = "One Spy will be told they are part of the Resistance, but any success they play will become a fail", ["click_function"] = "click_psionic"},
+  ["Random Roles"] = {["Option"] = "Random Roles", ["Type"]="Option", ["Info"] = "Roles will be randomly selected", ["click_function"] = "click_randomRoles", ["Extra Clicks"] = {"show_randomButtons"}},
+}
+
+function create_selectButtons()
+  local roleCards = ref_roleCards
+  local buttondata = {click_function = "click_role", function_owner = self, label = " ", position = {0, 0.1, 0.3}, scale = {0.5, 0.5, 0.5}, width = 1300, height = 1300, font_size = 400, tooltip = " ", color = {0,0,0,0}}
+  local descrpdata = {click_function = "click_explain", function_owner = self, label = " ", position = {0, 0.1, -0.7}, scale = {0.5, 0.5, 0.5}, width = 1300, height = 600, font_size = 400, tooltip = " ", color = {0,0,0,0}}
+
+  for role,data in pairs(role_data) do
+    local cardGUIDs = roleCards[role]
+    buttondata.tooltip = role
+    descrpdata.tooltip = role
+
+    for _,guid in pairs(cardGUIDs) do
+      local obj = getObjectFromGUID(guid)
+
+      if obj.getPosition().y < 2 and obj.getPosition().y > 0.1 then
+        obj.createButton(buttondata)
+        obj.createButton(descrpdata)
+
+        if data["Variants"] ~= nil then
+          Global.setTable("temp_variant"..obj.getGUID(), {
+            ['Variant'] = data["Variants"],
+            ["Clicked"] = false})
+
+          local funcName = "click_showVariants"..role
+          local func = function(obj, player)
+            click_variantOptions(obj, player)
+          end
+          Global.setVar(funcName, func)
+
+          local optButton = {click_function = funcName, function_owner = self, label = " ",
+          position = {0.9, 0.1, -0.8}, scale = {0.5, 0.5, 0.5}, width = 400, height = 400,
+          font_size = 400, color = {0.7573, 0.7573, 0.7573, 0}, tooltip = "Variant Options"}
+          obj.createButton(optButton)
+        end
+      end
+    end
+  end
+
+  local opt_obj = getObjectFromGUID('f8f9bb')
+  local data = {click_function = "click_roleOption", function_owner = self, label = " ",
+  position = {0, 0.1, 0}, scale = {0.5, 0.5, 0.5}, width = 1500, height = 1500, font_size = 400,
+  tooltip = "Role Options", color = {0,0,0,0}}
+  opt_obj.createButton(data)
+end
+
+data_roleOptionClicked = false
+function click_roleOption()
+
+  local opt_obj = getObjectFromGUID('f8f9bb')
+
+  if data_roleOptionClicked then
+    data_roleOptionClicked = false
+    opt_obj.clearButtons()
+    local data = {click_function = "click_roleOption", function_owner = self, label = " ",
+    position = {0, 0.1, 0}, scale = {0.5, 0.5, 0.5}, width = 1500, height = 1500, font_size = 400,
+    tooltip = "Role Options", color = {0,0,0,0}}
+    opt_obj.createButton(data)
+  else
+    data_roleOptionClicked = true
+    local clickData = {click_function = "INSERT_FUNCTION", function_owner = self, label = "Psionic Corruption",
+    position = {-0.2, 0, 1.1}, scale = {0.5, 0.5, 0.5}, width = 3300, height = 400, font_size = 400}
+
+    local explainData = {click_function = "INSERT_FUNCTION", function_owner = self, label = "?",
+    position = {1.7, 0, 1.1}, scale = {0.5, 0.5, 0.5}, width = 400, height = 400, font_size = 400}
+
+    for name,option in pairs(role_options) do
+      local funcName = option["click_function"]
+      local func = nil
+      if option["Type"] == "Role" then
+        func = function(obj, play)
+          toggle_role(option["Option"])
+          update_roleNotes()
+
+          if not role_data[option["Option"]]["Selected"] then
+            for ind,objD in pairs(obj.getButtons()) do
+              if objD.label == name then
+                opt_obj.editButton({ index = ind-1, color = {1, 0, 0, 10} })
+              end
+            end
+
+            role_options[name]["Selected"] = false
+          else
+            for ind,objD in pairs(obj.getButtons()) do
+              if objD.label == name then
+                opt_obj.editButton({ index = ind-1, color = {0.192, 0.701, 0.168, 10} })
+              end
+            end
+
+            role_options[name]["Selected"] = true
+          end
+        end
+      else
+        func = function(obj, play)
+          if table.contains(data_includedOptions, option["Option"]) then
+            data_includedOptions = table.removeItems(data_includedOptions, option["Option"])
+            for ind,objD in pairs(obj.getButtons()) do
+              if objD.label == name then
+                opt_obj.editButton({ index = ind-1, color = {1, 0, 0, 10} })
+              end
+            end
+            role_options[name]["Selected"] = true
+          else
+            table.insert(data_includedOptions, option["Option"])
+            for ind,objD in pairs(obj.getButtons()) do
+              if objD.label == name then
+                opt_obj.editButton({ index = ind-1, color = {0.192, 0.701, 0.168, 10} })
+              end
+            end
+            role_options[name]["Selected"] = false
+          end
+
+          if role_options[name]["Extra Clicks"] ~= nil then
+            for _,ext in pairs(role_options[name]["Extra Clicks"]) do
+              Global.call(ext, {})
+            end
+          end
+          update_roleNotes()
+        end
+      end
+
+      Global.setVar(funcName, func)
+
+      clickData.click_function = funcName
+      clickData.label = name
+
+      if option["Selected"] then
+        clickData.color = {0.192, 0.701, 0.168, 10}
+      else
+        clickData.color = {1, 0, 0, 10}
+      end
+
+      local exfuncName = option["click_function"].."Explain"
+      local exfunc = function(obj, play)
+        printToColor(option["Info"], play, {1,1,0})
+      end
+      Global.setVar(exfuncName, exfunc)
+
+      explainData.click_function = exfuncName
+
+      opt_obj.createButton(clickData)
+      opt_obj.createButton(explainData)
+
+      clickData.position[3] = clickData.position[3] + 0.5
+      explainData.position[3] = explainData.position[3] + 0.5
+    end
+  end
+end
+
+
+random_optionSelected = false
+function show_ExtraOptions(obj, play)
+  if random_optionSelected then
+    random_optionSelected = false
+    obj.editButton({ index = buttonIndex_extraRandom["Toggle"], label = ">" })
+
+    obj.removeButton(buttonIndex_extraRandom["Add 1"])
+    obj.removeButton(buttonIndex_extraRandom["Add 2"])
+    obj.removeButton(buttonIndex_extraRandom["Add 3"])
+    obj.removeButton(buttonIndex_extraRandom["Sub 1"])
+    obj.removeButton(buttonIndex_extraRandom["Sub 2"])
+    obj.removeButton(buttonIndex_extraRandom["Sub 3"])
+    obj.removeButton(buttonIndex_extraRandom["Show Roles"])
+  else
+    random_optionSelected = true
+    obj.editButton({ index = buttonIndex_extraRandom["Toggle"], label = "<" })
+
+    local base = { position = {4, 0, 2}, width = 1500, }
+    local values = { 0,1,2,3,4,5,6,7,8,9,10 }
+    local labels = {[0] = "Min: 0","Min: 1","Min: 2","Min: 3","Min: 4","Min: 5","Min: 6","Min: 7","Min: 8","Min: 9","Min: 10"}
+    createScrolling(getObjectFromGUID('f8f9bb'), "RandomMin", base, nil,nil, values, labels, "data_randomMin", 8)
+    buttonIndex_extraRandom["Add 1"] = #obj.getButtons() - 1
+    buttonIndex_extraRandom["Add 2"] = #obj.getButtons() - 2
+    buttonIndex_extraRandom["Add 3"] = #obj.getButtons() - 3
+
+    local baseX = { position = {6.5, 0, 2}, width = 1500, }
+    local valuesX = { 1,2,3,4,5,6,7,8,9,10 }
+    local labelsX = {"Max: 1","Max: 2","Max: 3","Max: 4","Max: 5","Max: 6","Max: 7","Max: 8","Max: 9","Max: 10"}
+    createScrolling(getObjectFromGUID('f8f9bb'), "RandomMax", baseX, nil,nil, valuesX, labelsX, "data_randomMax", 10)
+    buttonIndex_extraRandom["Sub 1"] = #obj.getButtons() - 1
+    buttonIndex_extraRandom["Sub 2"] = #obj.getButtons() - 2
+    buttonIndex_extraRandom["Sub 3"] = #obj.getButtons() - 3
+
+    local clickData = {click_function = "click_showRoles", function_owner = self, label = "Show Roles",
+    position = {5.25, 0, 1.4}, scale = {0.5, 0.5, 0.5}, width = 3300, height = 400, font_size = 400, color = {1,0,0,10}}
+    getObjectFromGUID('f8f9bb').createButton(clickData)
+    buttonIndex_extraRandom["Show Roles"] = #obj.getButtons() - 1
+  end
+end
+
+function click_showRoles(obj,play)
+  if not Player[play].admin then return end
+
+  if option_showRandomRoles then
+    option_showRandomRoles = false
+    obj.editButton({
+      index          = buttonIndex_extraRandom["Show Roles"],
+      color          = {1,0,0,10},
+    })
+  else
+    option_showRandomRoles = true
+    obj.editButton({
+      index          = buttonIndex_extraRandom["Show Roles"],
+      color          = {0.192, 0.701, 0.168, 10},
+    })
+  end
+end
+
+buttonIndex_extraRandom = {}
+function show_randomButtons()
+  local extraData = {click_function = "show_ExtraOptions", function_owner = self, label = ">",
+  position = {2.1, 0, 1.6}, scale = {0.5, 0.5, 0.5}, width = 400, height = 400, font_size = 400}
+
+  getObjectFromGUID('f8f9bb').createButton(extraData)
+  buttonIndex_extraRandom["Toggle"] = #getObjectFromGUID('f8f9bb').getButtons() - 1
+end
+data_randomMin = 7
+data_randomMax = 10
+
+function click_variantOptions(obj, player)
+  if not Player[player].admin then return end
+
+  local data = {click_function = "INSERT_FUNCTION", function_owner = self,
+  label = "", position = {2, 0.1, -0.85}, scale = {0.3, 0.3, 0.3},
+  width = 3100, height = 400, font_size = 400, color = {1, 0, 0, 10}}
+  local expdata = {click_function = "INSERT_FUNCTION", function_owner = self,
+  label = "?", position = {3.1, 0.1, -0.85}, scale = {0.3, 0.3, 0.3},
+  width = 400, height = 400, font_size = 400, color = {1, 1, 1, 10}}
+
+  local savedData = Global.getTable("temp_variant"..obj.getGUID())
+  if savedData["Clicked"] then
+    savedData["Clicked"] = false
+
+    local but = #obj.getButtons() - 3
+    for i=1,but do
+      obj.removeButton(#obj.getButtons() - i)
+    end
+  else
+    savedData["Clicked"] = true
+
+    local i = 0
+    for opt,explain in pairs(savedData["Variant"]) do
+      local funcName = "click_option"..i..obj.getGUID()
+      local func = function(objec, player)
+        if not Player[player].admin then return end
+
+        if not table.contains(data_includedOptions, opt) then
+          table.insert(data_includedOptions, opt)
+          for ind,objD in pairs(objec.getButtons()) do
+            if objD.label == opt then
+              objec.editButton({
+                index          = ind-1, -- int    (required),
+                color          = {0.192, 0.701, 0.168, 10}-- Color,
+              })
+            end
+          end
+        else
+          data_includedOptions = table.removeItems(data_includedOptions, opt)
+          for ind,objD in pairs(objec.getButtons()) do
+            if objD.label == opt then
+              objec.editButton({
+                index          = ind-1, -- int    (required),
+                color          = {1, 0, 0, 10}-- Color,
+              })
+            end
+          end
+        end
+        update_roleNotes()
+      end
+      Global.setVar(funcName, func)
+      data.click_function = funcName
+      data.label = opt
+
+      if table.contains(data_includedOptions, opt) then
+        data.color = {0.192, 0.701, 0.168, 10}
+      else
+        data.color = {1, 0, 0, 10}
+      end
+
+
+      local exfuncName = "click_optionEx"..i..obj.getGUID()
+      local exfunc =function(obj, color)
+        printToColor(explain, color, {1,1,0})
+      end
+      Global.setVar(exfuncName, exfunc)
+      expdata.click_function = exfuncName
+
+      obj.createButton(data)
+      obj.createButton(expdata)
+
+      data.position[3] = data.position[3] + 0.3
+      expdata.position[3] = expdata.position[3] + 0.3
+      i = i + 1
+    end
+  end
+
+  Global.setTable("temp_variant"..obj.getGUID(), savedData)
+end
+
+function click_explain(obj, player)
+  local roleName = obj.getName()
+  local role = role_data[roleName]
+  local color = (role["Color"] or role["Team"])
+  printToColor(ref_colorCodes[color] .. "\u{25c6}" .. role["Info"], player, {1,1,1})
+end
+
+function click_role(obj, player)
+  local roleName = obj.getName()
+
+  if Player[player].admin then
+    toggle_role(roleName)
+    update_roleNotes()
+  else
+    click_explain(obj, player)
+  end
+end
+
+function toggle_role(role, force)
+  local playerCount = #getSeatedPlayers()
+  if playerCount <= 1 then playerCount = 10 end
+
+  local randomRoles = table.contains(data_includedOptions, "Random Roles")
+
+  if force ~= nil then
+    if force then
+      role_data[role]["Selected"] = true
+
+      if role_data[role]["Siblings"] ~= nil then
+        for _,sib in pairs(role_data[role]["Siblings"]) do
+          if not role_data[sib]["Selected"] then
+            toggle_role(sib, true)
+          end
+        end
+      end
+
+      if not randomRoles and role_data[role]["Parent"] ~= nil then
+        toggle_role(role_data[role]["Parent"], true)
+      elseif randomRoles and role_data[role]["Children"] ~= nil then
+        for _,child in pairs(role_data[role]["Children"]) do
+          toggle_role(child, true)
+        end
+      end
+    else
+      role_data[role]["Selected"] = false
+
+      if role_data[role]["Siblings"] ~= nil then
+        for _,sib in pairs(role_data[role]["Siblings"]) do
+          if role_data[sib]["Selected"] then
+            toggle_role(sib, false)
+          end
+        end
+      end
+
+      if not randomRoles and role_data[role]["Children"] ~= nil then
+        for _,child in pairs(role_data[role]["Children"]) do
+          toggle_role(child, false)
+        end
+      elseif randomRoles and role_data[role]["Parent"] ~= nil then
+        toggle_role(role_data[role]["Parent"], false)
+      end
+    end
+  else
+    if role_data[role]["Selected"] then
+      role_data[role]["Selected"] = false
+
+      if role_data[role]["Siblings"] ~= nil then
+        for _,sib in pairs(role_data[role]["Siblings"]) do
+          if role_data[sib]["Selected"] then
+            toggle_role(sib, false)
+          end
+        end
+      end
+
+      if not randomRoles and role_data[role]["Children"] ~= nil then
+        for _,child in pairs(role_data[role]["Children"]) do
+          toggle_role(child, false)
+        end
+      elseif randomRoles and role_data[role]["Parent"] ~= nil then
+        toggle_role(role_data[role]["Parent"], false)
+      end
+    else
+      role_data[role]["Selected"] = true
+
+      if role_data[role]["Siblings"] ~= nil then
+        for _,sib in pairs(role_data[role]["Siblings"]) do
+          if not role_data[sib]["Selected"] then
+            toggle_role(sib, true)
+          end
+        end
+      end
+
+      if not randomRoles and role_data[role]["Parent"] ~= nil then
+        toggle_role(role_data[role]["Parent"], true)
+      elseif randomRoles and role_data[role]["Children"] ~= nil then
+        for _,child in pairs(role_data[role]["Children"]) do
+          toggle_role(child, true)
+        end
+      end
+    end
+  end
+
+  for _,guid in pairs(ref_roleCards[role]) do
+    if role_data[role]["Selected"] then
+      local color = {}
+      if role_data[role]["Team"] == "Resistance" then
+        color = {0,0.7,1}
+
+        if not table.contains(data_specialRoles.resistance, role) then
+          table.insert(data_specialRoles.resistance, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+            table.insert(data_specialRoles.resistance, role)
+          end
+        end
+      elseif role_data[role]["Team"] == "Spy" then
+        color = {1,0,0}
+
+        if not table.contains(data_specialRoles.spies, role) then
+          table.insert(data_specialRoles.spies, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+            table.insert(data_specialRoles.spies, role)
+          end
+        end
+      elseif role_data[role]["Team"] == "Neutral" then
+        color = {0,1,0}
+
+        if role_data[role]["Add"] ~= nil then
+          for _,_ in pairs(role_data[role]["Add"].resistance) do
+            if not table.contains(data_specialRoles.resistance, role) then
+              table.insert(data_specialRoles.resistance, role)
+              if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+                table.insert(data_specialRoles.resistance, role)
+              end
+            end
+          end
+
+          for _,_ in pairs(role_data[role]["Add"].spy) do
+            if not table.contains(data_specialRoles.spies, role) then
+              table.insert(data_specialRoles.spies, role)
+              if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+                table.insert(data_specialRoles.spies, role)
+              end
+            end
+          end
+        else
+          if not table.contains(data_specialRoles.neutral, role) then
+            table.insert(data_specialRoles.neutral, role)
+            if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+              table.insert(data_specialRoles.neutral, role)
+            end
+          end
+        end
+      else
+        color = {0,1,0}
+
+        if not table.contains(data_specialRoles.secondary, role) then
+          table.insert(data_specialRoles.secondary, role)
+          if role_data[role]["Double"] ~= nil and role_data[role]["Double"] <= playerCount then
+            table.insert(data_specialRoles.secondary, role)
+          end
+        end
+      end
+
+      if not randomRoles and role_data[role]["Option"] ~= nil then
+        if not table.contains(data_includedOptions, role_data[role]["Option"]) then
+          table.insert(data_includedOptions, role_data[role]["Option"])
+        end
+      end
+
+      local obj = getObjectFromGUID(guid)
+      if role_data[role]["Color"] == "Neutral" then
+        color = {0,1,0}
+      end
+
+      if randomRoles then
+        color = {1,0,0}
+      end
+
+      if obj.getPosition().y < 2 and obj.getPosition().y > 0.1 then
+        obj.highlightOn(color)
+      end
+    else
+      if role_data[role]["Team"] == "Resistance" then
+        if table.contains(data_specialRoles.resistance, role) then
+          data_specialRoles.resistance = table.removeItems(data_specialRoles.resistance, role)
+        end
+      elseif role_data[role]["Team"] == "Spy" then
+        if table.contains(data_specialRoles.spies, role) then
+          data_specialRoles.spies = table.removeItems(data_specialRoles.spies, role)
+        end
+      elseif role_data[role]["Team"] == "Neutral" then
+        if role_data[role]["Add"] ~= nil then
+          for _,_ in pairs(role_data[role]["Add"].resistance) do
+            if table.contains(data_specialRoles.resistance, role) then
+              data_specialRoles.resistance = table.removeItems(data_specialRoles.resistance, role)
+            end
+          end
+
+          for _,_ in pairs(role_data[role]["Add"].spy) do
+            if table.contains(data_specialRoles.spies, role) then
+              data_specialRoles.spies = table.removeItems(data_specialRoles.spies, role)
+            end
+          end
+        else
+          if table.contains(data_specialRoles.neutral, role) then
+            data_specialRoles.neutral = table.removeItems(data_specialRoles.neutral, role)
+          end
+        end
+      else
+        if table.contains(data_specialRoles.secondary, role) then
+          data_specialRoles.secondary = table.removeItems(data_specialRoles.secondary, role)
+        end
+      end
+
+      if role_data[role]["Option"] ~= nil then
+        if table.contains(data_includedOptions, role_data[role]["Option"]) then
+          data_includedOptions = table.removeItems(data_includedOptions, role_data[role]["Option"])
+        end
+      end
+
+      local obj = getObjectFromGUID(guid)
+      if obj.getPosition().y < 2 and obj.getPosition().y > 0.1 then
+        obj.highlightOff()
+      end
+    end
+  end
+end
+
+function update_roleNotes()
+  local specialRoles = data_specialRoles
+  local output = ""
+
+  if table.contains(data_includedOptions, "Random Roles") then
+    output = "╔════════════╗\n◆ Removed Roles ◆   \n╚════════════╝"
+
+    output = output .. "\n\n[00aaff][u]Resistance Roles[/u]"
+    if #specialRoles.resistance > 0 then
+      for _,role in pairs(specialRoles.resistance) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    output = output .. "\n\n[ff0000][u]Spy Roles[/u]"
+    if #specialRoles.spies > 0 then
+      for _,role in pairs(specialRoles.spies) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    if #specialRoles.neutral > 0 then
+      output = output .. ref_colorCodes.Neutral .. "\n\n[u]Neutral Roles[/u]"
+      for _,role in pairs(specialRoles.neutral) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    if #specialRoles.secondary > 0 then
+      output = output .. ref_colorCodes.Secondary .. "\n\n[u]Secondary Roles[/u]"
+      for _,role in pairs(specialRoles.secondary) do
+        output = output .. "\n◆" .. role
+      end
+    end
+  else
+    output = "╔═══════════╗\n◆ Selected Roles ◆   \n╚═══════════╝"
+
+    local numPlayer = #getSeatedPlayers()
+
+    if numPlayer <= 1 then numPlayer = 10 end
+    if numPlayer < 5 then numPlayer = 5 end
+
+    local resistance = ref_resistanceCount[numPlayer]
+    local spies = numPlayer - resistance
+    local neutralRoles = #specialRoles.neutral/2
+    resistance = resistance - neutralRoles
+    spies = spies - neutralRoles
+
+    if #specialRoles.resistance > resistance then
+      output = output .. "\nTOO MANY RESISTANCE ROLES"
+    end
+    if #specialRoles.spies > spies then
+      output = output .. "\nTOO MANY SPY ROLES"
+    end
+
+    output = output .. "\n\n[00aaff][u]Resistance Roles (".. #specialRoles.resistance .. "/" .. resistance .. ")[/u]"
+    if #specialRoles.resistance > 0 then
+      for _,role in pairs(specialRoles.resistance) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    output = output .. "\n\n[ff0000][u]Spy Roles (".. #specialRoles.spies .. "/" .. spies .. ")[/u]"
+    if #specialRoles.spies > 0 then
+      for _,role in pairs(specialRoles.spies) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    if #specialRoles.neutral > 0 then
+      output = output .. ref_colorCodes.Neutral .. "\n\n[u]Neutral Roles[/u]"
+      for _,role in pairs(specialRoles.neutral) do
+        output = output .. "\n◆" .. role
+      end
+    end
+
+    if #specialRoles.secondary > 0 then
+      output = output .. ref_colorCodes.Secondary .. "\n\n[u]Secondary Roles[/u]"
+      for _,role in pairs(specialRoles.secondary) do
+        output = output .. "\n◆" .. role
+      end
+    end
+  end
+
+  local optOutput = ""
+  for ind,opt in pairs(data_includedOptions) do
+    optOutput = optOutput .. "\n◆" .. opt
+  end
+  if optOutput ~= "" then
+    optOutput = "\n\n[ffffff]╔═══════════╗\n◆ Active Options ◆   \n╚═══════════╝" .. optOutput
+  end
+
+
+  setNotes(output..optOutput)
+end

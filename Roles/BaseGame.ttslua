@@ -1,0 +1,91 @@
+-- [ Base Game ] --
+-- These are the Roles and functions for the base game
+
+
+-- Resistance Roles
+function role_Resistance(color)
+  local data = role_Base(color)
+  data["Role"] = "Resistance"
+  data["Team"] = "Resistance"
+  data["Mission Cards"] = {"Success"}
+  data["Output"] = function()
+    if data.Role ~= "Resistance" then
+      return ref_colorCodes.Resistance .. "You are the " .. data.Role .. "!"
+    else
+      return ref_colorCodes.Resistance .. "You are a member of the Resistance!"
+    end
+  end
+  data["Help"] = ref_colorCodes.Resistance .. "As a member of the Resistance, your goal is to help the Resistance take down the evil Empire! You win when 3 missions Succeed."
+
+  return data
+end
+
+-- Spy Roles
+function role_Spy(color)
+  local data = role_Base(color)
+  data["Role"] = "Spy"
+  data["Team"] = "Spy"
+  data["Mission Cards"] = {"Success", "Fail"}
+  data["Output"] = function()
+    if option_blindMode then
+      return ref_colorCodes.Spy .. "All the Spies are Blind!"
+    end
+
+    local output = output_returnSpies(color, "Spy")
+    local spies = helper_returnKnownSpies(color)
+
+    if #spies == 1 then
+      output = "\nYour fellow spy is " .. output
+    else
+      output = "\nYour fellow spies are " .. output
+    end
+
+
+
+    if data.Role ~= "Spy" then
+      return ref_colorCodes.Spy .. "You are the " .. data.Role .. "!" .. output
+    else
+      return ref_colorCodes.Spy .. "You are a undercover Spy!" .. output
+    end
+  end
+  return data
+end
+
+-- Neutral base
+function role_Base(color)
+  local data = {}
+  data["Role"] = ""
+  data["Team"] = "Neutral"
+  data["Board"] = ref_playerBoards[color]
+  data["Mission Cards"] = {}
+  data["Card"] = nil
+  data["Card Count"] = {}
+  data["Output"] = function() end
+  data["Place Card"] = function(color, instant)
+    local card = nil
+    if type(data.Card) == "string" then
+      card = getObjectFromGUID(data.Card)
+    else
+      card = data.Card
+    end
+
+    local playerHand = Player[color].getPlayerHand()
+    local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 6.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 6.6}
+    local rot = {0, playerHand['rot_y'] + 180, 0}
+
+    if instant then
+      card.setPosition(pos)
+      card.setRotation(rot)
+    else
+      card.setPositionSmooth(pos)
+      card.setRotationSmooth(rot)
+    end
+    card.setScale({2.12, 1, 2.12})
+  end
+  data["Saved Output"] = ""
+  data["Output"] = function()
+    print_error(84)
+    return "Error: If you're seeing this... whoops"
+  end
+  return data
+end
