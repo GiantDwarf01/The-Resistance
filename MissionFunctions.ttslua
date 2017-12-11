@@ -142,7 +142,13 @@ function calculate_missionResults()
     if playerData[color]["Mission Results"] ~= nil and not table.contains(data_missionResultFunctions, color) then
       table.insert(data_missionResultFunctions, color)
       playerData[color]["Mission Results"](color)
+
+      if global_debug then
+        print("Trying Mission Results - " .. playerData[color].Role)
+      end
       return 1
+    elseif global_debug and playerData[color]["Mission Results"] ~= nil then
+      print("Skipping Mission Results - " .. playerData[color].Role)
     end
   end
 
@@ -150,7 +156,13 @@ function calculate_missionResults()
     if data_optionData[option]["Mission Results"] ~= nil and not table.contains(data_missionResultFunctions, option) then
       table.insert(data_missionResultFunctions, option)
       data_optionData[option]["Mission Results"]()
+
+      if global_debug then
+        print("Trying Mission Results - " .. option)
+      end
       return 1
+    elseif global_debug and data_optionData[option]["Mission Results"] ~= nil then
+      print("Skipping Mission Results - " .. option)
     end
   end
 
@@ -256,6 +268,8 @@ function calculate_missionResults()
     if table.contains(roles, "Mayor") then
       broadcastToAll("The Hitman has killed the Mayor!", {1,0,0})
       end_game("Spy")
+
+      if global_debug then print("Trying Hitman Victory") end
       return 1
     end
   end
@@ -305,6 +319,9 @@ function calculate_missionResults()
 
     update_notebook()
     deal_teamTokens()
+
+    if global_debug then print("Trying Extraction") end
+
     return 1
   end
   if played_cards["Cure"] then

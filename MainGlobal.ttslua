@@ -1071,6 +1071,9 @@ function end_game(winner)
   local playersInGame = data_playersInGame
   local playerData = data_playerData
   for _,color in pairs(playersInGame) do
+    if playerData[color]["Game Over"] ~= nil then
+      playerData[color]["Game Over"]()
+    end
     revealColor(color)
 
     local playerHand = Player[color].getPlayerHand()
@@ -1132,14 +1135,20 @@ function setup_hiddenZones(allPlayers)
   for index, color in pairs(playersInGame) do
     local playerHand = Player[color].getPlayerHand()
     local zone = getObjectFromGUID(playerZones[color])
-    local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 2.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 2.6}
     local rot = {playerHand['rot_x'] + 337.95, playerHand['rot_y'] + 180, 0}
-    --zone.setPosition(pos)
-    --zone.setRotation(rot)
+
     if allPlayers then
+      local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * -5, -4, playerHand['pos_z'] + playerHand['trigger_forward_z'] * -5}
+
       zone.setScale({0,0,0})
+      zone.setPositionSmooth(pos)
+      zone.setRotationSmooth(rot)
     else
+      local pos = {playerHand['pos_x'] + playerHand['trigger_forward_x'] * 2.6, 1.04, playerHand['pos_z'] + playerHand['trigger_forward_z'] * 2.6}
+
       zone.setScale({16, 4.7, 11.8})
+      zone.setPosition(pos)
+      zone.setRotation(rot)
     end
   end
 end

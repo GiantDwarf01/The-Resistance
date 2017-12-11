@@ -137,7 +137,7 @@ function option_watching()
 end
 function option_inquistor()
   local data = {}
-  data["Inquisitor"] = previousPlayer(data_currentLeader, data_playersInGame)
+  data["Inquisitor"] = player.previous(data_currentLeader, data_playersInGame)
   data["Place Inquisitor"] = function(color, smooth)
     local inquisitorToken = getObjectFromGUID(ref_tokens["Inquisitor"])
     local board = getObjectFromGUID(ref_playerBoards[color])
@@ -346,7 +346,7 @@ function option_randomRoles()
     end
 
     if not table.contains(data_specialRoles.secondary, "Amnesiac") and math.random(100) >= 85 then table.insert(selectedRoles, "Amnesiac") end
-    if not table.contains(data_specialRoles.secondary, "Psionic") and math.random(100) >= 90 then table.insert(selectedRoles, "Psionic") end
+    if not table.contains(data_specialRoles.secondary, "Psionic") and math.random(100) >= 95 then table.insert(selectedRoles, "Psionic") end
 
     local outTeams = {resistance = {}, spies = {}, neutral = {}, secondary = {}}
     data_specialRoles = { resistance = {}, spies = {}, neutral = {}, secondary = {} }
@@ -620,7 +620,6 @@ function check_dealtPlotCards()
     end
   end
 
-  if changed then
     local count = 0
     for _,data in pairs(optData["Cards"]) do
       if data.Done and data.Mission == data_currentMission then count = count + 1 end
@@ -644,7 +643,6 @@ function check_dealtPlotCards()
     end
 
     data_optionData["Plot Cards"] = optData
-  end
 end
 
 data_instantTokens = {}
@@ -905,8 +903,8 @@ ref_plotCards = {
       token.highlightOn({0,1,0})
 
       function repeating_checkOverheard(data)
-        local next = nextPlayer(data.Color, data_playersInGame)
-        local prev = previousPlayer(data.Color, data_playersInGame)
+        local next = player.next(data.Color, data_playersInGame)
+        local prev = player.previous(data.Color, data_playersInGame)
 
         for index,checkColor in pairs(data_playersInGame) do
           if data.Color ~= checkColor then

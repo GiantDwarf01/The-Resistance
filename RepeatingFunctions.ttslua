@@ -68,67 +68,66 @@ function repeating_hunterCheck(team)
 
   -- Check Team Token area
   for index,color in pairs(data_playersInGame) do
+    if playerRole[color] ~= team.." Hunter" then
       local board = getObjectFromGUID(ref_playerBoards[color])
       local teamPos = board.positionToWorld(ref_boardPosition.Team)
       local list = getObjectsAtPosition(teamPos, "Tile")
 
       if #list > 0 then
-        if playerRole[color] ~= team.." Hunter" then
-          local opposing = "Resistance"
-          if team == "Resistance" then opposing = "Spy" end
-
-          if playerRole[color] == opposing .. " Chief" then
-            if team == "Resistance" then
-              broadcastToAll("The Resistance has successfully killed the Spy Chief!", {0,0.65,1})
-              check_victory("Resistance")
-            else
-              broadcastToAll("The Spies has successfully killed the Resistance Chief!", {1,0,0})
-              check_victory("Spy")
-            end
+        local opposing = "Resistance"
+        if team == "Resistance" then opposing = "Spy" end
+        if playerRole[color] == opposing .. " Chief" then
+          if team == "Resistance" then
+            broadcastToAll("The Resistance has successfully killed the Spy Chief!", {0,0.65,1})
+            check_victory("Resistance")
           else
-            local token = object_victoryTokens[data_currentMission - 1]
+            broadcastToAll("The Spies has successfully killed the Resistance Chief!", {1,0,0})
+            check_victory("Spy")
+          end
+        else
+          local token = object_victoryTokens[data_currentMission - 1]
 
-            local altTeam = ""
+          local altTeam = ""
 
-            if team == "Resistance" then
-              token.setRotationSmooth({0,180,180})
-              data_victories.Spy = data_victories.Spy + 1
-              data_victories.Resistance = data_victories.Resistance - 1
-              roundWinner = "Spy"
-              altTeam = "Resistance Hunter Failed"
-            else
-              token.setRotationSmooth({0,180,0})
-              data_victories.Spy = data_victories.Spy - 1
-              data_victories.Resistance = data_victories.Resistance + 1
-              roundWinner = "Resistance"
-              altTeam = "Spy Hunter Failed"
-            end
+          if team == "Resistance" then
+            token.setRotationSmooth({0,180,180})
+            data_victories.Spy = data_victories.Spy + 1
+            data_victories.Resistance = data_victories.Resistance - 1
+            roundWinner = "Spy"
+            altTeam = "Resistance Hunter Failed"
+          else
+            token.setRotationSmooth({0,180,0})
+            data_victories.Spy = data_victories.Spy - 1
+            data_victories.Resistance = data_victories.Resistance + 1
+            roundWinner = "Resistance"
+            altTeam = "Spy Hunter Failed"
+          end
 
-            local mission = "Mission " .. data_currentMission - 1
-            local i = 0
-            while true do
-              i = i + 1
-              if data_record[mission]["Team " .. i] ~= nil and data_record[mission]["Team " .. i]["Victory"] ~= nil then
-                data_record[mission]["Team " .. i]["Victory"] = altTeam
-                break
-              end
-            end
-
-            local endWinner = ""
-            if data_victories.Resistance == 3 then
-              endWinner = "Resistance"
-            elseif data_victories.Spy == 3 then
-              endWinner = "Spy"
-            end
-
-            if not check_victory(endWinner) then
-              check_nextRound(roundWinner)
+          local mission = "Mission " .. data_currentMission - 1
+          local i = 0
+          while true do
+            i = i + 1
+            if data_record[mission]["Team " .. i] ~= nil and data_record[mission]["Team " .. i]["Victory"] ~= nil then
+              data_record[mission]["Team " .. i]["Victory"] = altTeam
+              break
             end
           end
 
-          list[1].destruct()
+          local endWinner = ""
+          if data_victories.Resistance == 3 then
+            endWinner = "Resistance"
+          elseif data_victories.Spy == 3 then
+            endWinner = "Spy"
+          end
+
+          if not check_victory(endWinner) then
+            check_nextRound(roundWinner)
+          end
         end
+
+        list[1].destruct()
       end
+    end
   end
 end
 

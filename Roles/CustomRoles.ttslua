@@ -835,6 +835,8 @@ function role_Amnesiac(color)
       else
         startLuaCoroutine(Global, 'calculate_missionResults')
       end
+    else
+      startLuaCoroutine(Global, 'calculate_missionResults')
     end
   end
 
@@ -846,6 +848,10 @@ function role_Amnesiac(color)
   data["Output"] = function()
     local teammate = data["Teammate"]
     return "[ffff00]You are... Actually, you don't recall who you are. You do however remember that " .. output_name(teammate) .. "[ffff00] was a friend..."
+  end
+
+  data["Game Over"] = function()
+    data["Remember"]()
   end
 
   return data
@@ -979,8 +985,8 @@ function role_NeutralSCPAgent(color)
   return data
 end
 function role_Psionic(color)
-  local data = role_Resistance(color)
-  data["Team"] = "Spy"
+  local data = data_playerData[color]
+  data["Old Role"] = data["Role"]
   data["Role"] = "Psionic"
   data["Old Data"] = data_playerData[color]
 
@@ -1006,7 +1012,6 @@ function role_Psionic(color)
 
   data["Remember"] = function()
     printToColor("Something seems off... Your mind begins to clear as you regain your thoughts", color, {1,1,0})
-
     data["Card"].destruct()
 
     data = data["Old Data"]
@@ -1022,6 +1027,10 @@ function role_Psionic(color)
     data.Card = card
 
     data["Place Card"](color, true)
+  end
+
+  data["Game Over"] = function()
+    data["Remember"]()
   end
 
   return data
@@ -1086,5 +1095,5 @@ end
 
 ref_secondaryRestrictions = {
   ["Amnesiac"] = { ["Roles"] = {"Mayor","Pdlitician","Deep Agent","Spy Hunter","Hacker","Corruptor","Resistance Defector","Spy Defector","ASI","SCP Agent"} },
-  ["Psionic"] = { ["Team"] = "Resistance", ["Roles"] = {"Politician","Deep Agent","Corruptor","Spy Defector", "ASI", "SCP Agent"}}
+  ["Psionic"] = { ["Team"] = "Resistance", ["Roles"] = {"Politician","Deep Agent","Corruptor","Spy Defector", "ASI", "SCP Agent", "Bioterrorist", "Spy Hunter"}}
 }

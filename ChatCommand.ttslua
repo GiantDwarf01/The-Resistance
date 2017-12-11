@@ -192,19 +192,33 @@ function command_setLeader(player, args)
 end
 --
 function command_roleInfo(player, args)
-  local role = "nil"
-  if #args == 2 then
-    role = args[1] .. " " .. args[2]
-  elseif #args == 1 then
-    role = args[1]
-  elseif data_playerData[player.color] ~= nil then
+  local role = ""
+
+  for i=1,#args do
+    if role == "" then
+      role = args[i]
+    else
+      role = role .. " " .. args[i]
+    end
+  end
+
+  if role == "" and data_playerData[player.color] ~= nil then
     role = data_playerData[player.color].Role
   end
 
-  function titleCase(first,rest)
-    return first:upper()..rest:lower()
+  local givenRole, givenCount = string.close(role,role_data,#role)
+  local resRole, resCount = string.close("Resistance "..role,role_data,#role+11)
+  local spyRole, spyCount = string.close("Spy "..role,role_data,#role+4)
+
+  local min = math.min(givenCount, resCount, spyCount)
+  if min == givenCount then
+    role = givenRole
+  elseif min == resCount then
+    role = resRole
+  else
+    role = spyRole
   end
-  role = string.gsub(role, "(%a)([%w_']*)", titleCase)
+
 
   if role_data[role] == nil then
     printToColor("No role called \"" .. role .. "\" found", player.color, {1,0,0})
@@ -233,6 +247,7 @@ ref_commandsDisplay = {
 }
 ref_adminCommands = {
   ["reset <color>"] = "Redeals the given player's vote or mission cards",
+  ["reset Team>"] = "Resets the current mission to the team building phase",
   ["force <approve/reject>"] = "Skip the Vote phase and force the given vote",
   ["setleader <color>"] = "Sets the given player as the Leader"
 }

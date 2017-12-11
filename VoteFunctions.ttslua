@@ -100,7 +100,13 @@ function calculate_votes()
     if data["Vote Reveal"] ~= nil and not data_voteFunctions[color] then
       data_voteFunctions[color] = true
       data["Vote Reveal"](color)
+
+      if global_debug then
+        print("Trying Vote Reveal - " .. data.Role)
+      end
       return 1
+    elseif global_debug and data["Vote Reveal"] ~= nil then
+      print("Skipping Vote Reveal - " .. data.Role)
     end
   end
 

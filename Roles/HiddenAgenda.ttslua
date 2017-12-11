@@ -115,6 +115,7 @@ function role_Assassin(color)
         assassinToken.setDescription("Drop on the player you think is the Commander")
         assassinToken.setScale({1.65, 1.00, 1.70})
         assassinToken.setRotation(board.getRotation())
+        assassinToken.setLock(false)
       else
         check_victory(winner)
       end

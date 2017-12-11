@@ -16,7 +16,7 @@ function set_leaderToken(color)
   if data_currentLeader == "" then
     data_currentLeader = playersInGame[math.random(#playersInGame)]
   else
-    data_currentLeader = color or nextPlayer(data_currentLeader, playersInGame)
+    data_currentLeader = color or player.next(data_currentLeader, playersInGame)
   end
 
   local board = getObjectFromGUID(ref_playerBoards[data_currentLeader])

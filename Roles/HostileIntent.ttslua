@@ -43,6 +43,8 @@ function role_ResistanceHunter(color)
         assassinToken.setScale({1.65, 1.00, 1.70})
         assassinToken.setLock(false)
         assassinToken.setRotation(board.getRotation())
+        assassinToken.setLock(false)
+
         revealColor(color)
       else
         check_victory(winner)
@@ -112,6 +114,8 @@ function role_SpyHunter(color)
         assassinToken.setScale({1.65, 1.00, 1.70})
         assassinToken.setLock(false)
         assassinToken.setRotation(board.getRotation())
+        assassinToken.setLock(false)
+
         revealColor(color)
       elseif winner == "Early Hunt" then
         data_gamePhase = "Spy Hunting"
@@ -125,6 +129,8 @@ function role_SpyHunter(color)
         assassinToken.setScale({1.65, 1.00, 1.70})
         assassinToken.setLock(false)
         assassinToken.setRotation(board.getRotation())
+        assassinToken.setLock(false)
+
         revealColor(color)
       else
         check_victory(winner)

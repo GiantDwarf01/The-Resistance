@@ -1,89 +1,6 @@
--- [[ Player Function ]] --
-function nextPlayer(color, players)
-  local colorOrder = {
-    "White", "Brown", "Red", "Orange", "Yellow",
-    "Green", "Teal", "Blue", "Purple",  "Pink",
-    "White", "Brown", "Red", "Orange", "Yellow",
-    "Green", "Teal", "Blue", "Purple",  "Pink",
-  }
+#include !/Tools/Tools
 
-  if players == nil then
-    players = getSeatedPlayers()
-  end
 
-  local start = false
-  for _, nextcolor in pairs(colorOrder) do
-    if not start then
-      if nextcolor == color then
-        start = true
-      end
-    else
-      if table.contains(players, nextcolor) then
-        return nextcolor
-      end
-    end
-  end
-end
-
-function previousPlayer(color, players)
-  local colorOrder = {
-    "Pink",   "Purple", "Blue",  "Teal", "Green",
-    "Yellow", "Orange",  "Red", "Brown", "White",
-    "Pink",   "Purple", "Blue",  "Teal", "Green",
-    "Yellow", "Orange",  "Red", "Brown", "White",
-  }
-
-  if players == nil then
-    players = getSeatedPlayers()
-  end
-
-  local start = false
-  for _, nextcolor in pairs(colorOrder) do
-    if not start then
-      if nextcolor == color then
-        start = true
-      end
-    else
-      if table.contains(players, nextcolor) then
-        return nextcolor
-      end
-    end
-  end
-end
-
--- [[ Table Functions ]] --
--- Swaps two indexes in array
-function table.swap(array, index1, index2)
-  array[index1], array[index2] = array[index2], array[index1]
-end
--- Shuffles an array
-function table.shuffle(array)
-  local counter = #array
-  while counter > 1 do
-    local index = math.random(counter)
-    table.swap(array, index, counter)
-    counter = counter -1
-  end
-end
--- Checks if table contains a value
-function table.contains(table, value)
-  if #table == 0 or value == nil then return false end
-  for _, val in pairs(table) do
-    if val == value then
-      return true
-    end
-  end
-
-  return false
-end
---Gets size of non indexed table
-function table.size(table)
-  local count = 0
-  for _,_ in pairs(table) do
-    count = count + 1
-  end
-  return count
-end
 -- Remove exception item lists
 function table.removeItems(list, ...)
   local exceptions = {...}
@@ -92,7 +9,6 @@ function table.removeItems(list, ...)
   for _,item in pairs(list) do
     if #exceptions == 0 or not table.contains(exceptions, item) then
       table.insert(foundItems, item)
-    end
   end
 
   return foundItems
@@ -120,79 +36,6 @@ function table.removeKey(list, key)
     end
   end
   return data
-end
--- Prints tables
-function table.print(inTable, indent)
-  if not indent then indent = 1 end
-
-  for k, v in pairs(inTable) do
-    formatting = string.rep("  ", indent) .. k .. ": "
-
-    if type(v) == "table" then
-      print(formatting)
-      table.print(v, indent+1)
-    elseif type(v) == "boolean" then
-      print(formatting .. tostring(v))
-    elseif type(v) == "userdata" then
-      print(formatting .. v.getName() .. ":" .. v.getGUID())
-    else
-      print(formatting .. v)
-    end
-  end
-end
--- Deep Copy table
-function table.copy(original)
-    local copy = {}
-    for k, v in pairs(original) do
-        -- as before, but if we find a table, make sure we copy that too
-        if type(v) == 'table' then
-            v = table.copy(v)
-        end
-        copy[k] = v
-    end
-    return copy
-end
--- Select random table element
-function table.random(tbl)
-  local size = table.size(tbl)
-  local random = math.random(size)
-
-  local i = 1
-  for k,v in pairs(tbl) do
-    if i == random then
-      return {key = k, value = v}
-    end
-    i = i + 1
-  end
-end
--- Merge indexed tables without duplicates
-function table.merge(...)
-  local merging = {...}
-  local out = merging[1]
-
-  for i=2,#merging do
-    local curTable = merging[i]
-    for j=1,#curTable do
-      if not table.contains(out, curTable[j]) then table.insert(out, curTable[j]) end
-    end
-  end
-
-  return out
-end
--- Check if tables are equal
-function table.equals(a, b)
-  if #a ~= #b then return false end
-  local t1,t2 = {}, {} -- temp tables
-  for k,v in pairs(a) do -- copy all values into keys for constant time lookups
-    t1[v] = (t1[v] or 0) + 1 -- make sure we track how many times we see each value.
-  end
-  for k,v in pairs(b) do
-    t2[v] = (t2[v] or 0) + 1
-  end
-  for k,v in pairs(t1) do -- go over every element
-    if v ~= t2[k] then return false end -- if the number of times that element was seen don't match...
-  end
-  return true
 end
 
 -- [[ Object Management Functions ]] --
