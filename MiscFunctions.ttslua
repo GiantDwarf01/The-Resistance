@@ -9,6 +9,7 @@ function table.removeItems(list, ...)
   for _,item in pairs(list) do
     if #exceptions == 0 or not table.contains(exceptions, item) then
       table.insert(foundItems, item)
+    end
   end
 
   return foundItems
