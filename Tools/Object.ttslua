@@ -1,0 +1,115 @@
+player = {}
+-- Returns the next player
+player.next = function(color, players)
+  local colorOrder = {
+    "White", "Brown", "Red", "Orange", "Yellow",
+    "Green", "Teal", "Blue", "Purple",  "Pink",
+  }
+
+  local color = color.color or color
+  local index = table.find(colorOrder, color)
+  local players = players or getSeatedPlayers()
+  local outColor = ""
+
+  local outIndex = index
+  repeat
+    outIndex = outIndex + 1
+    if outIndex > #colorOrder then
+      outIndex = 1
+    end
+    outColor = colorOrder[outIndex]
+  until table.contains(players, outColor) or outIndex == index
+  if outIndex == index then
+    return
+  end
+
+  return outColor
+end
+
+-- Returns the previous player
+player.previous = function(color, players)
+  local colorOrder = {
+    "White", "Brown", "Red", "Orange", "Yellow",
+    "Green", "Teal", "Blue", "Purple",  "Pink",
+  }
+
+  local color = color.color or color
+  local index = table.find(colorOrder, color)
+  local players = players or getSeatedPlayers()
+  local outColor = ""
+
+  local outIndex = index
+  repeat
+    outIndex = outIndex - 1
+    if outIndex < 1 then
+      outIndex = #colorOrder
+    end
+    outColor = colorOrder[outIndex]
+  until table.contains(players, outColor) or outIndex == index
+  if outIndex == index then
+    return
+  end
+
+  return outColor
+end
+
+Object = {}
+Object.placeByPlayer = function(object,
+  color,
+  offset,
+  rotation,
+  smooth)
+
+  local player = Player[color] or color
+  local hand = player.getHandTransform()
+
+end
+
+--Finds objects in radius of a position, accepts optional filtering function
+--Only pos is required, the others are optional
+--Example func: function(o) return o.tag=="Deck" or o.tag=="Card" end
+Object.castRadius = function(pos, radius, func, debug)
+    local radius = (radius or 1)
+    local objList = Physics.cast({
+        origin=pos, direction={0,1,0}, type=2, size={radius,radius,radius},
+        max_distance=0, debug=(debug or false)
+    })
+
+    local refinedList = {}
+    for _, obj in ipairs(objList) do
+        if func == nil then
+            table.insert(refinedList, obj.hit_object)
+        else
+            if func(obj.hit_object) then
+                table.insert(refinedList, obj.hit_object)
+            end
+        end
+    end
+
+    return refinedList
+end
+
+--Finds objects in radius of a position, accepts optional filtering function
+--Only pos is required, the others are optional
+--Example func: function(o) return o.tag=="Deck" or o.tag=="Card" end
+Object.castBox = function(pos, size, ori, func, debug)
+    local size = (size or {1,1,1})
+    local ori = (ori or {0,0,0})
+    local objList = Physics.cast({
+        origin=pos, direction={0,1,0}, type=3, size=size,
+        orientation=ori, max_distance=0, debug=(debug or false)
+    })
+
+    local refinedList = {}
+    for _, obj in ipairs(objList) do
+        if func == nil then
+            table.insert(refinedList, obj.hit_object)
+        else
+            if func(obj.hit_object) then
+                table.insert(refinedList, obj.hit_object)
+            end
+        end
+    end
+
+    return refinedList
+end

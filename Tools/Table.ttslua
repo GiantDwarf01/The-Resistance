@@ -1,0 +1,245 @@
+-- Check if table is empty
+table.empty = function(tab)
+    return (next(tab) == nil)
+end
+
+-- Mash together two tables
+table.join = function(tab1, tab2)
+    local out = {}
+    for k=1,#tab1 do
+        out[k] = tab1[k]
+    end
+    local off = #tab1
+    for k=1,#tab2 do
+        out[k+off] = tab2[k]
+    end
+    return out
+end
+
+-- Shallow table copy
+-- Does not include metatables
+table.shallowcopy = function(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in pairs(orig) do
+            copy[orig_key] = orig_value
+        end
+    else
+        copy = orig
+    end
+    return copy
+end
+
+-- Deep table copy
+-- Includes metatables, avoids __pairs, recursive
+table.copy = function(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[table.copy(orig_key)] = table.copy(orig_value)
+        end
+        if getmetatable(orig) then
+            setmetatable(copy, table.copy(getmetatable(orig)))
+        end
+    else
+        copy = orig
+    end
+    return copy
+end
+
+-- Elements count
+-- Unlike #table, also counts non-number keyed values
+table.size = function(tab)
+    local count = 0
+    for _ in pairs(tab) do
+        count = count + 1
+    end
+    return count
+end
+
+-- Return the element that return minimal value from eval function
+-- Only iterates through numeric keys part
+table.min = function(tab, eval)
+    if not tab[1] then return end
+    local min = { el = tab[1], val = eval(tab[1]) }
+    for k=2,#tab do
+        local val = eval(tab[k])
+        if val < min.val then
+            min.val = val
+            min.el = tab[k]
+        end
+    end
+    return min.el, min.val
+end
+
+-- Same as table.min, but takes the maximum
+table.max = function(tab, eval)
+    local function invEval(el)
+        return -1*eval(el)
+    end
+    local el, min = table.min(tab, invEval)
+    return el, -1*min
+end
+
+-- Return those values in tab that return true from valid function
+table.sieve = function(tab, valid)
+    local passed = {}
+    local rejected = {}
+    for k,v in ipairs(tab) do
+        if valid(v) then
+            if type(k) == 'number' then
+                table.insert(passed, v)
+            else
+                passed[k] = v
+            end
+        else
+            if type(k) == 'number' then
+                table.insert(rejected, v)
+            else
+                rejected[k] = v
+            end
+        end
+    end
+    return passed, rejected
+end
+
+-- Try to find en element in the table, return key if found, nil otherwise
+table.find = function(tab, el)
+    for k,v in pairs(tab) do
+        if v == el then
+            return k
+        end
+    end
+end
+
+-- Shallow table print
+table.print_s = function(tab, prefix)
+    prefix = prefix or 'Table'
+    print(prefix .. ':')
+    local function stringify(v)
+        local str = tostring(v)
+        if type(v) == 'string' then
+            str = '\'' .. str .. '\''
+        end
+        return str
+    end
+    for k,v in pairs(tab) do
+        print('   [' .. stringify(k) .. '] -> ' .. stringify(v))
+    end
+    print('')
+end
+
+-- Deep table print (sensitive to cycles!)
+table.print = function(tab, prefix, indent)
+    prefix = prefix or 'Table'
+    local indent = indent or 1
+    print(prefix .. ':')
+    local function stringify(v)
+        local str = tostring(v)
+        if type(v) == 'string' then
+            str = '\'' .. str .. '\''
+        end
+        return str
+    end
+    local indentStr = string.rep('    ', indent)
+    for k,v in pairs(tab) do
+        print(indentStr .. '[' .. stringify(k) .. '] -> ' .. stringify(v))
+        if type(v) == 'table' then
+            table.print(v, indentStr .. stringify(v), indent+1)
+        end
+    end
+    if indent == 1 then
+        print('')
+    end
+end
+
+-- Apply a function on each table element
+table.process = function(tab, fcn)
+    local out = {}
+    for k,v in pairs(tab) do
+        out[k] = fcn(v)
+    end
+    return out
+end
+
+-- Checks if an item exists in a table
+table.contains = function(tab, e1)
+  return table.find(tab, e1) ~= nil
+end
+
+-- Swaps two indexes in array
+table.swap = function(array, index1, index2)
+  array[index1], array[index2] = array[index2], array[index1]
+end
+
+-- Shuffles an array
+table.shuffle = function(array)
+  local counter = #array
+  while counter > 1 do
+    local index = math.random(counter)
+    table.swap(array, index, counter)
+    counter = counter -1
+  end
+end
+
+-- Check if tables are equal
+table.equals = function(a, b)
+  if #a ~= #b then return false end
+  local t1,t2 = {}, {} -- temp tables
+  for k,v in pairs(a) do -- copy all values into keys for constant time lookups
+    t1[v] = (t1[v] or 0) + 1 -- make sure we track how many times we see each value.
+  end
+  for k,v in pairs(b) do
+    t2[v] = (t2[v] or 0) + 1
+  end
+  for k,v in pairs(t1) do -- go over every element
+    if v ~= t2[k] then return false end -- if the number of times that element was seen don't match...
+  end
+  return true
+end
+
+-- Merge indexed tables without duplicates
+table.merge = function(...)
+  local merging = {...}
+  local out = merging[1]
+
+  for i=2,#merging do
+    local curTable = merging[i]
+    for j=1,#curTable do
+      if not table.contains(out, curTable[j]) then table.insert(out, curTable[j]) end
+    end
+  end
+
+  return out
+end
+
+-- Randomly select a key and value from table
+table.random = function(tbl)
+  local size = table.size(tbl)
+  local random = math.random(size)
+
+  local i = 1
+  for k,v in pairs(tbl) do
+    if i == random then
+      return {key = k, value = v}
+    end
+    i = i + 1
+  end
+end
+
+
+table.removeDuplicates = function(tbl)
+  local hash = {}
+  local res = {}
+  for _,v in ipairs(tbl) do
+    if (not hash[v]) then
+      res[#res+1] = v -- you could print here instead of saving to result table if you wanted
+      hash[v] = true
+    end
+  end
+  return res
+end

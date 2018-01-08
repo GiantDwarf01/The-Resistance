@@ -1,0 +1,79 @@
+-- Check if string begins with the argument (no regex)
+string.beginswith = function(str, prefix)
+    return (str:sub(1, prefix:len()) == prefix)
+end
+string.startswith = string.beginswith
+
+-- Check if the string ends with the argument (no regex)
+string.endswith = function(str, prefix)
+    return (str:sub(-1*prefix:len(), -1) == prefix)
+end
+
+-- Check if string contains argument anywhere in it (no regex)
+string.contains = function(str, query)
+    return (str:find(query, 1, true) ~= nil)
+end
+
+-- Capitalize the first letter of each word in a string
+string.captialize = function(str)
+  function titleCase(first,rest)
+    return first:upper()..rest:lower()
+  end
+  return string.gsub(str, "(%a)([%w_']*)", titleCase)
+end
+
+-- Try to match type with given table
+string.close = function(str, tbl, thres, useIndex)
+  function lev(strA, strB)
+    local matrix = math.matrix(#strA+1, #strB+1)
+    local row, col = #matrix, #matrix[1]
+    local cost
+
+    for i=1,row do
+      matrix[i][1] = i - 1
+    end
+    for j=1,col do
+      matrix[1][j] = j - 1
+    end
+    for i=2,row do
+      for j=2,col do
+        if (strA:sub(i-1, i-1) == strB:sub(j-1,j-1)) then
+          cost = 0
+        else
+          cost = 1
+        end
+        matrix[i][j] = math.min(matrix[i-1][j] + 1, matrix[i][j-1]+1, matrix[i-1][j-1] + cost)
+      end
+    end
+    return matrix[row][col]
+  end
+
+  local thres = thres or -1
+  local dist,word = -1, ""
+  for k,v in pairs(tbl) do
+    local val = v
+    if (type(v) ~= "string" and type(k) == "string") or useIndex then
+      val = k
+    end
+    local leven = lev(str, val)
+    if leven < dist or dist == -1 then
+      dist = leven
+      word = val
+    end
+  end
+
+  if dist <= thres or thres == -1 then
+    return word,dist
+  else
+    return str,-1
+  end
+end
+
+-- Replace a table of strings with given strings
+string.replace = function(string, keys)
+  local out = string
+  for key,value in pairs(keys) do
+    out = string.gsub(out, key, value)
+  end
+  return out
+end

@@ -42,10 +42,11 @@ end
 -- [[ Object Management Functions ]] --
 -- Gets objects at given position with the given tag(s)
 function getObjectsAtPosition(pos, ...)
-    local tagList = {...}
-    local objList = Physics.cast({
-      origin=pos, direction={0,1,0}, type=2, size={0.1,0.1,0.1},max_distance=0, debug=global_debug
-    })
+  local tagList = {...}
+  local objList = Physics.cast({
+    origin=pos, direction={0,1,0}, type=2, size={0.1,0.1,0.1},max_distance=0, debug=debug_output
+  })
+
     local foundItems = {}
     for _, obj in ipairs(objList) do
         if #tagList == 0 then
